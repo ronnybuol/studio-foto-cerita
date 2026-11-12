@@ -545,7 +545,9 @@ function lcdPage(){
  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
- const content=stage===1
+ const content=stage===1 && state.presentation.view==="theory"
+   ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${state.presentation.slide+1} / ${THEORY_SLIDES.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
+   :stage===1
    ?`<div class="lcd-camera-heading"><div class="kicker">TAHAP 01 · LABORATORIUM KAMERA</div>
       <h1>Ubah pengaturan. <em>Amati fotonya.</em></h1>
       <p>Peragaan langsung dikendalikan trainer. Perhatikan cahaya, kedalaman ruang, gerakan, dan noise.</p></div>
@@ -562,7 +564,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?"lcd-camera-mode":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):""}">
      ${content}
      ${footer}
    </div>
@@ -598,10 +600,11 @@ async function refreshLCD(){
  lcdPolling=true;
  const prevStage=state.online?state.serverStage:state.demoStage;
  const prevCamera=JSON.stringify(state.demoCamera);
+ const prevPresentation=JSON.stringify(state.presentation);
  try{
    await syncState();
    const nextStage=state.online?state.serverStage:state.demoStage;
-   if(prevStage!==nextStage||!$(".lcd-mode")){
+   if(prevStage!==nextStage||prevPresentation!==JSON.stringify(state.presentation)||!$(".lcd-mode")){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
@@ -627,7 +630,14 @@ setInterval(async()=>{
   if(pageMode()==="lcd"){await refreshLCD();return}
   if(document.hidden)return;
   const now=Date.now();
-  if(now-lastPassivePoll>12000){lastPassivePoll=now;await syncState()}
+  if(now-lastPassivePoll>3500){
+    lastPassivePoll=now;
+    const prev=JSON.stringify({stage:state.serverStage,presentation:state.presentation});
+    await syncState();
+    if(pageMode()==="peserta"&&state.user&&state.active==="kamera"&&prev!==JSON.stringify({stage:state.serverStage,presentation:state.presentation})){
+      renderParticipant();
+    }
+  }
 },1800);
 await syncState();
 render();
