@@ -67,7 +67,11 @@ async function request(path,{method="GET",payload,auth=false}={}){
   if(token) headers.Authorization=`Bearer ${token}`;
   const response=await fetch(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"});
   const body=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(body.error||`HTTP ${response.status}`);
+  if(!response.ok){
+    const error=new Error(body.error||`HTTP ${response.status}`);
+    error.status=response.status;
+    throw error;
+  }
   return body;
 }
 async function syncState(){
@@ -342,7 +346,7 @@ function renderParticipant(){
  $("#root").innerHTML=lessonLayout();bindLessons();
 }
 function trainerLogin(){
- return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
+ return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><div id="trainer-login-feedback" role="alert" aria-live="polite" class="login-feedback" hidden></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
 }
 async function fetchDashboard(){
  if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,camera:state.demoCamera,presentation:state.presentation,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
@@ -521,12 +525,72 @@ function bindDashboard(){
  }
 }
 async function renderTrainer(){
- if(!state.trainerToken){$("#root").innerHTML=trainerLogin();$("#trainer-login").onsubmit=async e=>{
-   e.preventDefault();if(!state.online){toast("Kendali kelas membutuhkan backend. Gunakan pratinjau lokal.");return}
-   try{const r=await request("/api/login",{method:"POST",payload:{pin:$("#trainer-pin").value}});state.trainerToken=r.token;state.trainerRole=r.role;sessionStorage.setItem("lm26-trainer",r.token);sessionStorage.setItem("lm26-role",r.role);await fetchDashboard();render()}catch(err){toast("Login gagal: "+err.message)}
- };if(!state.online)$("#trainer-preview").onclick=()=>{state.trainerToken="demo";state.trainerRole="trainer";fetchDashboard().then(render)};return}
- try{await fetchDashboard();$("#root").innerHTML=renderDashboard();bindDashboard()}
- catch(e){state.trainerToken="";sessionStorage.removeItem("lm26-trainer");$("#root").innerHTML=trainerLogin();toast("Sesi dashboard berakhir: "+e.message);renderTrainer()}
+  const root=$("#root");
+  if(!state.trainerToken){
+    root.innerHTML=trainerLogin();
+    const form=$("#trainer-login");
+    const feedback=$("#trainer-login-feedback");
+    const showError=(message)=>{
+      feedback.hidden=false;
+      feedback.textContent=message;
+    };
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      const button=form.querySelector("button[type=submit]");
+      if(!state.online){
+        showError("Server kelas belum terhubung. Periksa koneksi internet dan muat ulang halaman.");
+        return;
+      }
+      button.disabled=true;
+      button.textContent="Memeriksa PIN…";
+      feedback.hidden=true;
+      try{
+        const result=await request("/api/login",{method:"POST",payload:{pin:$("#trainer-pin").value}});
+        state.trainerToken=result.token;
+        state.trainerRole=result.role;
+        sessionStorage.setItem("lm26-trainer",result.token);
+        sessionStorage.setItem("lm26-role",result.role);
+        await renderTrainer();
+      }catch(error){
+        showError(error.message);
+        button.disabled=false;
+        button.textContent="Coba masuk kembali";
+      }
+    };
+    if(!state.online){
+      const preview=$("#trainer-preview");
+      if(preview)preview.onclick=()=>{
+        state.trainerToken="demo";
+        state.trainerRole="trainer";
+        fetchDashboard().then(render);
+      };
+    }
+    return;
+  }
+  try{
+    await fetchDashboard();
+    root.innerHTML=renderDashboard();
+    bindDashboard();
+  }catch(error){
+    if(error.status===401||error.status===403){
+      state.trainerToken="";
+      sessionStorage.removeItem("lm26-trainer");
+      sessionStorage.removeItem("lm26-role");
+      await renderTrainer();
+      const feedback=$("#trainer-login-feedback");
+      if(feedback){
+        feedback.hidden=false;
+        feedback.textContent="Sesi lama sudah kedaluwarsa. Masukkan PIN trainer untuk membuat sesi baru.";
+      }
+      return;
+    }
+    // PIN telah diterima: jangan hapus sesi saat dashboard yang gagal.
+    root.innerHTML=`<div class="page"><div class="card login-card"><span class="eyebrow">LOGIN BERHASIL, DASHBOARD BELUM SIAP</span>
+      <h1>PIN sudah diterima.</h1><p>Terjadi kesalahan saat memuat dashboard: ${escapeHtml(error.message)}.</p>
+      <p class="small-note">Data peserta dan pengaturan kelas tidak dihapus. Anda bisa mengulang pemuatan dashboard.</p>
+      <button id="trainer-retry-dashboard" class="btn primary block">Coba muat dashboard lagi</button></div></div>`;
+    $("#trainer-retry-dashboard").onclick=renderTrainer;
+  }
 }
 function lcdFooter(stage,count,link,qr){
  return `<div class="lcd-bottom">
