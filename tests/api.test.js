@@ -31,7 +31,9 @@ function mockEnv(){
          if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
          if(sql.includes("UPDATE sessions SET camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
-           data.camera=JSON.parse(args[0]);
+           if(sql.includes("'$.view'"))data.camera={...data.camera,view:args[0],slide:args[1]};
+           else if(sql.includes("'$.a'"))data.camera={...data.camera,a:args[0],s:args[1],i:args[2]};
+           else data.camera=JSON.parse(args[0]);
          }
          if(sql.includes("INSERT INTO answers")){
            const [participant_id,stage,payload]=args;
@@ -119,4 +121,29 @@ test("sebelum migrasi D1, kelas tetap dapat diakses dan API menampilkan petunjuk
  const result=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:2,s:3,i:1},trainer.token);
  assert.equal(result.status,503);
  assert.match(result.data.error,/migrasi database/);
+});
+
+test("trainer mengendalikan 8 slide teori dan beralih ke simulator tanpa menghapus pengaturan kamera",async()=>{
+ const env=mockEnv();
+ const original=await call(env,"/lensa-muda/api/state");
+ assert.deepEqual(original.data.presentation,{view:"theory",slide:0});
+ const trainer=(await call(env,"/lensa-muda/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/lensa-muda/api/login","POST",{pin:"mentor-67890"})).data;
+ const forbidden=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:2},mentor.token);
+ assert.equal(forbidden.status,403);
+ const invalid=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:8},trainer.token);
+ assert.equal(invalid.status,400);
+ const presentation=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:4},trainer.token);
+ assert.equal(presentation.status,200);
+ assert.deepEqual((await call(env,"/lensa-muda/api/state")).data.presentation,{view:"theory",slide:4});
+ const camera=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:2,s:0,i:4},trainer.token);
+ assert.equal(camera.status,200);
+ assert.deepEqual((await call(env,"/lensa-muda/api/state")).data.presentation,{view:"theory",slide:4});
+ assert.deepEqual((await call(env,"/lensa-muda/api/state")).data.camera,{a:2,s:0,i:4});
+ const switched=await call(env,"/lensa-muda/api/presentation","PUT",{view:"simulator",slide:4},trainer.token);
+ assert.equal(switched.status,200);
+ assert.deepEqual((await call(env,"/lensa-muda/api/state")).data.presentation,{view:"simulator",slide:4});
+ const dash=await call(env,"/lensa-muda/api/dashboard","GET",undefined,trainer.token);
+ assert.deepEqual(dash.data.presentation,{view:"simulator",slide:4});
+ assert.deepEqual(dash.data.camera,{a:2,s:0,i:4});
 });
