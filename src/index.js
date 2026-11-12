@@ -52,6 +52,10 @@ async function stageState(env){
   return row.active_stage;
 }
 const DEFAULT_CAMERA = Object.freeze({a:1,s:3,i:1});
+const DEFAULT_PRESENTATION = Object.freeze({view:"theory",slide:0});
+function presentationFromCamera(value){
+  return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=7?value.slide:0};
+}
 function validCamera(value){
   return value&&typeof value==="object"&&!Array.isArray(value)
     &&["a","s","i"].every(k=>Number.isInteger(value[k])&&value[k]>=0&&value[k]<=6);
@@ -87,7 +91,7 @@ async function handleApi(req,env){
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const camera=await liveCamera(env);
-    return output({stage,camera,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
     const data=await bodyJson(req),name=norm(data.name,90),school=norm(data.school,140),className=norm(data.className,30);
@@ -126,7 +130,25 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    return output({stage,camera:await liveCamera(env),count:map.size,participants:[...map.values()],role:user.role});
+    const camera=await liveCamera(env);
+    return output({stage,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
+  }
+  if(method==="PUT"&&path==="/api/presentation"){
+    const user=await access(req,env);
+    if(!user)return failure("Autentikasi trainer diperlukan",401);
+    if(user.role!=="trainer")return failure("Hanya trainer boleh mengendalikan materi",403);
+    const data=await bodyJson(req);
+    if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>7)
+      return failure("Mode presentasi atau nomor slide tidak valid",400);
+    try{
+      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?),updated_at=? WHERE id=?")
+        .bind(data.view,data.slide,new Date().toISOString(),SESSION_ID).run();
+    }catch(error){
+      if(/no such column:\\s*camera_json/i.test(String(error?.message)))
+        return failure("Database belum memiliki kolom kamera. Terapkan migrasi 0001.",503);
+      throw error;
+    }
+    return output({ok:true,presentation:{view:data.view,slide:data.slide}});
   }
   if(method==="PUT"&&path==="/api/demo-camera"){
     const user=await access(req,env);
@@ -135,8 +157,8 @@ async function handleApi(req,env){
     const data=await bodyJson(req);
     if(!validCamera(data))return failure("Pengaturan kamera tidak valid",400);
     try{
-      await env.DB.prepare("UPDATE sessions SET camera_json=?,updated_at=? WHERE id=?")
-        .bind(JSON.stringify({a:data.a,s:data.s,i:data.i}),new Date().toISOString(),SESSION_ID).run();
+      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.a',?,'$.s',?,'$.i',?),updated_at=? WHERE id=?")
+        .bind(data.a,data.s,data.i,new Date().toISOString(),SESSION_ID).run();
     }catch(error){
       if(/no such column:\s*camera_json/i.test(String(error?.message)))
         return failure("Jalankan migrasi database camera_json di Cloudflare D1 Console terlebih dahulu.",503);
