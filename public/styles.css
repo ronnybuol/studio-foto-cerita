@@ -210,3 +210,7 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
  .theory-sample figcaption{font-size:9px;padding:6px 3px}
  .theory-observe strong{font-size:12px}
 }
+
+/* Login trainer: pesan permanen dan mudah dibaca, tidak hanya toast sementara. */
+.login-feedback{padding:12px 14px;margin:10px 0 14px;border:1px solid #eeb2a2;border-radius:10px;background:#fff0ea;color:#8c2d1a;font-size:13px;font-weight:650;line-height:1.55}
+.login-feedback[hidden]{display:none}
