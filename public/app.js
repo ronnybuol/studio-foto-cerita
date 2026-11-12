@@ -56,12 +56,13 @@ let state = {
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
 function saveWork(){localStorage.setItem(STORAGE_WORK,JSON.stringify(state.work))}
 function toast(message){const box=$("#toast");box.textContent=message;box.classList.add("visible");clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.classList.remove("visible"),2800)}
+const PUBLIC_BASE = "/lensa-muda";
 async function request(path,{method="GET",payload,auth=false}={}){
   const headers={};
   if(payload!==undefined) headers["Content-Type"]="application/json";
   const token=auth?state.trainerToken:state.user?.token;
   if(token) headers.Authorization=`Bearer ${token}`;
-  const response=await fetch(path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"});
+  const response=await fetch(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"});
   const body=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(body.error||`HTTP ${response.status}`);
   return body;
