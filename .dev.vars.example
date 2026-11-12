@@ -1,0 +1,5 @@
+# Salin menjadi .dev.vars untuk pengembangan lokal.
+# Gunakan PIN yang berbeda; JANGAN commit .dev.vars.
+TRAINER_PIN="ganti-pin-trainer-yang-kuat"
+MENTOR_PIN="ganti-pin-pendamping-yang-berbeda"
+SESSION_SECRET="ganti-kunci-acak-panjang-minimal-32-karakter"
