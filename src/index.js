@@ -107,14 +107,20 @@ async function handleApi(req,env){
   }
   if(method==="POST"&&path==="/api/login"){
     if(!env.TRAINER_PIN||!env.SESSION_SECRET)return failure("Konfigurasi autentikasi belum lengkap",503);
+    const data=await bodyJson(req),pin=typeof data.pin==="string"?data.pin:"";
     const ip=req.headers.get("CF-Connecting-IP")||"local";
     const attemptId=await sha256(env.SESSION_SECRET+ip);
-    if(await loginsTooMany(env,attemptId))return failure("Terlalu banyak percobaan login. Coba setelah 15 menit.",429);
-    const data=await bodyJson(req),pin=typeof data.pin==="string"?data.pin:"";
+    // Periksa kredensial valid lebih dahulu: trainer yang akhirnya memasukkan PIN
+    // benar tidak terkunci karena percobaan sebelumnya. Percobaan salah tetap dibatasi.
     let role=null;
     if(pin&&constantEqual(pin,env.TRAINER_PIN))role="trainer";
     else if(pin&&env.MENTOR_PIN&&constantEqual(pin,env.MENTOR_PIN))role="mentor";
-    if(!role){await recordBadLogin(env,attemptId);return failure("PIN tidak sesuai",401)}
+    if(!role){
+      if(await loginsTooMany(env,attemptId))
+        return failure("Terlalu banyak percobaan gagal. Tunggu hingga 15 menit atau gunakan PIN yang benar.",429);
+      await recordBadLogin(env,attemptId);
+      return failure("PIN tidak sesuai dengan Secret Cloudflare. Periksa TRAINER_PIN dan coba lagi.",401);
+    }
     await clearBadLogin(env,attemptId);
     return output({role,token:await makeToken(env.SESSION_SECRET,role)});
   }
