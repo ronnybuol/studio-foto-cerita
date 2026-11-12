@@ -118,6 +118,64 @@ const motionSVG=`<svg class="motion" viewBox="0 0 900 600" aria-hidden="true"><p
 function sceneHTML(id="cameraScene",extra=""){
 return `<div id="${id}" class="scene ${extra}"><div class="view-label">SIMULASI • SANGGAR KERAJINAN</div>${backSVG}${subjectSVG}${motionSVG}<div class="exposure"></div><canvas class="noise" width="450" height="300"></canvas><svg class="gridlines" viewBox="0 0 900 600"><path d="M300 0v600M600 0v600M0 200h900M0 400h900" stroke="#ffffffad" stroke-width="3"/></svg><div class="framing"></div></div>`;
 }
+function theorySlideContent(index,variant="lcd"){
+ const slide=THEORY_SLIDES[index]||THEORY_SLIDES[0];
+ return `<div class="theory-layout theory-layout-${variant}">
+   <section class="theory-explain">
+     <div class="theory-kicker">${escapeHtml(slide.eyebrow)} <span>· ${index+1} / ${THEORY_SLIDES.length}</span></div>
+     <h2>${escapeHtml(slide.title)}</h2>
+     <p class="theory-lead">${escapeHtml(slide.lead)}</p>
+     <ul class="theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+     <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div>
+   </section>
+   <div class="theory-visual">${theoryVisual(index,{sceneHTML,shotSrc})}</div>
+ </div>`;
+}
+function theoryParticipantPage(){
+ const i=state.presentation.slide,slide=THEORY_SLIDES[i]||THEORY_SLIDES[0];
+ return `${titleBlock("kamera")}
+  <div class="info" style="margin-bottom:14px"><b>Materi teori sedang berlangsung.</b> Ikuti pembahasan bersama trainer. Setelah slide terakhir, trainer akan membuka laboratorium kamera untuk latihan pribadi.</div>
+  <div class="card theory-participant-card">${theorySlideContent(i,"participant")}</div>
+  <p class="small-note">Materi ${i+1} dari ${THEORY_SLIDES.length}. Pertanyaan diskusi dijawab secara lisan bersama kelas; tidak perlu membawa kamera.</p>`;
+}
+function theoryTrainerPanel(data,isMentor){
+ const p=state.presentation;
+ const i=p.slide,slide=THEORY_SLIDES[i]||THEORY_SLIDES[0];
+ const stageLive=data.stage===1,enabled=!isMentor;
+ return `<section class="card trainer-theory-card">
+    <div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 1</span>
+      <h2>Materi Dasar Fotografi</h2>
+      <p class="small-note">Delapan slide sebelum latihan exposure. Ketika tahap 01 terbuka, tombol ini mengubah isi LCD.</p></div>
+      <span class="pill ${stageLive?"green":"gray"}">${stageLive?"● TAHAP 01 AKTIF":"BUKA TAHAP 01 TERLEBIH DAHULU"}</span>
+    </div>
+    ${p.view==="theory"?`
+      <div class="trainer-theory-preview">
+        <div class="trainer-theory-title"><span>${escapeHtml(slide.eyebrow)}</span><h3>${escapeHtml(slide.title)}</h3>
+          <p>${escapeHtml(slide.lead)}</p><div class="trainer-theory-note"><b>CATATAN UNTUK TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
+        <div class="trainer-theory-mini">${theoryVisual(i,{sceneHTML,shotSrc})}</div>
+      </div>
+      <div class="trainer-slide-nav">
+        <button class="btn subtle" data-slide-step="-1" ${i===0||!enabled?"disabled":""}>← Slide sebelumnya</button>
+        <strong>Slide ${i+1} / ${THEORY_SLIDES.length}</strong>
+        <button class="btn primary" data-slide-step="1" ${i===THEORY_SLIDES.length-1||!enabled?"disabled":""}>Slide berikutnya →</button>
+      </div>
+      <div class="theory-step-picker" role="group" aria-label="Pilih slide">
+        ${THEORY_SLIDES.map((item,n)=>`<button class="theory-dot" data-slide="${n}" aria-pressed="${n===i}" title="${escapeHtml(item.title)}" ${!enabled?"disabled":""}>${String(n+1).padStart(2,"0")}</button>`).join("")}
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-present-mode="simulator" ${!enabled?"disabled":""}>◉ Mulai simulator kamera →</button>
+        <span class="small-note">Membuka simulator tanpa mengubah hasil latihan peserta.</span>
+      </div>
+    `:`
+      <div class="trainer-theory-compact">
+        <div><strong>Mode simulator kamera sedang aktif</strong>
+          <p class="small-note">Panel pengaturan kamera berada tepat di bawah ini. Anda dapat kembali ke slide teori kapan saja.</p></div>
+        <button class="btn subtle" data-present-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide teori</button>
+      </div>
+    `}
+    <p id="presentation-save-status" role="status" class="small-note">${!stageLive?"Slide tersimpan, tetapi belum ditayangkan sampai tahap 01 dibuka.":p.view==="theory"?"Tampilan LCD: slide teori.":"Tampilan LCD: simulator."}</p>
+  </section>`;
+}
 function cameraPage(){
 const cam=state.camera;
 return `${titleBlock("kamera")}<div class="card"><div class="info" style="margin-bottom:14px"><b>Eksperimen:</b> pengaturan apa yang membuat tangan lebih tajam, ruang lebih luas, atau foto lebih terang? Ubah satu slider dulu lalu amati hasilnya. Adegan ini <b>ilustrasi simulasi</b>, bukan foto sesungguhnya.</div>${sceneHTML()}<div class="statline"><div><span>Perubahan exposure dibanding f/2.8 · 1/125 · ISO 200</span><div class="small-note" style="color:#ccd2d5">Pengaruh terang-gelap dihitung bersama, seperti exposure triangle.</div></div><strong id="ev">0 EV</strong></div><div class="control-grid"><div class="control"><label for="aperture">Bukaan / aperture <output id="apertureValue">f/${APERTURE[cam.a]}</output></label><input id="aperture" type="range" min="0" max="6" value="${cam.a}" step="1"><small id="apertureHelp">Kedalaman ruang</small></div><div class="control"><label for="shutter">Shutter speed <output id="shutterValue">${SHUTTERS[cam.s].l}s</output></label><input id="shutter" type="range" min="0" max="6" value="${cam.s}" step="1"><small id="shutterHelp">Ketajaman gerak</small></div><div class="control"><label for="iso">ISO <output id="isoValue">${ISOS[cam.i]}</output></label><input id="iso" type="range" min="0" max="6" value="${cam.i}" step="1"><small id="isoHelp">Noise dan sensitivitas efektif</small></div></div><div class="actions"><button id="reset-camera" class="btn subtle">↺ Reset kamera</button><button id="save-camera" class="btn primary">Simpan eksperimen ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>💡 Bukaan lensa</h3><p class="small-note">f-number kecil berarti bukaan besar: lebih banyak cahaya dan area fokus yang lebih tipis. Pada banyak smartphone, bukaan fisik tetap; gunakan fokus, jarak, dan fitur mode potret bila tersedia.</p></div><div class="card"><h3>⚡ Rana & ISO</h3><p class="small-note">Rana lebih cepat bisa membekukan gerakan tetapi mengurangi cahaya. ISO tinggi membantu pemotretan gelap, namun biasanya meningkatkan noise. Pengaturan nyata bergantung jenis kamera dan kondisi lokasi.</p></div></div>`;
