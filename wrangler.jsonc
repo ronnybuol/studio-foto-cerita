@@ -6,14 +6,23 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"],
-    "not_found_handling": "single-page-application"
+    "run_worker_first": [
+      "/lensa-muda/api/*"
+    ],
+    "not_found_handling": "single-page-application",
+    "base_path": "/lensa-muda"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "lensa-muda-db",
       "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PHOTO_BUCKET",
+      "bucket_name": "lensa-muda-media"
     }
   ]
 }
