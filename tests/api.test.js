@@ -51,11 +51,11 @@ async function call(env,path,method="GET",payload,token){
 }
 test("sesi dibuka pada orientasi dan pendaftaran menyimpan sekolah serta kelas",async()=>{
  const env=mockEnv();
- const initial=await call(env,"/api/state");
+ const initial=await call(env,"/lensa-muda/api/state");
  assert.equal(initial.status,200);assert.equal(initial.data.stage,0);
- const reg=await call(env,"/api/participants","POST",{name:"Sari",school:"SMA Negeri 1",className:"XI B"});
+ const reg=await call(env,"/lensa-muda/api/participants","POST",{name:"Sari",school:"SMA Negeri 1",className:"XI B"});
  assert.equal(reg.status,201);assert.equal(reg.data.user.school,"SMA Negeri 1");assert.equal(reg.data.user.className,"XI B");
- const status=await call(env,"/api/state");assert.equal(status.data.count,1);
+ const status=await call(env,"/lensa-muda/api/state");assert.equal(status.data.count,1);
 });
 test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor hanya membaca",async()=>{
  const env=mockEnv();
@@ -71,11 +71,11 @@ test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor
  assert.equal(invalidMentor.status,403);
  const locked=await call(env,"/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
  assert.equal(locked.status,403);
- const change=await call(env,"/api/state","PUT",{stage:4},trainer.data.token);
+ const change=await call(env,"/lensa-muda/api/state","PUT",{stage:4},trainer.data.token);
  assert.equal(change.status,200);
  const badStory=await call(env,"/api/answers/story","PUT",{selected:[1,1,2,3,4,5,6,7,8]},p);
  assert.equal(badStory.status,400);
- const saved=await call(env,"/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
+ const saved=await call(env,"/lensa-muda/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
  assert.equal(saved.status,200);
  const dashboard=await call(env,"/api/dashboard","GET",undefined,trainer.data.token);
  assert.equal(dashboard.data.count,1);
