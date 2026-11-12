@@ -51,6 +51,22 @@ async function stageState(env){
   if(!row)throw Error("Database belum disiapkan: jalankan schema.sql");
   return row.active_stage;
 }
+const DEFAULT_CAMERA = Object.freeze({a:1,s:3,i:1});
+function validCamera(value){
+  return value&&typeof value==="object"&&!Array.isArray(value)
+    &&["a","s","i"].every(k=>Number.isInteger(value[k])&&value[k]>=0&&value[k]<=6);
+}
+async function liveCamera(env){
+  try{
+    const row=await env.DB.prepare("SELECT camera_json FROM sessions WHERE id=?").bind(SESSION_ID).first();
+    const data=JSON.parse(row?.camera_json||"null");
+    return validCamera(data)?data:{...DEFAULT_CAMERA};
+  }catch(error){
+    // Jalur lama tetap dapat dipakai sampai migrasi D1 dilaksanakan.
+    if(/no such column:\s*camera_json/i.test(String(error?.message)))return {...DEFAULT_CAMERA};
+    throw error;
+  }
+}
 async function loginsTooMany(env,id){
   const row=await env.DB.prepare("SELECT failures, window_start FROM login_attempts WHERE id=?").bind(id).first();
   const now=Date.now();
@@ -70,7 +86,8 @@ async function handleApi(req,env){
   const url=new URL(req.url),path=url.pathname.startsWith(PUBLIC_BASE+"/")?url.pathname.slice(PUBLIC_BASE.length):url.pathname,method=req.method;
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
-    return output({stage,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    const camera=await liveCamera(env);
+    return output({stage,camera,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
     const data=await bodyJson(req),name=norm(data.name,90),school=norm(data.school,140),className=norm(data.className,30);
@@ -109,7 +126,23 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    return output({stage,count:map.size,participants:[...map.values()],role:user.role});
+    return output({stage,camera:await liveCamera(env),count:map.size,participants:[...map.values()],role:user.role});
+  }
+  if(method==="PUT"&&path==="/api/demo-camera"){
+    const user=await access(req,env);
+    if(!user)return failure("Autentikasi trainer diperlukan",401);
+    if(user.role!=="trainer")return failure("Hanya trainer yang boleh mengendalikan demo kamera",403);
+    const data=await bodyJson(req);
+    if(!validCamera(data))return failure("Pengaturan kamera tidak valid",400);
+    try{
+      await env.DB.prepare("UPDATE sessions SET camera_json=?,updated_at=? WHERE id=?")
+        .bind(JSON.stringify({a:data.a,s:data.s,i:data.i}),new Date().toISOString(),SESSION_ID).run();
+    }catch(error){
+      if(/no such column:\s*camera_json/i.test(String(error?.message)))
+        return failure("Jalankan migrasi database camera_json di Cloudflare D1 Console terlebih dahulu.",503);
+      throw error;
+    }
+    return output({ok:true,camera:{a:data.a,s:data.s,i:data.i}});
   }
   if(method==="PUT"&&path==="/api/state"){
     const user=await access(req,env);
