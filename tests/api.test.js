@@ -3,12 +3,16 @@ import assert from "node:assert/strict";
 import handler from "../src/index.js";
 
 function mockEnv(){
- const data={stage:0,participants:[],answers:[],loginAttempts:new Map()};
+ const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map()};
  const DB={prepare(sql){
    return {bind(...args){
      return {
        async first(){
          if(sql.includes("SELECT active_stage"))return {active_stage:data.stage};
+         if(sql.includes("SELECT camera_json")){
+           if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
+           return {camera_json:JSON.stringify(data.camera)};
+         }
          if(sql.includes("COUNT(*) AS total"))return {total:data.participants.length};
          if(sql.includes("WHERE token_hash=?"))return data.participants.find(p=>p.token_hash===args[0])||null;
          if(sql.includes("SELECT failures"))return data.loginAttempts.get(args[0])||null;
@@ -25,6 +29,10 @@ function mockEnv(){
            data.participants.push({id,session_id,name,school,class_name,token_hash,created_at});
          }
          if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
+         if(sql.includes("UPDATE sessions SET camera_json")){
+           if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
+           data.camera=JSON.parse(args[0]);
+         }
          if(sql.includes("INSERT INTO answers")){
            const [participant_id,stage,payload]=args;
            const found=data.answers.find(x=>x.participant_id===participant_id&&x.stage===stage);
@@ -81,4 +89,34 @@ test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor
  assert.equal(dashboard.data.count,1);
  assert.equal(dashboard.data.participants[0].done,1);
  assert.deepEqual(dashboard.data.participants[0].answers.story.selected,[1,2,3,4,5,6,7,8,9]);
+});
+test("peragaan kamera disimpan untuk LCD; mentor dan peserta tidak boleh mengubah",async()=>{
+ const env=mockEnv();
+ const initial=await call(env,"/lensa-muda/api/state");
+ assert.deepEqual(initial.data.camera,{a:1,s:3,i:1});
+ const trainer=(await call(env,"/lensa-muda/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/lensa-muda/api/login","POST",{pin:"mentor-67890"})).data;
+ const unauthorized=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:0,s:5,i:2});
+ assert.equal(unauthorized.status,401);
+ const forbidden=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:0,s:5,i:2},mentor.token);
+ assert.equal(forbidden.status,403);
+ const invalid=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:1,s:7,i:1},trainer.token);
+ assert.equal(invalid.status,400);
+ const saved=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:0,s:5,i:2},trainer.token);
+ assert.equal(saved.status,200);
+ const live=await call(env,"/lensa-muda/api/state");
+ assert.deepEqual(live.data.camera,{a:0,s:5,i:2});
+ const dashboard=await call(env,"/lensa-muda/api/dashboard","GET",undefined,mentor.token);
+ assert.deepEqual(dashboard.data.camera,{a:0,s:5,i:2});
+});
+test("sebelum migrasi D1, kelas tetap dapat diakses dan API menampilkan petunjuk",async()=>{
+ const env=mockEnv();
+ env._data.migrated=false;
+ const state=await call(env,"/lensa-muda/api/state");
+ assert.equal(state.status,200);
+ assert.deepEqual(state.data.camera,{a:1,s:3,i:1});
+ const trainer=(await call(env,"/lensa-muda/api/login","POST",{pin:"trainer-12345"})).data;
+ const result=await call(env,"/lensa-muda/api/demo-camera","PUT",{a:2,s:3,i:1},trainer.token);
+ assert.equal(result.status,503);
+ assert.match(result.data.error,/migrasi database/);
 });
