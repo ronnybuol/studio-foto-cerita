@@ -429,22 +429,106 @@ async function renderTrainer(){
  try{await fetchDashboard();$("#root").innerHTML=renderDashboard();bindDashboard()}
  catch(e){state.trainerToken="";sessionStorage.removeItem("lm26-trainer");$("#root").innerHTML=trainerLogin();toast("Sesi dashboard berakhir: "+e.message);renderTrainer()}
 }
+function lcdFooter(stage,count,link,qr){
+ return `<div class="lcd-bottom">
+  <div><strong>${String(stage).padStart(2,"0")} / 06</strong><div>${escapeHtml(STAGES[stage]?.name||"Orientasi")}</div>
+  <div class="lcd-participants">${count} peserta terdaftar · 16 November 2026</div></div>
+  <div class="lcd-join"><span>${escapeHtml(link)}</span><div class="lcd-qr">
+   <img src="${qr}" alt="QR menuju halaman peserta" width="112" height="112"
+   onerror="this.style.display='none';this.parentElement.textContent='Buka tautan kelas'"></div></div>
+ </div>`;
+}
 function lcdPage(){
- const stage=state.online?state.serverStage:state.demoStage,s=STAGES[stage]||STAGES[0],count=state.online?state.count:(state.user?1:0);
+ const stage=state.online?state.serverStage:state.demoStage;
+ const step=STAGES[stage]||STAGES[0];
+ const count=state.online?state.count:(state.user?1:0);
  const link=location.origin+location.pathname+"#/peserta";
  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
- return `<div class="page"><div class="lcd-mode"><div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div><h1>${escapeHtml(s.title)}</h1><p>${escapeHtml(s.blurb)}</p></div><div class="lcd-bottom"><div><strong>${String(stage).padStart(2,"0")} / 06</strong><div>${escapeHtml(s.name)}</div><div class="lcd-participants">${count} peserta terdaftar · 16 November 2026</div></div><div style="display:flex;gap:16px;align-items:center"><div style="max-width:270px;overflow-wrap:anywhere;font-size:13px">${escapeHtml(link)}</div><div class="lcd-qr"><img src="${qr}" alt="QR menuju halaman peserta" width="112" height="112" onerror="this.style.display='none';this.parentElement.textContent='Buka URL kelas di ponsel'"></div></div></div></div><div class="actions"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div><p class="small-note">QR mengandalkan layanan gambar eksternal. Bila internet terbatas, gunakan tautan teks yang ditampilkan.</p></div>`;
+ const footer=lcdFooter(stage,count,link,qr);
+ const camera=state.demoCamera;
+ const content=stage===1
+   ?`<div class="lcd-camera-heading"><div class="kicker">TAHAP 01 · LABORATORIUM KAMERA</div>
+      <h1>Ubah pengaturan. <em>Amati fotonya.</em></h1>
+      <p>Peragaan langsung dikendalikan trainer. Perhatikan cahaya, kedalaman ruang, gerakan, dan noise.</p></div>
+      <div class="lcd-camera-layout">
+        <div class="lcd-camera-photo">${sceneHTML("lcdCameraScene")}
+          <div class="lcd-camera-note">Ilustrasi simulasi · bukan hasil kamera sungguhan</div></div>
+        <div class="lcd-camera-readouts">
+          <div class="lcd-reading"><span>APERTURE / BUKAAN</span><strong id="lcd-aperture">f/${APERTURE[camera.a]}</strong><small id="lcd-aperture-tip">Kedalaman ruang</small></div>
+          <div class="lcd-reading"><span>SHUTTER SPEED</span><strong id="lcd-shutter">${SHUTTERS[camera.s].l}s</strong><small id="lcd-shutter-tip">Gerak objek</small></div>
+          <div class="lcd-reading"><span>ISO</span><strong id="lcd-iso">${ISOS[camera.i]}</strong><small id="lcd-iso-tip">Penguatan sinyal</small></div>
+          <div class="lcd-reading lcd-ev-reading"><span>PERUBAHAN EXPOSURE</span><strong id="lcd-ev">${exposureText(camera)}</strong><small>Relatif terhadap f/2.8 · 1/125 · ISO 200</small></div>
+        </div>
+      </div>`
+   :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
+      <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
+ return `<div class="page lcd-page">
+   <div class="lcd-mode ${stage===1?"lcd-camera-mode":""}">
+     ${content}
+     ${footer}
+   </div>
+   <div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button>
+     <button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div>
+   <p class="small-note">Untuk demonstrasi langsung, tampilkan LCD di jendela tersendiri. QR menggunakan layanan gambar eksternal; gunakan URL tertulis jika QR tidak tampil.</p>
+ </div>`;
+}
+function paintLcdCamera(){
+ const scene=$("#lcdCameraScene");if(!scene)return;
+ const c=state.demoCamera;
+ paintCameraScene(scene,c);
+ $("#lcd-aperture").textContent=`f/${APERTURE[c.a]}`;
+ $("#lcd-shutter").textContent=`${SHUTTERS[c.s].l}s`;
+ $("#lcd-iso").textContent=ISOS[c.i];
+ $("#lcd-ev").textContent=exposureText(c);
+ $("#lcd-aperture-tip").textContent=APERTURE[c.a]<=2.8?"Latar lebih blur":APERTURE[c.a]>=11?"Area fokus lebih luas":"Kedalaman ruang sedang";
+ $("#lcd-shutter-tip").textContent=SHUTTERS[c.s].t>=1/30?"Gerak mudah kabur":SHUTTERS[c.s].t<=1/500?"Gerak dibekukan":"Perhatikan gerakan";
+ $("#lcd-iso-tip").textContent=ISOS[c.i]>=1600?"Noise semakin jelas":ISOS[c.i]<=200?"Noise rendah":"Noise sedang";
 }
 function renderLCD(){
- $("#root").innerHTML=lcdPage();$("#lcd-refresh").onclick=async()=>{await syncState();render()};
- $("#lcd-fullscreen").onclick=()=>{$(".lcd-mode").requestFullscreen?.().catch(()=>toast("Mode layar penuh tidak tersedia di browser ini"))};
+ $("#root").innerHTML=lcdPage();
+ $("#lcd-refresh").onclick=refreshLCD;
+ // Fullscreen menempel pada #root yang tidak diganti saat LCD diperbarui.
+ $("#lcd-fullscreen").onclick=()=>{
+   $("#root").requestFullscreen?.().catch(()=>toast("Mode layar penuh tidak tersedia di browser ini"));
+ };
+ paintLcdCamera();
+}
+let lcdPolling=false;
+async function refreshLCD(){
+ if(lcdPolling||pageMode()!=="lcd")return;
+ lcdPolling=true;
+ const prevStage=state.online?state.serverStage:state.demoStage;
+ const prevCamera=JSON.stringify(state.demoCamera);
+ try{
+   await syncState();
+   const nextStage=state.online?state.serverStage:state.demoStage;
+   if(prevStage!==nextStage||!$(".lcd-mode")){
+     renderLCD();
+   }else{
+     if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
+     const count=$(".lcd-participants");
+     if(count)count.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar · 16 November 2026`;
+   }
+ }finally{lcdPolling=false}
 }
 async function render(){
  document.title=`Studio Foto Cerita — Lensa Muda 2026`;
  const mode=pageMode();if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else renderParticipant();
 }
 window.addEventListener("hashchange",render);
-window.addEventListener("visibilitychange",()=>{if(!document.hidden)syncState().then(()=>{if(pageMode()==="lcd")renderLCD()})});
-setInterval(async()=>{if(document.hidden)return;await syncState();if(pageMode()==="lcd")renderLCD()},12000);
+window.addEventListener("visibilitychange",()=>{
+  if(!document.hidden){
+    if(pageMode()==="lcd")refreshLCD();
+    else syncState();
+  }
+});
+// LCD diperbarui tanpa mengganti konten halaman, sehingga mode fullscreen tetap aktif.
+let lastPassivePoll=0;
+setInterval(async()=>{
+  if(pageMode()==="lcd"){await refreshLCD();return}
+  if(document.hidden)return;
+  const now=Date.now();
+  if(now-lastPassivePoll>12000){lastPassivePoll=now;await syncState()}
+},1800);
 await syncState();
 render();
