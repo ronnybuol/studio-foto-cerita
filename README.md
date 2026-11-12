@@ -15,11 +15,11 @@ Dalam mode ini, aplikasi menggunakan **mode demo lokal**: jawaban hanya tersimpa
 
 ## Deploy untuk kelas dengan banyak ponsel (Cloudflare Workers + D1)
 
-1. Buat database D1: `npx wrangler d1 create lensa-muda-db`; masukkan `database_id` yang diberikan ke `wrangler.jsonc` (ganti placeholder).
+1. Jalankan `npm install`, lalu buat database D1: `npx wrangler d1 create lensa-muda-db`; masukkan `database_id` yang diberikan ke `wrangler.jsonc` (ganti placeholder).
 2. Terapkan skema: `npx wrangler d1 execute lensa-muda-db --remote --file=schema.sql`.
 3. Tambahkan rahasia PIN: `npx wrangler secret put TRAINER_PIN` lalu `npx wrangler secret put MENTOR_PIN` (PIN berbeda; bagikan hanya kepada yang berhak).
-4. Jalankan lokal terintegrasi: `npx wrangler dev`; untuk produksi: `npx wrangler deploy`.
-5. Periksa pendaftaran, simpan jawaban, pengaturan tahap oleh trainer, dan pembaruan LCD dari perangkat berbeda.
+4. Tambahkan kunci tanda tangan sesi: `npx wrangler secret put SESSION_SECRET` (teks acak minimal 32 karakter).\n5. Jalankan lokal terintegrasi: `npx wrangler dev`; untuk produksi: `npx wrangler deploy`.
+6. Periksa pendaftaran, simpan jawaban, pengaturan tahap oleh trainer, dan pembaruan LCD dari perangkat berbeda.
 
 **Jangan menaruh PIN ke repositori**. Bersihkan data latihan jika berganti angkatan. Pendaftaran bersifat terbuka tanpa kuota, tetapi beban serentak tetap harus diuji pada jaringan tempat acara.
 
