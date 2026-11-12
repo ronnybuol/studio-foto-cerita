@@ -1,3 +1,4 @@
+import {THEORY_SLIDES,theoryVisual} from "./slides.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -47,6 +48,7 @@ const SHOTS = [
 let state = {
   online:false,serverStage:0,count:0,demoStage:6,role:"participant",
   demoCamera:{a:1,s:3,i:1},
+  presentation:{view:"theory",slide:0},
   user:readJSON(STORAGE_USER,null),work:readJSON(STORAGE_WORK,{}),
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
@@ -74,6 +76,8 @@ async function syncState(){
     if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
     state.online=true; state.serverStage=data.stage;state.count=data.count||0;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<THEORY_SLIDES.length)
+      state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
   }catch{
@@ -91,7 +95,7 @@ function lessonLayout(){
   return `<div class="page"><div class="lab-layout"><aside class="side"><h3>Modul pembelajaran</h3><nav class="side-nav">${nav}</nav><div class="user-chip"><b>${escapeHtml(state.user?.name||"Peserta")}</b><p>${escapeHtml(state.user?.school||"")} ${state.user?.className?"· "+escapeHtml(state.user.className):""}</p><span class="pill ${state.online?"green":"gray"}">${state.online?"Kelas langsung":"Mode demo"}</span></div></aside><section class="lesson">${renderModule()}</section></div></div>`;
 }
 function renderModule(){switch(state.active){
-  case "kamera":return cameraPage();
+  case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
   case "komposisi":return compositionPage();
   case "edfat":return edfatPage();
   case "story":return storyPage();
@@ -283,10 +287,11 @@ function trainerLogin(){
  return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
 }
 async function fetchDashboard(){
- if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,camera:state.demoCamera,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
+ if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,camera:state.demoCamera,presentation:state.presentation,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
  state.dashboard=await request("/api/dashboard",{auth:true});
  state.serverStage=state.dashboard.stage;state.count=state.dashboard.count;
  if(state.dashboard.camera)state.demoCamera=state.dashboard.camera;
+ if(state.dashboard.presentation)state.presentation=state.dashboard.presentation;
 }
 function trainerCameraPanel(data,isMentor){
  const c=state.demoCamera;
