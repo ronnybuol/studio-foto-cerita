@@ -106,3 +106,107 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
  .lcd-join>span{display:none}
  .lcd-reading strong{font-size:27px}
 }
+
+
+/* Materi teori visual (v0.3) */
+.trainer-theory-card{margin-top:16px}
+.trainer-theory-preview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.trainer-theory-title{background:#181c23;color:#fff;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.trainer-theory-title>span{color:#ff934e;font-size:12px;font-weight:900;letter-spacing:1px}
+.trainer-theory-title h3{font-size:clamp(21px,2.3vw,31px);margin:0;letter-spacing:-.6px}
+.trainer-theory-title>p{font-size:14px;color:#d6dade;line-height:1.55;margin:0}
+.trainer-theory-note{background:#313843;border-radius:11px;padding:13px;margin-top:auto}
+.trainer-theory-note>b{color:#ffb37c;font-size:10px;letter-spacing:1px}
+.trainer-theory-note p{font-size:13px;color:#f1f1f1;margin:7px 0 0;line-height:1.55}
+.trainer-theory-mini{border:1px solid #e9e5de;border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;background:#f6f5f0}
+.trainer-theory-mini>div{width:100%}
+.trainer-theory-mini .theory-sample figcaption{font-size:10px}
+.trainer-theory-mini .theory-triangle svg{max-height:230px}
+.trainer-theory-mini .theory-observe{font-size:11px}
+.trainer-slide-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 10px}
+.trainer-slide-nav strong{font-size:13px;color:#6a6b6d}
+.theory-step-picker{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px;margin-bottom:14px}
+.theory-dot{border:1px solid #d4d5d5;border-radius:9px;background:#fff;padding:10px 3px;font-weight:850;color:#63666a}
+.theory-dot[aria-pressed=true]{background:#24282f;border-color:#24282f;color:#fff}
+.theory-dot:disabled{opacity:.5;cursor:not-allowed}
+.trainer-theory-compact{border-radius:12px;padding:19px 20px;background:#f6f5f1;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.trainer-theory-compact p{margin:5px 0 0}
+.lcd-theory-mode{padding:clamp(24px,3.2vw,48px);gap:14px}
+.lcd-theory-intro{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.theory-slide-indicator{font-size:12px;font-weight:850;letter-spacing:1px;color:#cdd1d8}
+.theory-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(18px,3vw,50px);align-items:center;min-height:0;width:100%}
+.theory-layout-lcd{flex:1}
+.theory-layout .theory-explain{min-width:0}
+.theory-kicker{color:#ffab72;font-size:12px;letter-spacing:1.3px;font-weight:900;display:flex;flex-wrap:wrap;gap:8px}
+.theory-kicker span{color:#a8b0bb}
+.theory-explain h2{font-size:clamp(32px,3.9vw,62px);letter-spacing:-1.7px;line-height:1.08;margin:13px 0 12px}
+.theory-lead{font-size:clamp(16px,1.65vw,26px)!important;line-height:1.5!important;color:#f0f1f1!important;margin:0 0 19px!important}
+.theory-points{margin:0 0 19px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+.theory-points li{position:relative;color:#dde1e5;padding-left:22px;font-size:clamp(14px,1.25vw,20px);line-height:1.4}
+.theory-points li:before{content:"";position:absolute;left:0;top:.5em;background:#ef7939;width:9px;height:9px;border-radius:50%}
+.theory-question{border-left:4px solid #f27b38;background:#2a313a;border-radius:0 12px 12px 0;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.theory-question span{color:#ffb47c;font-size:11px;font-weight:900;letter-spacing:1px}
+.theory-question strong{font-size:clamp(15px,1.4vw,23px);line-height:1.4;color:#fff}
+.theory-visual{min-width:0;max-height:100%;overflow:hidden}
+.theory-sample{margin:0;background:#20262e;border-radius:12px;overflow:hidden;min-width:0}
+.theory-sample .scene{border-radius:0}
+.theory-sample figcaption{color:#fff;background:#29303a;font-weight:800;font-size:11px;padding:9px;text-align:center}
+.theory-story-visual{background:#242b33;padding:14px;border-radius:14px}
+.theory-story-visual img{width:100%;display:block;aspect-ratio:3/2;object-fit:cover;border-radius:9px}
+.theory-observe{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.theory-observe>div{background:#343e4a;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.theory-observe span{font-size:10px;font-weight:900;letter-spacing:.8px;color:#ffa868}
+.theory-observe strong{font-size:13px;color:#fff;line-height:1.4}
+.theory-story-visual>small{color:#bfc7d0;font-size:10px;display:block;margin-top:8px}
+.theory-light-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.theory-light-grid>p,.theory-balance>p,.theory-challenge>p{grid-column:1/-1;font-size:12px!important;text-align:center;color:#dce0e2!important;margin:4px 0!important}
+.light-front .scene{filter:brightness(1.2) contrast(.92)}
+.light-side .scene{filter:brightness(.83) contrast(1.3)}
+.light-back .scene{filter:brightness(.34) contrast(1.35)}
+.theory-triangle{background:#212832;border-radius:14px;padding:18px 12px;text-align:center}
+.theory-triangle svg{display:block;width:100%;height:auto;max-height:380px}
+.theory-triangle p{font-size:14px!important;color:#d2d9df!important;margin:0!important}
+.theory-two-scenes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.theory-depth-shallow .back{filter:blur(10px)}
+.theory-depth-deep .back{filter:blur(0)}
+.theory-motion-slow .motion{filter:blur(18px)}
+.theory-motion-fast .motion{filter:blur(0)}
+.theory-iso-high .scene:after{content:"";position:absolute;z-index:7;inset:0;opacity:.22;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.78'/%3E%3C/svg%3E");mix-blend-mode:screen}
+.theory-balance{display:grid;grid-template-columns:minmax(0,1fr) 35px minmax(0,1fr);gap:8px;align-items:center}
+.theory-balance-card{padding:12px;background:#242c35;border-radius:12px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.theory-balance-card>span{font-weight:900;font-size:10px;letter-spacing:1px;color:#ff9d64}
+.theory-balance-card .scene{border-radius:8px}
+.theory-balance-card strong{font-size:clamp(11px,1.15vw,17px);color:#fff}
+.theory-balance-card small{color:#bdc6d0;font-size:12px}
+.theory-balance-vs{font-size:29px;color:#f09053;text-align:center}
+.theory-challenge{display:grid;gap:12px}
+.theory-challenge>div{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:13px;align-items:center;border-radius:12px;background:#29323d;padding:13px}
+.theory-challenge>div span{grid-row:span 2;font-size:29px;font-weight:950;color:#ee884f}
+.theory-challenge>div strong{font-size:clamp(16px,1.5vw,23px);color:#fff}
+.theory-challenge>div small{font-size:14px;color:#c9d0da;margin-top:4px}
+.theory-participant-card{background:#171b22;color:#fff}
+.theory-layout-participant{gap:17px}
+.theory-layout-participant .theory-explain h2{font-size:clamp(26px,3vw,36px)}
+.theory-layout-participant .theory-lead{font-size:16px!important}
+.theory-layout-participant .theory-points li{font-size:13px}
+.theory-layout-participant .theory-question strong{font-size:15px}
+@media(max-width:1000px){
+ .theory-layout{grid-template-columns:1fr 1fr;gap:15px}
+ .theory-explain h2{font-size:clamp(30px,4vw,48px)}
+ .theory-lead{font-size:16px!important}
+ .theory-points li{font-size:14px}
+ .trainer-theory-preview{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+ .theory-layout,.theory-layout-participant{grid-template-columns:1fr}
+ .trainer-slide-nav{flex-wrap:wrap}
+ .trainer-slide-nav strong{order:-1;width:100%;text-align:center}
+ .trainer-theory-compact{flex-direction:column;align-items:stretch}
+ .theory-story-visual .theory-observe{grid-template-columns:1fr}
+ .theory-explain h2{font-size:33px;letter-spacing:-1px}
+ .theory-lead{font-size:16px!important}
+ .lcd-theory-mode{padding:22px 16px}
+ .theory-visual{max-height:none}
+ .theory-sample figcaption{font-size:9px;padding:6px 3px}
+ .theory-observe strong{font-size:12px}
+}
