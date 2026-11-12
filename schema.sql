@@ -1,7 +1,3 @@
--- Studio Foto Cerita Lensa Muda, 16 November 2026
--- Jalankan: npx wrangler d1 execute lensa-muda-db --remote --file=schema.sql
--- Cloudflare D1 mengaktifkan pemeriksaan foreign key secara otomatis.
-
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
