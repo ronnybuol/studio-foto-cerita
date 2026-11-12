@@ -1,0 +1,84 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import handler from "../src/index.js";
+
+function mockEnv(){
+ const data={stage:0,participants:[],answers:[],loginAttempts:new Map()};
+ const DB={prepare(sql){
+   return {bind(...args){
+     return {
+       async first(){
+         if(sql.includes("SELECT active_stage"))return {active_stage:data.stage};
+         if(sql.includes("COUNT(*) AS total"))return {total:data.participants.length};
+         if(sql.includes("WHERE token_hash=?"))return data.participants.find(p=>p.token_hash===args[0])||null;
+         if(sql.includes("SELECT failures"))return data.loginAttempts.get(args[0])||null;
+         return null;
+       },
+       async all(){
+         if(sql.includes("FROM participants WHERE session_id=?"))return {results:data.participants.map(p=>({id:p.id,name:p.name,school:p.school,className:p.class_name}))};
+         if(sql.includes("FROM answers a JOIN participants"))return {results:data.answers};
+         return {results:[]};
+       },
+       async run(){
+         if(sql.includes("INSERT INTO participants")){
+           const [id,session_id,name,school,class_name,token_hash,created_at]=args;
+           data.participants.push({id,session_id,name,school,class_name,token_hash,created_at});
+         }
+         if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
+         if(sql.includes("INSERT INTO answers")){
+           const [participant_id,stage,payload]=args;
+           const found=data.answers.find(x=>x.participant_id===participant_id&&x.stage===stage);
+           if(found)found.payload=payload;else data.answers.push({participant_id,stage,payload});
+         }
+         if(sql.includes("INSERT INTO login_attempts")){
+           const [id,now]=args;
+           data.loginAttempts.set(id,{failures:(data.loginAttempts.get(id)?.failures||0)+1,window_start:now});
+         }
+         if(sql.includes("DELETE FROM login_attempts"))data.loginAttempts.delete(args[0]);
+         return {success:true};
+       }
+     }
+   }}
+ }};
+ return {DB,TRAINER_PIN:"trainer-12345",MENTOR_PIN:"mentor-67890",SESSION_SECRET:"a-long-and-random-test-only-secret-1234567890",ASSETS:{fetch:async()=>new Response("static")},_data:data};
+}
+async function call(env,path,method="GET",payload,token){
+ const headers={};
+ if(payload!==undefined)headers["Content-Type"]="application/json";
+ if(token)headers.Authorization=`Bearer ${token}`;
+ const res=await handler.fetch(new Request("https://studio.test"+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload)}),env);
+ return {status:res.status,data:res.headers.get("Content-Type")?.includes("json")?await res.json():await res.text()};
+}
+test("sesi dibuka pada orientasi dan pendaftaran menyimpan sekolah serta kelas",async()=>{
+ const env=mockEnv();
+ const initial=await call(env,"/api/state");
+ assert.equal(initial.status,200);assert.equal(initial.data.stage,0);
+ const reg=await call(env,"/api/participants","POST",{name:"Sari",school:"SMA Negeri 1",className:"XI B"});
+ assert.equal(reg.status,201);assert.equal(reg.data.user.school,"SMA Negeri 1");assert.equal(reg.data.user.className,"XI B");
+ const status=await call(env,"/api/state");assert.equal(status.data.count,1);
+});
+test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor hanya membaca",async()=>{
+ const env=mockEnv();
+ const reg=await call(env,"/api/participants","POST",{name:"Rani",school:"SMK Contoh",className:"XII"});
+ const p=reg.data.user.token;
+ const denied=await call(env,"/api/login","POST",{pin:"salah"});
+ assert.equal(denied.status,401);
+ const trainer=await call(env,"/api/login","POST",{pin:"trainer-12345"});
+ assert.equal(trainer.status,200);
+ const mentor=await call(env,"/api/login","POST",{pin:"mentor-67890"});
+ assert.equal(mentor.data.role,"mentor");
+ const invalidMentor=await call(env,"/api/state","PUT",{stage:4},mentor.data.token);
+ assert.equal(invalidMentor.status,403);
+ const locked=await call(env,"/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
+ assert.equal(locked.status,403);
+ const change=await call(env,"/api/state","PUT",{stage:4},trainer.data.token);
+ assert.equal(change.status,200);
+ const badStory=await call(env,"/api/answers/story","PUT",{selected:[1,1,2,3,4,5,6,7,8]},p);
+ assert.equal(badStory.status,400);
+ const saved=await call(env,"/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
+ assert.equal(saved.status,200);
+ const dashboard=await call(env,"/api/dashboard","GET",undefined,trainer.data.token);
+ assert.equal(dashboard.data.count,1);
+ assert.equal(dashboard.data.participants[0].done,1);
+ assert.deepEqual(dashboard.data.participants[0].answers.story.selected,[1,2,3,4,5,6,7,8,9]);
+});
