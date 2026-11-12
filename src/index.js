@@ -1,4 +1,5 @@
 const SESSION_ID = "lensa-muda-2026";
+const PUBLIC_BASE = "/lensa-muda";
 const ANSWER_KEYS = new Map([["kamera",1],["komposisi",2],["edfat",3],["story",4],["caption",5],["etika",6]]);
 const encoder = new TextEncoder();
 function output(data,status=200){
@@ -66,7 +67,7 @@ async function recordBadLogin(env,id){
 async function clearBadLogin(env,id){await env.DB.prepare("DELETE FROM login_attempts WHERE id=?").bind(id).run()}
 async function handleApi(req,env){
   if(!env.DB)return failure("Database D1 belum terpasang",503);
-  const url=new URL(req.url),path=url.pathname,method=req.method;
+  const url=new URL(req.url),path=url.pathname.startsWith(PUBLIC_BASE+"/")?url.pathname.slice(PUBLIC_BASE.length):url.pathname,method=req.method;
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     return output({stage,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
@@ -145,7 +146,8 @@ async function handleApi(req,env){
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
-    if(!url.pathname.startsWith("/api/"))return env.ASSETS.fetch(request);
+    const apiPath=url.pathname.startsWith(PUBLIC_BASE+"/")?url.pathname.slice(PUBLIC_BASE.length):url.pathname;
+    if(!apiPath.startsWith("/api/"))return env.ASSETS.fetch(request);
     try{return await handleApi(request,env)}
     catch(err){console.error("API error:",err?.message||"unknown");return failure(err?.message==="Format JSON tidak valid"||err?.message==="Ukuran data terlalu besar"?err.message:"Layanan sedang mengalami gangguan",500)}
   }
