@@ -46,6 +46,7 @@ const SHOTS = [
 ].map(([title,type,desc,i])=>({id:i+1,title,type,desc,i}));
 let state = {
   online:false,serverStage:0,count:0,demoStage:6,role:"participant",
+  demoCamera:{a:1,s:3,i:1},
   user:readJSON(STORAGE_USER,null),work:readJSON(STORAGE_WORK,{}),
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
@@ -72,6 +73,7 @@ async function syncState(){
     const data=await request("/api/state");
     if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
     state.online=true; state.serverStage=data.stage;state.count=data.count||0;
+    if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
   }catch{
@@ -116,26 +118,49 @@ function cameraPage(){
 const cam=state.camera;
 return `${titleBlock("kamera")}<div class="card"><div class="info" style="margin-bottom:14px"><b>Eksperimen:</b> pengaturan apa yang membuat tangan lebih tajam, ruang lebih luas, atau foto lebih terang? Ubah satu slider dulu lalu amati hasilnya. Adegan ini <b>ilustrasi simulasi</b>, bukan foto sesungguhnya.</div>${sceneHTML()}<div class="statline"><div><span>Perubahan exposure dibanding f/2.8 · 1/125 · ISO 200</span><div class="small-note" style="color:#ccd2d5">Pengaruh terang-gelap dihitung bersama, seperti exposure triangle.</div></div><strong id="ev">0 EV</strong></div><div class="control-grid"><div class="control"><label for="aperture">Bukaan / aperture <output id="apertureValue">f/${APERTURE[cam.a]}</output></label><input id="aperture" type="range" min="0" max="6" value="${cam.a}" step="1"><small id="apertureHelp">Kedalaman ruang</small></div><div class="control"><label for="shutter">Shutter speed <output id="shutterValue">${SHUTTERS[cam.s].l}s</output></label><input id="shutter" type="range" min="0" max="6" value="${cam.s}" step="1"><small id="shutterHelp">Ketajaman gerak</small></div><div class="control"><label for="iso">ISO <output id="isoValue">${ISOS[cam.i]}</output></label><input id="iso" type="range" min="0" max="6" value="${cam.i}" step="1"><small id="isoHelp">Noise dan sensitivitas efektif</small></div></div><div class="actions"><button id="reset-camera" class="btn subtle">↺ Reset kamera</button><button id="save-camera" class="btn primary">Simpan eksperimen ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>💡 Bukaan lensa</h3><p class="small-note">f-number kecil berarti bukaan besar: lebih banyak cahaya dan area fokus yang lebih tipis. Pada banyak smartphone, bukaan fisik tetap; gunakan fokus, jarak, dan fitur mode potret bila tersedia.</p></div><div class="card"><h3>⚡ Rana & ISO</h3><p class="small-note">Rana lebih cepat bisa membekukan gerakan tetapi mengurangi cahaya. ISO tinggi membantu pemotretan gelap, namun biasanya meningkatkan noise. Pengaturan nyata bergantung jenis kamera dan kondisi lokasi.</p></div></div>`;
 }
+function exposureFor(cam){
+  const aperture=APERTURE[cam.a],shutter=SHUTTERS[cam.s].t,iso=ISOS[cam.i];
+  return Math.log2((shutter/(1/125))*Math.pow(2.8/aperture,2)*(iso/200));
+}
+function exposureText(cam){
+  const ev=exposureFor(cam);
+  return `${ev>0?"+":""}${ev.toFixed(1)} EV`;
+}
+function paintCameraScene(sc,cam){
+  if(!sc)return;
+  const aperture=APERTURE[cam.a],shutter=SHUTTERS[cam.s].t,iso=ISOS[cam.i],ev=exposureFor(cam);
+  const bgBlur=Math.max(0,Math.min(8,(8-aperture)*1.3));
+  const motionBlur=Math.max(0,Math.min(18,(shutter*125-1)*2));
+  sc.querySelector(".back").style.filter=`blur(${bgBlur.toFixed(1)}px)`;
+  sc.querySelector(".motion").style.filter=`blur(${motionBlur.toFixed(1)}px)`;
+  sc.querySelector(".exposure").style.background=ev<0
+    ?`rgba(0,0,0,${Math.min(.72,-ev*.115)})`
+    :`rgba(255,255,240,${Math.min(.68,ev*.105)})`;
+  const canvas=sc.querySelector(".noise"),ctx=canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(iso>400){
+    const pixels=ctx.createImageData(canvas.width,canvas.height),d=pixels.data;
+    let seed=12271+cam.i*8137;
+    const alpha=Math.min(120,(cam.i-2)*23);
+    for(let j=0;j<d.length;j+=4){
+      seed=(1664525*seed+1013904223)>>>0;
+      const gray=(seed>>>16)&255;
+      d[j]=gray;d[j+1]=gray;d[j+2]=gray;d[j+3]=alpha;
+    }
+    ctx.putImageData(pixels,0,0);
+  }
+}
 function updateCamera(){
-const cam=state.camera,sc=$("#cameraScene");if(!sc)return;
-const aperture=APERTURE[cam.a],shutter=SHUTTERS[cam.s].t,iso=ISOS[cam.i];
-const ev=Math.log2((shutter/(1/125))*Math.pow(2.8/aperture,2)*(iso/200));
-const bgBlur=Math.max(0,Math.min(8,(8-aperture)*1.3));
-const motionBlur=Math.max(0,Math.min(18,(shutter*125-1)*2));
-sc.querySelector(".back").style.filter=`blur(${bgBlur.toFixed(1)}px)`;
-sc.querySelector(".motion").style.filter=`blur(${motionBlur.toFixed(1)}px)`;
-const overlay=sc.querySelector(".exposure");
-overlay.style.background=ev<0?`rgba(0,0,0,${Math.min(.72,-ev*.115)})`:`rgba(255,255,240,${Math.min(.68,ev*.105)})`;
-$("#ev").textContent=`${ev>0?"+":""}${ev.toFixed(1)} EV`;
-$("#apertureValue").textContent=`f/${aperture}`;
-$("#shutterValue").textContent=`${SHUTTERS[cam.s].l}s`;
-$("#isoValue").textContent=`${iso}`;
-$("#apertureHelp").textContent=aperture<4?"Latar cenderung semakin blur":aperture>8?"Area fokus tampak lebih luas":"Kedalaman ruang menengah";
-$("#shutterHelp").textContent=shutter>=1/30?"Gerak tampak kabur":shutter<=1/500?"Gerak lebih mudah dibekukan":"Perhatikan gerakan tangan";
-$("#isoHelp").textContent=iso>=1600?"Noise semakin terlihat":iso<=200?"Noise relatif rendah":"Penguatan cahaya meningkat";
-const canvas=sc.querySelector(".noise"),ctx=canvas.getContext("2d");ctx.clearRect(0,0,450,300);
-if(iso>400){const image=ctx.createImageData(450,300),d=image.data;let seed=12271+cam.i*8137;const alpha=Math.min(120, (cam.i-2)*23);
- for(let i=0;i<d.length;i+=4){seed=(1664525*seed+1013904223)>>>0;const gray=(seed>>>16)&255;d[i]=gray;d[i+1]=gray;d[i+2]=gray;d[i+3]=alpha}ctx.putImageData(image,0,0)}
+  const cam=state.camera,sc=$("#cameraScene");
+  if(!sc)return;
+  paintCameraScene(sc,cam);
+  $("#ev").textContent=exposureText(cam);
+  $("#apertureValue").textContent=`f/${APERTURE[cam.a]}`;
+  $("#shutterValue").textContent=`${SHUTTERS[cam.s].l}s`;
+  $("#isoValue").textContent=`${ISOS[cam.i]}`;
+  $("#apertureHelp").textContent=APERTURE[cam.a]<4?"Latar cenderung semakin blur":APERTURE[cam.a]>8?"Area fokus tampak lebih luas":"Kedalaman ruang menengah";
+  $("#shutterHelp").textContent=SHUTTERS[cam.s].t>=1/30?"Gerak tampak kabur":SHUTTERS[cam.s].t<=1/500?"Gerak lebih mudah dibekukan":"Perhatikan gerakan tangan";
+  $("#isoHelp").textContent=ISOS[cam.i]>=1600?"Noise semakin terlihat":ISOS[cam.i]<=200?"Noise relatif rendah":"Penguatan cahaya meningkat";
 }
 function compositionPage(){
 return `${titleBlock("komposisi")}<div class="card"><p class="small-note">Ubah garis bantu, bingkai dalam bingkai, dan posisi subjek. Tidak semua foto harus mengikuti rule of thirds; tentukan mana yang paling baik menjelaskan peristiwa.</p>${sceneHTML("compositionScene","showgrid")}<div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${state.composition.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${state.composition.frame}">▣ Bingkai alami</button></div><div class="eyebrow">Letak subjek</div><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${state.composition.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div><div class="info">Coba tempatkan tokoh di sisi kiri atau kanan dan biarkan ruang untuk alat kerja. Tanyakan: apakah bingkai memperjelas informasi atau justru memotong bagian penting?</div><div class="actions"><button class="btn primary" id="save-comp">Simpan pilihan komposisi ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>Jarak dan sudut</h3><p class="small-note">Foto lebar memberi konteks, foto dekat menunjukkan detail. Sudut rendah dapat mengubah kesan subjek; pilih angle untuk menjelaskan, bukan sekadar dramatis.</p></div><div class="card"><h3>Ketika memotret budaya</h3><p class="small-note">Jangan sampai upaya memperoleh komposisi bagus membuat kita mengganggu ritual atau mengatur ulang kejadian yang seharusnya spontan.</p></div></div>`;
@@ -258,9 +283,10 @@ function trainerLogin(){
  return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
 }
 async function fetchDashboard(){
- if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length}]:[],answers:state.work};return}
+ if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,camera:state.demoCamera,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
  state.dashboard=await request("/api/dashboard",{auth:true});
  state.serverStage=state.dashboard.stage;state.count=state.dashboard.count;
+ if(state.dashboard.camera)state.demoCamera=state.dashboard.camera;
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
