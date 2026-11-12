@@ -588,8 +588,17 @@ async function renderTrainer(){
     root.innerHTML=`<div class="page"><div class="card login-card"><span class="eyebrow">LOGIN BERHASIL, DASHBOARD BELUM SIAP</span>
       <h1>PIN sudah diterima.</h1><p>Terjadi kesalahan saat memuat dashboard: ${escapeHtml(error.message)}.</p>
       <p class="small-note">Data peserta dan pengaturan kelas tidak dihapus. Anda bisa mengulang pemuatan dashboard.</p>
-      <button id="trainer-retry-dashboard" class="btn primary block">Coba muat dashboard lagi</button></div></div>`;
+      <button id="trainer-retry-dashboard" class="btn primary block">Coba muat dashboard lagi</button>
+      <button id="trainer-back-login" class="btn subtle block" style="margin-top:8px">← Kembali ke Login / Ganti PIN</button></div></div>`;
     $("#trainer-retry-dashboard").onclick=renderTrainer;
+    $("#trainer-back-login").onclick=()=>{
+      state.trainerToken="";
+      state.trainerRole="trainer";
+      state.dashboard=null;
+      sessionStorage.removeItem("lm26-trainer");
+      sessionStorage.removeItem("lm26-role");
+      renderTrainer();
+    };
   }
 }
 function lcdFooter(stage,count,link,qr){
