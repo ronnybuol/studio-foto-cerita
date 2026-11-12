@@ -62,3 +62,20 @@ Untuk menguji:
 - Simulator pada versi ini masih berupa ilustrasi grafis, bukan foto nyata atau simulasi optik yang presisi.
 - Penyempurnaan viewport dan scroll pada layar HP peserta belum termasuk tahap v0.2.
 - Penayangan LCD memakai polling D1, bukan WebSocket; latensi bergantung koneksi dan aktivitas browser.
+
+## Peningkatan v0.3 — teori sebelum simulator (tanpa migrasi D1 tambahan)
+
+Delapan slide teori dasar fotografi tersedia pada `public/slides.js`. Trainer mengendalikan slide melalui `#/trainer`, dan layar `#/lcd` secara otomatis mengikuti nomor slide dan mode presentasi. Seluruh catatan mengajar hanya ditampilkan di dashboard trainer; slide LCD dirancang untuk dibaca dari jauh.
+
+**Cara uji:**
+1. Buka `https://kelasbelajar.org/lensa-muda/#/trainer` dan login.
+2. Klik tahap `01 · Laboratorium Kamera`. Ketika tahap ini dibuka dari tahap lain, mode dimulai dari slide teori 1.
+3. Panel `Materi Dasar Fotografi` berisi navigasi slide, delapan tombol nomor, dan catatan khusus trainer.
+4. Buka `https://kelasbelajar.org/lensa-muda/#/lcd` pada tab terpisah. Klik `Layar penuh`, lalu uji tombol `Slide berikutnya` dari dashboard. LCD mengikuti perubahan dalam beberapa detik tanpa keluar dari layar penuh.
+5. Klik `Mulai simulator kamera` di dashboard. LCD beralih ke peragaan kamera langsung; slider aperture, shutter, dan ISO kembali berfungsi.
+6. Klik `Kembali ke slide teori` untuk mengembalikan materi.
+7. Peserta yang membuka modul kamera di HP akan melihat ringkasan slide selama mode teori, lalu simulator ketika trainer mengalihkan mode.
+
+State presentasi disimpan secara atomik dalam JSON pada kolom `camera_json` yang sudah dibuat di v0.2 menggunakan `json_set` SQLite. **Tidak perlu menjalankan SQL baru.** Metadata tambahan `view` dan `slide` tidak menghapus pengaturan kamera `a`, `s`, dan `i`.
+
+Materi visual pada versi ini berupa **ilustrasi simulasi** dan diberi label yang sesuai. Foto dokumenter nyata, foto seri dengan parameter kamera berbeda, serta penyempurnaan layout HP merupakan pekerjaan tahap berikutnya.
