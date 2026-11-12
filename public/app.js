@@ -1,4 +1,4 @@
-import {THEORY_SLIDES,theoryVisual} from "./slides.js";
+import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl} from "./slides.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -122,6 +122,14 @@ const motionSVG=`<svg class="motion" viewBox="0 0 900 600" aria-hidden="true"><p
 function sceneHTML(id="cameraScene",extra=""){
 return `<div id="${id}" class="scene ${extra}"><div class="view-label">SIMULASI • SANGGAR KERAJINAN</div>${backSVG}${subjectSVG}${motionSVG}<div class="exposure"></div><canvas class="noise" width="450" height="300"></canvas><svg class="gridlines" viewBox="0 0 900 600"><path d="M300 0v600M600 0v600M0 200h900M0 400h900" stroke="#ffffffad" stroke-width="3"/></svg><div class="framing"></div></div>`;
 }
+function photoSceneHTML(id="cameraScene"){
+ return `<div id="${id}" class="scene photo-camera-scene">
+   <img class="photo-main" src="${cameraPhotoUrl("base")}" alt="Ilustrasi generatif pengrajin memahat kayu sebagai bahan latihan exposure" decoding="async">
+   <img class="photo-motion" src="${cameraPhotoUrl("shutter-cepat")}" alt="" aria-hidden="true" decoding="async">
+   <div class="exposure"></div><canvas class="noise" width="450" height="300"></canvas>
+   <div class="view-label">SIMULASI FOTO GENERATIF · BUKAN FOTO PERISTIWA NYATA</div>
+ </div>`;
+}
 function theorySlideContent(index,variant="lcd"){
  const slide=THEORY_SLIDES[index]||THEORY_SLIDES[0];
  return `<div class="theory-layout theory-layout-${variant}">
@@ -182,7 +190,7 @@ function theoryTrainerPanel(data,isMentor){
 }
 function cameraPage(){
 const cam=state.camera;
-return `${titleBlock("kamera")}<div class="card"><div class="info" style="margin-bottom:14px"><b>Eksperimen:</b> pengaturan apa yang membuat tangan lebih tajam, ruang lebih luas, atau foto lebih terang? Ubah satu slider dulu lalu amati hasilnya. Adegan ini <b>ilustrasi simulasi</b>, bukan foto sesungguhnya.</div>${sceneHTML()}<div class="statline"><div><span>Perubahan exposure dibanding f/2.8 · 1/125 · ISO 200</span><div class="small-note" style="color:#ccd2d5">Pengaruh terang-gelap dihitung bersama, seperti exposure triangle.</div></div><strong id="ev">0 EV</strong></div><div class="control-grid"><div class="control"><label for="aperture">Bukaan / aperture <output id="apertureValue">f/${APERTURE[cam.a]}</output></label><input id="aperture" type="range" min="0" max="6" value="${cam.a}" step="1"><small id="apertureHelp">Kedalaman ruang</small></div><div class="control"><label for="shutter">Shutter speed <output id="shutterValue">${SHUTTERS[cam.s].l}s</output></label><input id="shutter" type="range" min="0" max="6" value="${cam.s}" step="1"><small id="shutterHelp">Ketajaman gerak</small></div><div class="control"><label for="iso">ISO <output id="isoValue">${ISOS[cam.i]}</output></label><input id="iso" type="range" min="0" max="6" value="${cam.i}" step="1"><small id="isoHelp">Noise dan sensitivitas efektif</small></div></div><div class="actions"><button id="reset-camera" class="btn subtle">↺ Reset kamera</button><button id="save-camera" class="btn primary">Simpan eksperimen ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>💡 Bukaan lensa</h3><p class="small-note">f-number kecil berarti bukaan besar: lebih banyak cahaya dan area fokus yang lebih tipis. Pada banyak smartphone, bukaan fisik tetap; gunakan fokus, jarak, dan fitur mode potret bila tersedia.</p></div><div class="card"><h3>⚡ Rana & ISO</h3><p class="small-note">Rana lebih cepat bisa membekukan gerakan tetapi mengurangi cahaya. ISO tinggi membantu pemotretan gelap, namun biasanya meningkatkan noise. Pengaturan nyata bergantung jenis kamera dan kondisi lokasi.</p></div></div>`;
+return `${titleBlock("kamera")}<div class="card"><div class="info" style="margin-bottom:14px"><b>Eksperimen:</b> pengaturan apa yang membuat tangan lebih tajam, ruang lebih luas, atau foto lebih terang? Ubah satu slider dulu lalu amati hasilnya. Adegan ini <b>ilustrasi simulasi</b>, bukan foto sesungguhnya.</div>${photoSceneHTML("cameraScene")}<div class="statline"><div><span>Perubahan exposure dibanding f/2.8 · 1/125 · ISO 200</span><div class="small-note" style="color:#ccd2d5">Pengaruh terang-gelap dihitung bersama, seperti exposure triangle.</div></div><strong id="ev">0 EV</strong></div><div class="control-grid"><div class="control"><label for="aperture">Bukaan / aperture <output id="apertureValue">f/${APERTURE[cam.a]}</output></label><input id="aperture" type="range" min="0" max="6" value="${cam.a}" step="1"><small id="apertureHelp">Kedalaman ruang</small></div><div class="control"><label for="shutter">Shutter speed <output id="shutterValue">${SHUTTERS[cam.s].l}s</output></label><input id="shutter" type="range" min="0" max="6" value="${cam.s}" step="1"><small id="shutterHelp">Ketajaman gerak</small></div><div class="control"><label for="iso">ISO <output id="isoValue">${ISOS[cam.i]}</output></label><input id="iso" type="range" min="0" max="6" value="${cam.i}" step="1"><small id="isoHelp">Noise dan sensitivitas efektif</small></div></div><div class="actions"><button id="reset-camera" class="btn subtle">↺ Reset kamera</button><button id="save-camera" class="btn primary">Simpan eksperimen ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>💡 Bukaan lensa</h3><p class="small-note">f-number kecil berarti bukaan besar: lebih banyak cahaya dan area fokus yang lebih tipis. Pada banyak smartphone, bukaan fisik tetap; gunakan fokus, jarak, dan fitur mode potret bila tersedia.</p></div><div class="card"><h3>⚡ Rana & ISO</h3><p class="small-note">Rana lebih cepat bisa membekukan gerakan tetapi mengurangi cahaya. ISO tinggi membantu pemotretan gelap, namun biasanya meningkatkan noise. Pengaturan nyata bergantung jenis kamera dan kondisi lokasi.</p></div></div>`;
 }
 function exposureFor(cam){
   const aperture=APERTURE[cam.a],shutter=SHUTTERS[cam.s].t,iso=ISOS[cam.i];
@@ -197,8 +205,20 @@ function paintCameraScene(sc,cam){
   const aperture=APERTURE[cam.a],shutter=SHUTTERS[cam.s].t,iso=ISOS[cam.i],ev=exposureFor(cam);
   const bgBlur=Math.max(0,Math.min(8,(8-aperture)*1.3));
   const motionBlur=Math.max(0,Math.min(18,(shutter*125-1)*2));
-  sc.querySelector(".back").style.filter=`blur(${bgBlur.toFixed(1)}px)`;
-  sc.querySelector(".motion").style.filter=`blur(${motionBlur.toFixed(1)}px)`;
+  if(sc.classList.contains("photo-camera-scene")){
+    const main=sc.querySelector(".photo-main");
+    const photo=cam.a<=1?"aperture-lebar":cam.a>=4?"aperture-sempit":"base";
+    const next=cameraPhotoUrl(photo);
+    if(main.getAttribute("src")!==next)main.setAttribute("src",next);
+    const movement=sc.querySelector(".photo-motion");
+    const movePhoto=cam.s<=2?"shutter-lambat":"shutter-cepat";
+    const moveSrc=cameraPhotoUrl(movePhoto);
+    if(movement.getAttribute("src")!==moveSrc)movement.setAttribute("src",moveSrc);
+    movement.style.opacity=cam.s===3?"0":String(Math.min(.96,Math.abs(cam.s-3)*.32));
+  } else {
+    sc.querySelector(".back").style.filter=`blur(${bgBlur.toFixed(1)}px)`;
+    sc.querySelector(".motion").style.filter=`blur(${motionBlur.toFixed(1)}px)`;
+  }
   sc.querySelector(".exposure").style.background=ev<0
     ?`rgba(0,0,0,${Math.min(.72,-ev*.115)})`
     :`rgba(255,255,240,${Math.min(.68,ev*.105)})`;
@@ -282,7 +302,7 @@ async function saveAnswer(key,payload){
 }
 function bindLessons(){
  $$("[data-nav]").forEach(btn=>btn.addEventListener("click",()=>{const key=btn.dataset.nav;if(isUnlocked(key))goModule(key)}));
- if(state.active==="kamera"){
+ if(state.active==="kamera" && $("#aperture")){
   [["aperture","a"],["shutter","s"],["iso","i"]].forEach(([id,key])=>$("#"+id).addEventListener("input",e=>{state.camera[key]=Number(e.target.value);updateCamera()}));
   $("#reset-camera").onclick=()=>{state.camera={a:1,s:3,i:1};["aperture","shutter","iso"].forEach((id,n)=>{$("#"+id).value=[1,3,1][n]});updateCamera()};
   $("#save-camera").onclick=()=>saveAnswer("kamera",{...state.camera,at:new Date().toISOString()});
@@ -365,7 +385,7 @@ function trainerCameraPanel(data,isMentor){
    </div>
    <div class="trainer-demo-grid">
      <div class="trainer-scene">
-       ${sceneHTML("trainerCameraScene")}
+       ${photoSceneHTML("trainerCameraScene")}
        <div class="trainer-demo-ev"><span>Perubahan pencahayaan</span><strong id="trainer-ev">${exposureText(c)}</strong></div>
        <p class="small-note">Ilustrasi demonstrasi — pengaturan di sini tidak mengganti eksperimen individu peserta.</p>
      </div>
@@ -625,7 +645,7 @@ function lcdPage(){
       <h1>Ubah pengaturan. <em>Amati fotonya.</em></h1>
       <p>Peragaan langsung dikendalikan trainer. Perhatikan cahaya, kedalaman ruang, gerakan, dan noise.</p></div>
       <div class="lcd-camera-layout">
-        <div class="lcd-camera-photo">${sceneHTML("lcdCameraScene")}
+        <div class="lcd-camera-photo">${photoSceneHTML("lcdCameraScene")}
           <div class="lcd-camera-note">Ilustrasi simulasi · bukan hasil kamera sungguhan</div></div>
         <div class="lcd-camera-readouts">
           <div class="lcd-reading"><span>APERTURE / BUKAAN</span><strong id="lcd-aperture">f/${APERTURE[camera.a]}</strong><small id="lcd-aperture-tip">Kedalaman ruang</small></div>

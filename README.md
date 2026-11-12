@@ -79,3 +79,19 @@ Delapan slide teori dasar fotografi tersedia pada `public/slides.js`. Trainer me
 State presentasi disimpan secara atomik dalam JSON pada kolom `camera_json` yang sudah dibuat di v0.2 menggunakan `json_set` SQLite. **Tidak perlu menjalankan SQL baru.** Metadata tambahan `view` dan `slide` tidak menghapus pengaturan kamera `a`, `s`, dan `i`.
 
 Materi visual pada versi ini berupa **ilustrasi simulasi** dan diberi label yang sesuai. Foto dokumenter nyata, foto seri dengan parameter kamera berbeda, serta penyempurnaan layout HP merupakan pekerjaan tahap berikutnya.
+
+
+## v0.4 — Foto generatif untuk Laboratorium Kamera
+
+Sepuluh file WebP ada di folder public/assets/camera/ dan akan diakses sebagai static assets Cloudflare, bukan R2. Ukuran gabungan sekitar 1,6 MB.
+
+- base.webp: slide membaca foto dan referensi simulator.
+- cahaya-depan.webp, cahaya-samping.webp, cahaya-belakang.webp: slide arah datang cahaya.
+- aperture-lebar.webp dan aperture-sempit.webp: slide depth of field dan simulator.
+- shutter-lambat.webp dan shutter-cepat.webp: slide gerak dan overlay simulator.
+- iso-rendah.webp dan iso-tinggi.webp: contoh penguatan sinyal/noise.
+- Segitiga exposure tetap menggunakan infografik SVG.
+
+Semua ini foto generatif untuk latihan, bukan foto dokumentasi kejadian nyata. Angka f-stop, shutter dan ISO adalah label simulasi, bukan data EXIF hasil pemotretan. Simulator memberi representasi visual konseptual, bukan simulasi optika yang presisi. Jangan gunakan gambar ini sebagai foto jurnalistik atau karya lomba.
+
+Uji pada https://kelasbelajar.org/lensa-muda/#/trainer (tahap 01). LCD dan tampilan peserta harus menampilkan gambar yang sama. Tidak ada migrasi SQL tambahan.

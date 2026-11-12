@@ -214,3 +214,32 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
 /* Login trainer: pesan permanen dan mudah dibaca, tidak hanya toast sementara. */
 .login-feedback{padding:12px 14px;margin:10px 0 14px;border:1px solid #eeb2a2;border-radius:10px;background:#fff0ea;color:#8c2d1a;font-size:13px;font-weight:650;line-height:1.55}
 .login-feedback[hidden]{display:none}
+
+
+/* v0.4 Foto generatif teroptimasi untuk materi Laboratorium Kamera. */
+.theory-photo-sample{background:#20252d}
+.theory-photo-sample>img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:#3a4148}
+.theory-photo-sample figcaption{letter-spacing:.2px}
+.theory-balance-card .theory-balance-photo{width:100%;display:block;aspect-ratio:3/2;object-fit:cover;border-radius:8px}
+.theory-challenge-photo{padding:0!important;display:block!important;overflow:hidden;grid-column:1/-1;background:#232c36}
+.theory-challenge-photo>img{width:100%;max-height:260px;aspect-ratio:3/2;object-fit:cover;display:block}
+.scene.photo-camera-scene{background:#302d29}
+.scene.photo-camera-scene>.photo-main,
+.scene.photo-camera-scene>.photo-motion{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;user-select:none;pointer-events:none}
+.scene.photo-camera-scene>.photo-main{z-index:0}
+.scene.photo-camera-scene>.photo-motion{
+ z-index:3;opacity:0;
+ clip-path:polygon(7% 35%,58% 29%,61% 68%,12% 76%);
+ transition:opacity .2s ease;
+}
+.scene.photo-camera-scene>.exposure{z-index:4}
+.scene.photo-camera-scene>.noise{z-index:5}
+.scene.photo-camera-scene>.view-label{z-index:7;background:#101318c9;font-size:clamp(8px,.85vw,11px);max-width:85%;line-height:1.4}
+.trainer-scene .photo-camera-scene>.view-label{font-size:10px}
+.theory-story-visual>img{aspect-ratio:3/2}
+.theory-visual .theory-two-scenes img{width:100%}
+@media(max-width:650px){
+ .scene.photo-camera-scene>.view-label{top:8px;left:8px;padding:6px 8px;font-size:8px;letter-spacing:0}
+ .theory-photo-sample figcaption{font-size:10px}
+ .theory-light-grid{gap:5px}
+}
