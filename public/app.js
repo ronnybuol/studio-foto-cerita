@@ -455,17 +455,17 @@ function bindDashboard(){
      toast("Slide tidak tersinkron: "+error.message);
    }
  }
- $("[data-slide-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-slide-step]").forEach(button=>button.onclick=()=>{
    const n=state.presentation.slide+Number(button.dataset.slideStep);
    if(n>=0&&n<THEORY_SLIDES.length)choosePresentation({view:"theory",slide:n});
  });
- $("[data-slide]").forEach(button=>button.onclick=()=>{
+ $$("[data-slide]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:"theory",slide:Number(button.dataset.slide)});
  });
- $("[data-present-mode]").forEach(button=>button.onclick=()=>{
+ $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
