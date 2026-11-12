@@ -41,3 +41,24 @@ Setelah berhasil diuji melalui `*.workers.dev/lensa-muda/`, pasang Workers Route
 Deployment GitHub dapat dibuat melalui **Workers & Pages → Create application → GitHub → ronnybuol/studio-foto-cerita**. Pakai nama Worker `studio-foto-cerita`, build command kosong (aplikasi tanpa build), dan deploy command `npx wrangler deploy`. Sebelum deploy, database ID di `wrangler.jsonc` harus diganti dari placeholder seluruh nol ke ID D1 yang benar; dan bucket R2 `lensa-muda-media` harus telah dibuat. Setelah deploy, set secrets (`TRAINER_PIN`, `MENTOR_PIN`, `SESSION_SECRET`); jangan kirim nilai PIN atau secret melalui chat atau commit GitHub.
 
 Pada versi ini R2 sudah diberi binding `PHOTO_BUCKET`, tetapi fitur unggah foto asli belum diaktifkan. Berkas gambar yang digunakan di editor sembilan bingkai saat ini adalah ilustrasi lokal untuk latihan.
+
+## Peningkatan v0.2: Trainer mengendalikan demo kamera di LCD
+
+Setelah deployment versi ini, lakukan migrasi **sekali saja** di D1 Console database `lensa-muda-db`:
+
+```sql
+ALTER TABLE sessions ADD COLUMN camera_json TEXT NOT NULL DEFAULT '{"a":1,"s":3,"i":1}';
+```
+
+Ini hanya menambah kolom dan **tidak menghapus data peserta maupun jawaban**. Jalankan **sekali saja** pada database yang sudah ada. SQL yang sama tersedia pada `migrations/0001-live-camera.sql`. Pada database baru, kolom sudah termasuk dalam `schema.sql`, jadi migrasi tidak diperlukan.
+
+Untuk menguji:
+1. Trainer login melalui `/lensa-muda/#/trainer`, buka tahap `01 · Laboratorium Kamera`.
+2. Buka `/lensa-muda/#/lcd` di jendela lain (disarankan pada layar eksternal), pilih `Layar penuh`.
+3. Pada dashboard trainer, gerakkan slider di panel `Kontrol Kamera dari Trainer`. Perubahan seharusnya muncul di LCD dalam sekitar 2–4 detik jika koneksi stabil.
+4. Mode pendamping dapat melihat pengaturan, tetapi tidak dapat mengubahnya. Pengaturan trainer terpisah dari latihan kamera peserta.
+
+### Fitur yang masih akan dikembangkan
+- Simulator pada versi ini masih berupa ilustrasi grafis, bukan foto nyata atau simulasi optik yang presisi.
+- Penyempurnaan viewport dan scroll pada layar HP peserta belum termasuk tahap v0.2.
+- Penayangan LCD memakai polling D1, bukan WebSocket; latensi bergantung koneksi dan aktivitas browser.
