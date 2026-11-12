@@ -147,3 +147,16 @@ test("trainer mengendalikan 8 slide teori dan beralih ke simulator tanpa menghap
  assert.deepEqual(dash.data.presentation,{view:"simulator",slide:4});
  assert.deepEqual(dash.data.camera,{a:2,s:0,i:4});
 });
+
+test("PIN benar tetap diterima setelah percobaan gagal mencapai ambang pembatasan",async()=>{
+ const env=mockEnv();
+ for(let i=0;i<9;i++){
+   const bad=await call(env,"/lensa-muda/api/login","POST",{pin:"0000"});
+   assert.equal(bad.status,i<8?401:429);
+ }
+ const valid=await call(env,"/lensa-muda/api/login","POST",{pin:"trainer-12345"});
+ assert.equal(valid.status,200);
+ assert.equal(valid.data.role,"trainer");
+ const dashboard=await call(env,"/lensa-muda/api/dashboard","GET",undefined,valid.data.token);
+ assert.equal(dashboard.status,200);
+});
