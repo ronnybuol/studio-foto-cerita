@@ -806,3 +806,48 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .story-editor-intro h2{font-size:25px}
 }
 @media(max-width:365px){.story-candidate{grid-template-columns:1fr}.story-candidate-photo .story-photo{min-height:0;aspect-ratio:3/2}.story-candidate-photo .story-photo img{object-fit:contain}}
+
+
+/* Mode Sorotan Karya — overlay LCD independen dari posisi presentasi */
+.trainer-spotlight-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:16px;border-left:4px solid #e77532}
+.trainer-spotlight-banner>div{min-width:0}
+.trainer-spotlight-banner h3{font-size:20px;line-height:1.3;margin:7px 0}
+.trainer-spotlight-banner button{flex-shrink:0}
+.lcd-spotlight-mode{height:min(90svh,980px);min-height:0;overflow:hidden;justify-content:space-between;gap:10px;padding:clamp(14px,2.2vw,34px)}
+.lcd-spotlight-mode .lcd-bottom{flex:none;padding-top:5px}
+.spotlight-layout{min-width:0;min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,.85fr);gap:clamp(12px,2vw,28px);overflow:hidden}
+.spotlight-gallery{min-height:0;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:8px}
+.spotlight-tile{margin:0;min-width:0;min-height:0;overflow:hidden;background:#242a33;border:1px solid #39414c;border-radius:10px;display:flex;flex-direction:column}
+.spotlight-tile .story-photo{min-height:0;max-height:none;height:calc(100% - 28px);width:100%;aspect-ratio:auto;border-radius:0}
+.spotlight-tile .story-photo img{width:100%;height:100%;object-fit:contain}
+.spotlight-tile .story-photo-crop img{object-fit:cover}
+.spotlight-tile figcaption{flex:none;min-height:28px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 7px;color:#e8edf3;font-size:clamp(9px,.86vw,13px)}
+.spotlight-tile figcaption b{color:#ff9a5c;padding-right:4px}
+.spotlight-editorial{min-height:0;min-width:0;overflow:auto;display:flex;flex-direction:column;gap:9px}
+.spotlight-editorial h1,.spotlight-generic h1{font-size:clamp(25px,3.4vw,53px);line-height:1.07;margin:0;color:#fff;overflow-wrap:anywhere}
+.spotlight-editorial h2{font-size:clamp(17px,2vw,31px);line-height:1.15;margin:0;color:#fff}
+.spotlight-notes{padding:clamp(10px,1.2vw,19px);background:#272f3a;border-left:3px solid #e77532;border-radius:8px;min-width:0;overflow:auto}
+.spotlight-notes strong{font-size:11px;letter-spacing:.8px;color:#ffab73}
+.spotlight-notes p{font-size:clamp(13px,1.4vw,20px);line-height:1.5;color:#fff;margin:9px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.spotlight-prompt{margin-top:auto;color:#e6e9ee;font-size:clamp(13px,1vw,17px);line-height:1.35}
+.spotlight-generic{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:18px;overflow:auto}
+.spotlight-generic h2{font-size:clamp(22px,2.6vw,40px)}
+.spotlight-copy{font-size:clamp(18px,2vw,28px);line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:1150px}
+.spotlight-edfat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.spotlight-edfat>div{padding:15px;background:#282f3b;border-radius:10px}
+.spotlight-edfat b{font-size:clamp(16px,1.5vw,23px);color:#ffb07e}
+.spotlight-edfat p{font-size:clamp(13px,1.15vw,18px);line-height:1.4;margin:7px 0 0;overflow-wrap:anywhere}
+#root:fullscreen .lcd-spotlight-mode{height:100dvh;min-height:0}
+@media(max-width:850px){
+ .trainer-spotlight-banner{flex-wrap:wrap}
+ .lcd-spotlight-mode{height:auto;min-height:85svh;overflow:visible}
+ .spotlight-layout{grid-template-columns:1fr;overflow:visible}
+ .spotlight-gallery{min-height:480px;grid-template-rows:repeat(3,150px)}
+ .spotlight-editorial{overflow:visible}
+}
+@media(max-width:650px){
+ .spotlight-gallery{gap:5px;grid-template-rows:repeat(3,100px);min-height:325px}
+ .spotlight-tile figcaption{font-size:9px;padding:4px}
+ .spotlight-tile .story-photo{height:calc(100% - 25px)}
+ .spotlight-edfat{grid-template-columns:1fr}
+}
