@@ -109,3 +109,27 @@ Uji pada https://kelasbelajar.org/lensa-muda/#/trainer (tahap 01). LCD dan tampi
 Kode mendeteksi kolom `participants.username` saat akses pendaftaran/login/dashboard pertama, lalu menjalankan migrasi aditif idempoten: menambah kolom, memberikan username acak kepada peserta lama, dan membuat indeks unik. **Tidak menghapus peserta atau jawaban.** Skrip manual yang ekuivalen tersedia pada `migrations/0002-participant-username.sql`; jangan menjalankannya setelah migrasi otomatis karena `ALTER TABLE` hanya boleh sekali.
 
 Untuk produksi, sebaiknya ambil backup D1 sebelum deployment apabila tersedia. Setelah deployment, trainer membuka dashboard, memastikan username peserta lama tampil, kemudian menguji login dari browser privat. Jangan menghapus data peserta untuk memperbaiki login. Jika migrasi gagal, API mengembalikan pesan kegagalan agar operator dapat memeriksa D1 secara terkendali.
+
+
+## Perubahan terbaru: akun mudah diingat, fokus materi dan penguncian kelas
+
+**Ketentuan terbaru menggantikan keterangan sebelumnya tentang username acak saat pendaftaran.**
+
+- Pendaftaran baru: peserta mengisi nama, sekolah, kelas, dan **username pilihannya sendiri**. Username harus satu kata terdiri dari 3–20 huruf kecil a–z tanpa spasi (contoh `jufri`). Nilai disimpan persis sesuai input, dan keunikan ditegakkan oleh indeks D1.
+- Peserta lama yang memiliki username `LM-XXXXXXXXXXXX` **tetap dapat login**. Mereka bisa mengubahnya sendiri melalui menu **Akun > Ganti username** selama kelas terbuka, atau meminta trainer memperbaikinya dari tabel peserta. Tidak ada penghapusan progres.
+- Halaman peserta berfokus pada materi: pemilih modul kecil, panel akun yang bisa dibuka, tanpa tautan ke layar trainer atau LCD. Jika tahap yang dibuka trainer berubah, tampilan peserta mengikuti tahap itu; peserta tetap dapat memilih tahap sebelumnya yang sudah terbuka.
+- Trainer: tombol **Tambah peserta**, **Edit** identitas dan username, **Hapus** (jawaban ikut terhapus setelah konfirmasi), **Cetak / Simpan PDF** melalui dialog cetak browser, dan berbagi ringkasan daftar via WhatsApp/email. Username disertakan pada cetakan internal, **tidak disertakan pada pesan massal WA/email**.
+- Tombol **Kunci aplikasi peserta** hanya untuk trainer; status `is_locked` disimpan di D1. Ketika terkunci, peserta tidak dapat mendaftar, login, membuka profil API, mengubah username, atau menyimpan jawaban. API status terbuka untuk menampilkan pesan kelas ditutup. Trainer dan pendamping tetap bisa mengakses dashboard sesuai haknya; trainer bisa membuka kembali kelas.
+- `migrations/0003-class-lock.sql` adalah petunjuk migrasi aditif, tetapi Worker melakukan pengecekan dan penambahan kolom otomatis secara idempoten saat ada request. Jangan menjalankan migrasi manual setelah otomatis selesai. **Backup D1 lebih dulu** untuk deployment produksi.
+- Identitas Zonautara ditampilkan melalui ikon yang diadaptasi langsung dari berkas logo yang diberikan dan kredit pengembang pada footer.
+
+**Penting:** sistem username tanpa password tidak memberikan perlindungan setara autentikasi akun biasa selama kelas terbuka. Jangan membagikan username peserta kepada orang lain. Login salah telah dibatasi per IP. Aktifkan penguncian segera setelah kelas selesai; jangan mengandalkan penguncian sebagai pengganti keamanan saat kelas berlangsung.
+
+### Pengujian sesudah Cloudflare deploy
+
+1. Di HP kecil (lebar 320, 360, 390, 430 px), pastikan menu modul menjadi pemilih ringkas dan materi muncul di atas tanpa scroll horizontal.
+2. Coba pendaftaran username `jufri` (atau username uji unik), username duplikat, login ulang dari browser lain, dan mengganti username dari panel akun.
+3. Periksa username peserta lama di tabel trainer; ubah username salah satu akun lama lalu login tanpa kehilangan jawaban.
+4. Tambah, edit, cetak daftar (Save as PDF), dan hapus akun uji sebagai trainer; pastikan pendamping tidak punya tombol edit/hapus.
+5. Uji tombol kunci: peserta mendapat halaman “Kegiatan belajar telah selesai”, operasi peserta ditolak (423), dan trainer masih dapat membuka kembali.
+6. Verifikasi branding header dan footer, serta bahwa pembaruan stage dan slide trainer masih sinkron ke peserta/LCD.
