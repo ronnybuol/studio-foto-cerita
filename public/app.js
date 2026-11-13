@@ -1292,10 +1292,13 @@ setInterval(async()=>{
     const prev=JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation});
     await syncState();
     if(pageMode()==="peserta"){
-      const before=JSON.parse(prev),stageChanged=before.stage!==state.serverStage||before.locked!==state.locked;
-      const slideChanged=JSON.stringify(before.presentation)!==JSON.stringify(state.presentation);
-      // Hanya mode Ikuti trainer mengikuti perubahan slide; latihan dan materi pribadi tidak diganggu.
-      if(stageChanged||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
+      const before=JSON.parse(prev),stageChanged=before.stage!==state.serverStage,lockChanged=before.locked!==state.locked;
+       const slideChanged=JSON.stringify(before.presentation)!==JSON.stringify(state.presentation);
+       const startingLesson=stageChanged&&before.stage===0&&state.active==="mulai"&&state.serverStage>0;
+       if(startingLesson){state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
+       const accessRevoked=stageChanged&&!isUnlocked(state.active);
+       // Pembukaan tahap lanjut tidak menginterupsi peserta yang sedang menulis atau memilih foto.
+       if(lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
     }
   }
 },1800);
