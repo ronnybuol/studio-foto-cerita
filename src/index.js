@@ -134,7 +134,10 @@ async function handleApi(req,env){
   }
   if(method==="GET"&&path==="/api/me"){
     const p=await participant(req,env);if(!p)return failure("Sesi peserta tidak valid",401);
-    return output({user:p,stage:await stageState(env)});
+    const rows=await env.DB.prepare("SELECT stage,payload FROM answers WHERE participant_id=?").bind(p.id).all();
+    const answers={};
+    for(const row of rows.results||[]){try{answers[row.stage]=JSON.parse(row.payload)}catch{}}
+    return output({user:p,stage:await stageState(env),answers});
   }
   if(method==="POST"&&path==="/api/login"){
     if(!env.TRAINER_PIN||!env.SESSION_SECRET)return failure("Konfigurasi autentikasi belum lengkap",503);
