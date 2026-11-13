@@ -118,7 +118,7 @@ function participantLoginPage(){
  <span class="eyebrow">Sudah terdaftar?</span><h1>Masuk dengan username</h1>
  <p class="muted">Masukkan username dari pendaftaran sebelumnya. Kamu tidak perlu mengisi ulang data sekolah.</p>
  <form id="participant-login-form"><div class="field"><label for="participant-username">Username</label>
- <input id="participant-username" name="username" required maxlength="15" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="LM-XXXXXXXXXXXX" value="${escapeHtml(state.user?.username||"")}"></div>
+ <input id="participant-username" name="username" required maxlength="15" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="LM-XXXXXXXXXXXX" value="${escapeHtml(state.user?.username||localStorage.getItem("lm26-last-username")||"")}"></div>
  <button class="btn primary block" type="submit">Masuk ke kelas →</button></form>
  <p class="small-note">Username ini adalah kunci masuk tanpa password. Simpan secara pribadi. Jika lupa, hubungi trainer.</p></div></div>`;
 }
@@ -146,6 +146,7 @@ async function participantLogin(e){
   const data=await request("/api/participant-login",{method:"POST",payload:{username}});
   state.user=data.user;state.justRegistered=false;
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+  localStorage.setItem("lm26-last-username",state.user.username);
   const me=await request("/api/me");
   state.work=me.answers||{};saveWork();
   state.active="mulai";localStorage.setItem(STORAGE_VIEW,"mulai");
@@ -406,6 +407,7 @@ async function signup(e){
   state.user={id:crypto.randomUUID(),...data,username:"DEMO-"+crypto.randomUUID().slice(0,8).toUpperCase(),token:null};
  }
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+ localStorage.setItem("lm26-last-username",state.user.username);
  state.work={};saveWork();state.justRegistered=true;state.active="mulai";render();toast("Pendaftaran berhasil! Simpan username kamu.");
 }
 function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);render()}
@@ -857,5 +859,22 @@ setInterval(async()=>{
     }
   }
 },1800);
+async function restoreParticipantSession(){
+ if(!state.online||!state.user?.token)return;
+ try{
+  const response=await request("/api/me");
+  state.user={...state.user,...response.user,token:state.user.token};
+  state.work=response.answers||{};
+  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
+  saveWork();
+ }catch(error){
+  if(error.status!==401)return;
+  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
+  state.user=null;state.work={};
+  localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);
+ }
+}
 await syncState();
+await restoreParticipantSession();
 render();
