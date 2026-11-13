@@ -118,7 +118,7 @@ function participantLoginPage(){
  <span class="eyebrow">Sudah terdaftar?</span><h1>Masuk dengan username</h1>
  <p class="muted">Masukkan username dari pendaftaran sebelumnya. Kamu tidak perlu mengisi ulang data sekolah.</p>
  <form id="participant-login-form"><div class="field"><label for="participant-username">Username</label>
- <input id="participant-username" name="username" required maxlength="15" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="LM-XXXXXXXXXXXX" value="${escapeHtml(state.user?.username||localStorage.getItem("lm26-last-username")||"")}"></div>
+ <input id="participant-username" name="username" required maxlength="15" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="LM-XXXXXXXXXXXX" value=""></div>
  <button class="btn primary block" type="submit">Masuk ke kelas →</button></form>
  <p class="small-note">Username ini adalah kunci masuk tanpa password. Simpan secara pribadi. Jika lupa, hubungi trainer.</p></div></div>`;
 }
@@ -410,7 +410,7 @@ async function signup(e){
  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
  state.work={};saveWork();state.justRegistered=!!state.user.username;state.active="mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
-function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);render()}
+function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
 function renderParticipant(){
  if(!state.user){
   $("#root").innerHTML=landing();
