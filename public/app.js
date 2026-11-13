@@ -667,6 +667,15 @@ function renderParticipant(){
    state.learnerViews[state.active]={mode:learnerMode(state.active),slide:liveLearnerSlide(state.active)};
    saveLearnerViews();
  }
+ const learnerRangeNow=learnerRange(state.active);
+ // Begitu trainer membuka simulator bagi peserta yang sedang mengikuti kelas,
+ // jadikan latihan mandiri agar peserta tidak terseret saat trainer kembali ke slide.
+ if(learnerRangeNow&&state.learnerViews[state.active]?.mode==="follow"
+    &&state.presentation.view==="simulator"
+    &&state.presentation.slide>=learnerRangeNow[0]&&state.presentation.slide<=learnerRangeNow[1]){
+   state.learnerViews[state.active]={mode:"practice",slide:liveLearnerSlide(state.active)};
+   saveLearnerViews();
+ }
  $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
