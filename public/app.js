@@ -54,7 +54,7 @@ let state = {
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center"},
-  dashboard:null
+  dashboard:null,justRegistered:false
 };
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
 function saveWork(){localStorage.setItem(STORAGE_WORK,JSON.stringify(state.work))}
@@ -96,7 +96,7 @@ function titleBlock(key){const s=STAGES.find(x=>x.key===key);return `<div class=
 function isUnlocked(key){return !state.online || STAGES.findIndex(x=>x.key===key)<=state.serverStage}
 function lessonLayout(){
   const nav=STAGES.map((s,i)=>`<button data-nav="${s.key}" class="${state.active===s.key?"active":""} ${isUnlocked(s.key)?"":"locked"}" ${isUnlocked(s.key)?"":"disabled"}><span class="stepnum">${String(i).padStart(2,"0")}</span>${s.name}</button>`).join("");
-  return `<div class="page"><div class="lab-layout"><aside class="side"><h3>Modul pembelajaran</h3><nav class="side-nav">${nav}</nav><div class="user-chip"><b>${escapeHtml(state.user?.name||"Peserta")}</b><p>${escapeHtml(state.user?.school||"")} ${state.user?.className?"· "+escapeHtml(state.user.className):""}</p><span class="pill ${state.online?"green":"gray"}">${state.online?"Kelas langsung":"Mode demo"}</span></div></aside><section class="lesson">${renderModule()}</section></div></div>`;
+  return `<div class="page"><div class="lab-layout"><aside class="side"><h3>Modul pembelajaran</h3><nav class="side-nav">${nav}</nav><div class="user-chip"><b>${escapeHtml(state.user?.name||"Peserta")}</b><p>${escapeHtml(state.user?.school||"")} ${state.user?.className?"· "+escapeHtml(state.user.className):""}</p>${state.user?.username?`<p class="participant-username">Username: <strong>${escapeHtml(state.user.username)}</strong></p>`:""}<button class="btn small subtle" id="participant-switch-account">Ganti akun</button><span class="pill ${state.online?"green":"gray"}">${state.online?"Kelas langsung":"Mode demo"}</span></div></aside><section class="lesson">${renderModule()}</section></div></div>`;
 }
 function renderModule(){switch(state.active){
   case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
@@ -108,10 +108,49 @@ function renderModule(){switch(state.active){
   default:return startPage();
 }}
 function landing(){
-  return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Mulai belajar →</button><a class="btn ghost-dark" href="#/lcd">Layar kelas</a></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
+  return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Daftar peserta baru →</button><button class="btn ghost-dark" id="start-login">Sudah punya username? Masuk</button><a class="btn ghost-dark" href="#/lcd">Layar kelas</a></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
 }
 function signupPage(){
-  return `<div class="page"><div class="card login-card"><span class="eyebrow">Pendaftaran peserta • tanpa batas kuota aplikasi</span><h1>Masuk ke kelas</h1><p class="muted">Gunakan nama yang kamu setujui untuk ditampilkan selama kegiatan. Data sekolah dan kelas membantu guru serta fotografer pendamping mengenali peserta.</p><form id="signup-form"><div class="field"><label for="name">Nama peserta</label><input id="name" name="name" required minlength="2" maxlength="90" autocomplete="name" placeholder="Nama lengkap"></div><div class="field"><label for="school">Asal sekolah</label><input id="school" name="school" required maxlength="140" placeholder="SMA/SMK/MA ..."></div><div class="field"><label for="className">Kelas</label><input id="className" name="className" required maxlength="30" placeholder="Contoh: XI IPA 2"></div><button class="btn primary block" type="submit">Masuk Studio Foto Cerita →</button></form><p class="small-note">Aplikasi menyimpan progres latihan. Dalam mode demo, datanya hanya tersimpan pada perangkat ini.</p></div></div>`;
+  return `<div class="page"><div class="card login-card"><button type="button" class="btn small subtle" data-back-auth>← Kembali</button><span class="eyebrow">Pendaftaran peserta • tanpa batas kuota aplikasi</span><h1>Masuk ke kelas</h1><p class="muted">Gunakan nama yang kamu setujui untuk ditampilkan selama kegiatan. Data sekolah dan kelas membantu guru serta fotografer pendamping mengenali peserta.</p><form id="signup-form"><div class="field"><label for="name">Nama peserta</label><input id="name" name="name" required minlength="2" maxlength="90" autocomplete="name" placeholder="Nama lengkap"></div><div class="field"><label for="school">Asal sekolah</label><input id="school" name="school" required maxlength="140" placeholder="SMA/SMK/MA ..."></div><div class="field"><label for="className">Kelas</label><input id="className" name="className" required maxlength="30" placeholder="Contoh: XI IPA 2"></div><button class="btn primary block" type="submit">Masuk Studio Foto Cerita →</button></form><p class="small-note">Setelah mendaftar, kamu mendapatkan username untuk masuk kembali tanpa mengisi ulang data sekolah.</p></div></div>`;
+}
+function participantLoginPage(){
+ return `<div class="page"><div class="card login-card"><button class="btn small subtle" data-back-auth>← Kembali</button>
+ <span class="eyebrow">Sudah terdaftar?</span><h1>Masuk dengan username</h1>
+ <p class="muted">Masukkan username dari pendaftaran sebelumnya. Kamu tidak perlu mengisi ulang data sekolah.</p>
+ <form id="participant-login-form"><div class="field"><label for="participant-username">Username</label>
+ <input id="participant-username" name="username" required maxlength="15" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="LM-XXXXXXXXXXXX" value="${escapeHtml(state.user?.username||"")}"></div>
+ <button class="btn primary block" type="submit">Masuk ke kelas →</button></form>
+ <p class="small-note">Username ini adalah kunci masuk tanpa password. Simpan secara pribadi. Jika lupa, hubungi trainer.</p></div></div>`;
+}
+function participantWelcomePage(){
+ return `<div class="page"><div class="card login-card"><span class="eyebrow">Pendaftaran berhasil</span><h1>Simpan username kamu</h1>
+ <p>Gunakan username ini untuk masuk lagi dari HP atau laptop lain.</p>
+ <div class="username-ticket"><strong>${escapeHtml(state.user.username||"Mode demo")}</strong><button class="btn small" id="copy-participant-username">Salin</button></div>
+ <p class="small-note">Jangan bagikan username di grup publik karena tidak ada password tambahan.</p>
+ <button class="btn primary block" id="participant-continue">Mulai belajar →</button></div></div>`;
+}
+function showParticipantAuth(which){
+ $("#root").innerHTML=which==="login"?participantLoginPage():signupPage();
+ const form=which==="login"?$("#participant-login-form"):$("#signup-form");
+ form.onsubmit=which==="login"?participantLogin:signup;
+ $("[data-back-auth]").forEach(b=>b.onclick=renderParticipant);
+ window.scrollTo(0,0);
+}
+async function participantLogin(e){
+ e.preventDefault();
+ const form=e.currentTarget,button=form.querySelector("button[type=submit]");
+ const username=String(new FormData(form).get("username")||"").trim().toUpperCase();
+ button.disabled=true;button.textContent="Memeriksa username…";
+ try{
+  if(!state.online)throw Error("Login username memerlukan koneksi kelas.");
+  const data=await request("/api/participant-login",{method:"POST",payload:{username}});
+  state.user=data.user;state.justRegistered=false;
+  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+  const me=await request("/api/me");
+  state.work=me.answers||{};saveWork();
+  state.active="mulai";localStorage.setItem(STORAGE_VIEW,"mulai");
+  render();toast("Selamat datang kembali, "+state.user.name);
+ }catch(error){toast(error.message);button.disabled=false;button.textContent="Masuk ke kelas →"}
 }
 function startPage(){
   return `${titleBlock("mulai")}<div class="hero" style="padding:30px"><div><span class="kicker">Tantangan Lensa Muda</span><h1 style="font-size:clamp(27px,4vw,47px)">Satu foto bisa indah.<br><span>Sembilan foto bisa bercerita.</span></h1><p>Dalam tiga jam, kamu belajar membuat keputusan di balik kamera dan di meja editor. Karya akhir lomba menggunakan 9 foto asli dan satu caption bersama sekitar 150 kata.</p><div class="actions"><button class="btn primary" data-nav="kamera">Masuk laboratorium kamera →</button></div></div><div class="hero-icon"><svg viewBox="0 0 240 180" fill="none"><rect x="23" y="26" width="196" height="129" rx="12" stroke="currentColor" stroke-width="8"/><circle cx="119" cy="89" r="46" stroke="currentColor" stroke-width="8"/><path d="M33 145 92 98l41 27 35-51 44 54" stroke="currentColor" stroke-width="7"/></svg></div></div><div class="grid" style="margin-top:16px"><div class="card"><div class="eyebrow">Tidak perlu kamera</div><h3>Pakai simulator</h3><p class="small-note">Seluruh pelajaran inti dapat dikerjakan tanpa memotret sungguhan.</p></div><div class="card"><div class="eyebrow">Tema karya</div><h3>Wajah Budaya Sulut</h3><p class="small-note">Cari manusia, aktivitas, detail, hubungan, serta makna kebudayaan.</p></div><div class="card"><div class="eyebrow">Aturan pokok</div><h3>Jujur pada momen</h3><p class="small-note">Jangan mengarang fakta, merekayasa candid, atau menghapus objek.</p></div></div>`;
@@ -364,16 +403,29 @@ async function signup(e){
   try {const response=await request("/api/participants",{method:"POST",payload:data});state.user=response.user}
   catch(err){button.disabled=false;button.textContent="Masuk Studio Foto Cerita →";toast("Pendaftaran gagal: "+err.message);return}
  }else{
-  state.user={id:crypto.randomUUID(),...data,token:null};
+  state.user={id:crypto.randomUUID(),...data,username:"DEMO-"+crypto.randomUUID().slice(0,8).toUpperCase(),token:null};
  }
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
- state.active="mulai";render();toast("Selamat datang, "+state.user.name+"!");
+ state.work={};saveWork();state.justRegistered=true;state.active="mulai";render();toast("Pendaftaran berhasil! Simpan username kamu.");
 }
-function logout(){state.user=null;state.work={};localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);render()}
+function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);render()}
 function renderParticipant(){
- if(!state.user){$("#root").innerHTML=landing();$("#start-signup").onclick=()=>{$("#root").innerHTML=signupPage();$("#signup-form").onsubmit=signup;window.scrollTo(0,0)};return}
+ if(!state.user){
+  $("#root").innerHTML=landing();
+  $("#start-signup").onclick=()=>showParticipantAuth("signup");
+  $("#start-login").onclick=()=>showParticipantAuth("login");
+  return;
+ }
+ if(state.justRegistered){
+  $("#root").innerHTML=participantWelcomePage();
+  $("#copy-participant-username").onclick=()=>navigator.clipboard?.writeText(state.user.username).then(()=>toast("Username disalin"),()=>toast("Catat username secara manual"));
+  $("#participant-continue").onclick=()=>{state.justRegistered=false;renderParticipant()};
+  return;
+ }
  if(!isUnlocked(state.active))state.active=STAGES[Math.min(state.serverStage,6)].key;
  $("#root").innerHTML=lessonLayout();bindLessons();
+ const button=$("#participant-switch-account");
+ if(button)button.onclick=()=>{if(confirm("Keluar dari akun ini? Simpan username terlebih dahulu."))logout()};
 }
 function trainerLogin(){
  return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><div id="trainer-login-feedback" role="alert" aria-live="polite" class="login-feedback" hidden></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
