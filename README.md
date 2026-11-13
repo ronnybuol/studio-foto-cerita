@@ -214,3 +214,14 @@ Pada modul 01–04, peserta mendapat kontrol **Latihan saya**, **Baca materi**, 
 Mode belajar disimpan lokal dengan kunci ID peserta+modul. State `presentation` server dan D1 tetap menjadi acuan LCD, bukan pemaksa tampilan praktik peserta. Pembukaan modul berikutnya juga tidak memindahkan peserta dari tugas yang sedang dikerjakan; pembukaan tahap pertama dari orientasi tetap mengantar peserta ke modul aktif. Penutupan/lock kelas tetap berlaku. Draf baru disimpan lokal; untuk mengirim jawaban akhir ke dashboard trainer, peserta tetap perlu memakai tombol **Simpan**.
 
 Uji praktik: buka Modul 04, pilih beberapa foto dan tulis judul/alasan, ubah slide di trainer; HP harus tetap pada latihan. Tekan Baca materi, pindah slide sendiri, lalu Latihan saya; seluruh isian masih ada. Tekan Ikuti trainer lalu ubah slide; HP harus mengikuti. Ulangi pada Modul 01–03.
+
+
+## Modul 05 — Caption Lab (slide 45–50)
+
+Modul 05 melanjutkan **Sembilan Bingkai** tanpa menyusun ulang foto atau mengarang fakta. Enam slide khusus digunakan trainer dan layar LCD: memberi konteks, 5W+1H, membedakan klaim dengan bukti, narasi sembilan bingkai, pemeriksaan fakta, dan praktik. Contoh visual menggunakan foto dokumentasi musik bambu Sangihe, September 2017, karya Ronny Adolof Buol, yang sudah berada di `public/assets/composition/`.
+
+**Peserta:** saat latihan, Caption Lab menampilkan sembilan foto beserta urutan dan judul kerja dari Modul 04 milik peserta yang sama (bila sudah dipilih). Peserta mengisi enam unsur fakta, catatan hal-hal yang perlu diverifikasi, dan satu narasi sekitar 150 kata dengan penghitungan otomatis. Tiga butir pemeriksaan editorial perlu dicentang sebelum mengirim. Draf ditulis ke localStorage tiap perubahan; pengiriman akhir menggunakan key jawaban D1 `caption` yang sudah ada. Snapshot sembilan ID pilihan peserta juga disertakan pada hasil caption sehingga Sorotan Karya LCD dapat memperlihatkan foto pembuka, tengah, dan penutup. Kisaran 120–180 kata adalah panduan, bukan batas mutlak; validasi minimum 50 kata menghindari penyimpanan isian yang belum berupa narasi.
+
+Mode **Latihan saya / Baca materi / Ikuti trainer** tetap berlaku. Trainer boleh membuka slide lain tanpa memindahkan peserta dari editor. Sorotan karya peserta dari dashboard bekerja dengan jawaban yang sudah tersimpan, tidak menampilkan draf yang belum dikirim. Tidak ada migrasi D1, perubahan binding R2, atau pembuatan foto baru.
+
+**Uji:** trainer pilih tahap 05, LCD menampilkan slide pertama, pindahkan semua enam slide dan buka laboratorium; peserta pilih sembilan bingkai di Modul 04, kembali ke Caption Lab, pastikan urutan foto benar. Tulis sebagian caption, klik Baca materi lalu kembali ke Latihan saya dan periksa draf. Isi 5W+1H dan daftar pemeriksaan, simpan, segarkan dashboard, tampilkan hasil caption di LCD, lalu hentikan sorotan untuk kembali ke presentasi terakhir.

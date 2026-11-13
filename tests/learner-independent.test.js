@@ -8,7 +8,7 @@ test("Mode latihan peserta bertahan saat trainer mengubah slide dan referensi te
  assert.ok(start>=0&&end>start);
  const ctx={
   state:{user:{id:"participant-a"},presentation:{view:"simulator",slide:44},learnerViews:{story:{mode:"practice",slide:39}},active:"story",work:{}},
-  MAX_PRESENTATION_SLIDE:29,COMPOSITION_START:30,COMPOSITION_END:34,EDFAT_START:35,EDFAT_END:38,STORY_START:39,STORY_END:44,
+  MAX_PRESENTATION_SLIDE:29,COMPOSITION_START:30,COMPOSITION_END:34,EDFAT_START:35,EDFAT_END:38,STORY_START:39,STORY_END:44,CAPTION_START:45,CAPTION_END:50,
   localStorage:{setItem(){}},readJSON:()=>({}),renderParticipant(){ctx.renders++},
   renders:0,Number
  };

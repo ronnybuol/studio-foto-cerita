@@ -2,10 +2,11 @@ import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORD
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
+import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const APP_RELEASE = "m04-independent-20261114";
+const APP_RELEASE = "m05-caption-20261114";
 const STORAGE_USER = "lm26-user";
 const STORAGE_WORK = "lm26-work";
 const STORAGE_VIEW = "lm26-view";
@@ -91,7 +92,7 @@ async function syncState(){
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=STORY_END)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=CAPTION_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -102,7 +103,7 @@ async function syncState(){
   }
 }
 function pageMode(){const mode=location.hash.replace(/^#\//,"").split("/")[0];return ["trainer","lcd","peserta"].includes(mode)?mode:"peserta"}
-const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END]};
+const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END]};
 function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
 function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
 function saveLearnerViews(){localStorage.setItem(learnerKey(),JSON.stringify(state.learnerViews))}
@@ -136,7 +137,7 @@ function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode
  case "komposisi":return theory?compositionParticipantPage(slide):compositionPage();
  case "edfat":return theory?edfatParticipantSlide(slide):edfatPage();
  case "story":return theory?storyParticipantSlide(slide):storyPage();
- case "caption":return captionPage();
+ case "caption":return theory?captionParticipantSlide(slide):captionPage();
  case "etika":return ethicsPage();
  default:return startPage();
 }}
@@ -514,6 +515,41 @@ function storyTrainerPanel(data,isMentor){
  <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan foto yang tidak dipilih. Kandidat 12 adalah detail alternatif dari foto 5, bukan foto peristiwa lain.</p></div>`}
  </section>`;
 }
+function captionTheoryContent(index,variant="lcd"){
+ const slide=captionSlide(index);
+ return `<div class="caption-theory-layout caption-theory-${variant}"><div class="caption-theory-copy">
+  <span class="theory-kicker">BAB 5 · ${escapeHtml(slide.tag)} · ${captionLabel(index)} / ${CAPTION_SLIDES.length}</span>
+  <h2>${escapeHtml(slide.title)}</h2><p class="caption-theory-lead">${escapeHtml(slide.lead)}</p>
+  <ul class="caption-theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div>
+ </div>${captionVisual(index)}</div>`;
+}
+function captionParticipantSlide(index){
+ return `${titleBlock("caption")}<section class="card caption-learner-theory">
+   <p class="small-note">Tinjau foto dan diskusikan pertanyaan bersama kelas. Kamu juga boleh membuka teori sendiri lalu kembali menulis.</p>
+   ${captionTheoryContent(index,"participant")}</section>`;
+}
+function captionTrainerPanel(data,isMentor){
+ const i=state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START;
+ const x=captionSlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card caption-trainer-card"><div class="trainer-demo-heading">
+ <div><span class="eyebrow">PRESENTASI · BAB 5</span><h2>Caption Lab</h2>
+ <p class="small-note">Enam slide untuk memahami 5W+1H, verifikasi, dan menulis narasi foto dari sembilan bingkai.</p></div>
+ <span class="pill green">● MODUL 05 SIAP</span></div>
+ ${theory?`<div class="caption-trainer-preview"><div class="caption-trainer-notes">
+   <span class="eyebrow">SLIDE ${captionLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+   <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>
+   ${captionVisual(i)}</div><div class="trainer-slide-nav">
+   <button class="btn subtle" data-caption-step="-1" ${i===CAPTION_START||isMentor?"disabled":""}>← Sebelumnya</button>
+   <strong>Slide ${captionLabel(i)} / 06</strong>
+   <button class="btn primary" data-caption-step="1" ${i===CAPTION_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+   <div class="story-slide-dots">${CAPTION_SLIDES.map((x,j)=>`<button class="theory-dot" data-caption-slide="${CAPTION_START+j}" aria-pressed="${i===CAPTION_START+j}" ${isMentor?"disabled":""}>${captionLabel(CAPTION_START+j)}</button>`).join("")}</div>
+   <div class="actions"><button class="btn primary" data-caption-mode="simulator" ${isMentor?"disabled":""}>Buka Caption Lab peserta →</button></div>`
+ :`<div class="trainer-theory-compact"><div><strong>Caption Lab mandiri sedang terbuka</strong>
+ <p class="small-note">Peserta meninjau sembilan foto, mencatat 5W+1H, dan menyusun narasi. Perubahan slide trainer tidak mengganggu mereka.</p></div>
+ <button class="btn subtle" data-caption-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>`}
+ </section>`;
+}
 function renderStoryShot(x,chosen=false,pos=0,total=0){
  if(!x)return "";
  return `<article class="story-candidate ${chosen?"story-candidate-selected":""}">
@@ -544,10 +580,44 @@ function storyPage(){
  <div class="story-bank-grid">${remaining.map(x=>renderStoryShot(x)).join("")||`<div class="story-empty">Semua foto sudah dipilih.</div>`}</div></section>
  <div class="info"><b>Catatan editor:</b> foto pembuka mengenalkan, bagian tengah mengembangkan, dan penutup memberi pemahaman. Jangan membuat cerita yang tidak didukung fakta.</div>`;
 }
+function captionPhotoStrip(selected){
+ return `<div class="caption-photo-strip">${selected.map((id,i)=>{
+ const photo=STORY_BANK.find(x=>x.id===id);return !photo?"":`<figure class="caption-photo-tile">${storyImage(photo,"Foto urutan "+(i+1)+": "+photo.title)}
+ <figcaption><b>${String(i+1).padStart(2,"0")}</b> ${escapeHtml(photo.title)}</figcaption></figure>`;
+ }).join("")}</div>`;
+}
 function captionPage(){
-const saved=state.work.caption||{};
-const draft=saved.captionText||"";
-return `${titleBlock("caption")}<div class="info"><b>Satu caption untuk sembilan foto.</b> Masukkan data yang sudah kamu ketahui benar. Jika belum tahu, tulis “perlu verifikasi” dalam catatanmu, jangan mengarang informasi.</div><form id="caption-form" class="card" style="margin-top:16px"><h2>Catatan reporter: 5W+1H</h2><div class="field-row">${CAPTION_FIELDS.map(([key,label,placeholder])=>`<div class="field"><label for="cap-${key}">${label}</label><input id="cap-${key}" name="${key}" value="${escapeHtml(saved[key]||"")}" placeholder="${escapeHtml(placeholder)}" maxlength="500"></div>`).join("")}</div><hr class="rule"><div class="field"><label for="captionText">Caption final (satu narasi bersama)</label><textarea class="captionbox" id="captionText" name="captionText" placeholder="Tulis narasi yang memandu pembaca memahami seluruh rangkaian foto. Mulailah dari fakta terpenting…">${escapeHtml(draft)}</textarea><small><b id="wordcount">${countWords(draft)}</b> kata · target sekitar 150 kata (indikator latihan 120–180) · tidak ada teks otomatis dari AI</small><div class="progress-meter"><span id="wordbar" style="width:${Math.min(100,countWords(draft)/150*100)}%"></span></div></div><button class="btn primary" type="submit">Simpan caption ✓</button></form><div class="grid two" style="margin-top:14px"><div class="card"><h3>Caption bukan sekadar judul</h3><p class="small-note">Sampaikan siapa, apa, di mana, kapan, bagaimana, dan mengapa penting. Bedakan informasi yang kamu saksikan dan penjelasan yang kamu peroleh dari narasumber.</p></div><div class="card"><h3>Integritas karya</h3><p class="small-note">Pertahankan file asli beserta metadata. Jangan menambah, menghapus, atau memindahkan objek dan jangan menggunakan AI untuk menghasilkan karya lomba.</p></div></div>`;
+ const saved=state.work.caption||{},draft=saved.captionText||"",story=state.work.story||{};
+ const selected=Array.isArray(story.selected)?story.selected.filter(id=>STORY_BANK.some(x=>x.id===id)).slice(0,9):[];
+ const count=countWords(draft),validStory=selected.length===9;
+ return `${titleBlock("caption")}<section class="card caption-story-link">
+ <span class="eyebrow">DARI MODUL 04 KE MODUL 05</span><h2>Foto yang kamu pilih, cerita yang kamu tulis.</h2>
+ <p>${validStory?"Ini sembilan foto dari meja editormu, ditampilkan dalam urutan pilihanmu.":"Belum ada sembilan foto dari Modul 04. Kamu boleh mulai membuat catatan, tetapi sebaiknya lengkapi urutan fotomu lebih dulu."}</p>
+ ${validStory?`<div class="caption-story-title"><b>Judul kerja:</b> ${escapeHtml(story.title||"Belum ada judul")}</div>
+ ${captionPhotoStrip(selected)}`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
+ <p class="small-note">Foto dokumentasi: Ronny Adolof Buol · Sangihe, September 2017. Sembilan bingkai menjadi referensi, bukan bukti otomatis seluruh klaim dalam tulisan.</p></section>
+ <form id="caption-form" class="card caption-workspace">
+ <div class="story-head"><h2>Catatan fakta · 5W + 1H</h2><span class="pill">6 unsur</span></div>
+ <p class="small-note">Isi berdasarkan foto, catatan lapangan, dan informasi yang telah dipastikan. Jika masih belum diketahui, tulis “perlu verifikasi”. Jangan menebak.</p>
+ <div class="field-row">${CAPTION_FIELDS.map(([key,label,placeholder])=>`<div class="field">
+ <label for="cap-${key}">${label}</label><input id="cap-${key}" name="${key}" value="${escapeHtml(saved[key]||"")}" placeholder="${escapeHtml(placeholder)}" maxlength="500"></div>`).join("")}</div>
+ <div class="field"><label for="caption-verification">Fakta yang masih perlu diverifikasi</label>
+ <textarea id="caption-verification" name="verification" rows="3" maxlength="1800" placeholder="Contoh: nama dan peran orang dalam foto, nama lokasi yang lebih rinci, rincian penghargaan…">${escapeHtml(saved.verification||"")}</textarea>
+ <small>Tuliskan pertanyaan untuk narasumber atau data yang perlu diperiksa.</small></div>
+ <hr class="rule">
+ <div class="field"><label for="captionText">Narasi untuk sembilan foto (target sekitar 150 kata)</label>
+ <textarea class="captionbox" id="captionText" name="captionText" rows="9" maxlength="11000" placeholder="Mulailah dari fakta paling penting. Hubungkan orang, aktivitas, lokasi, dan proses yang terbukti dalam rangkaian foto…">${escapeHtml(draft)}</textarea>
+ <div class="caption-counter"><strong id="wordcount">${count} kata</strong><span id="caption-word-feedback">${count===0?"Mulai tulis narasimu":count<120?"Masih di bawah kisaran latihan":count<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan"}</span></div>
+ <div class="progress-meter"><span id="wordbar" style="width:${Math.min(100,count/150*100)}%"></span></div>
+ <small>Kisaran latihan 120–180 kata sebagai panduan, bukan aturan kaku. Prioritaskan akurasi. Aplikasi tidak menuliskan narasi otomatis.</small></div>
+ <div class="caption-review-list"><h3>Periksa sebelum menyimpan</h3>
+ <label><input type="checkbox" name="reviewVisual" value="yes" ${saved.reviewVisual==="yes"?"checked":""}> Semua pernyataan tentang foto sesuai yang terlihat.</label>
+ <label><input type="checkbox" name="reviewFacts" value="yes" ${saved.reviewFacts==="yes"?"checked":""}> Nama, tanggal, tempat, serta klaim lain telah diperiksa atau ditandai perlu verifikasi.</label>
+ <label><input type="checkbox" name="reviewSequence" value="yes" ${saved.reviewSequence==="yes"?"checked":""}> Narasi sesuai urutan dan gagasan sembilan foto.</label></div>
+ <div class="actions"><button class="btn primary" type="submit">Simpan hasil Caption Lab ✓</button></div>
+ <p class="small-note" role="status" id="caption-save-status" aria-live="polite">Draf tersimpan di perangkat saat kamu mengetik. Tekan Simpan untuk mengirim hasil ke trainer.</p>
+ </form>
+ <section class="card caption-reminder"><h3>Catatan editorial</h3><p>Rangkaian ini dokumentasi musik bambu Sangihe, September 2017. Nama, gelar, tujuan kegiatan, dan rincian penghargaan tidak boleh ditambahkan sebagai fakta tanpa sumber yang dapat diperiksa.</p></section>`;
 }
 function countWords(v){return v.trim()?v.trim().split(/\s+/).length:0}
 function ethicsPage(){
@@ -614,11 +684,33 @@ function bindLessons(){
  }
  if(state.active==="caption"){
   const form=$("#caption-form");
-  form.addEventListener("input",()=>{
-    const obj=Object.fromEntries(new FormData(form).entries());state.work.caption=obj;saveWork();
-    const n=countWords(obj.captionText||"");$("#wordcount").textContent=n;$("#wordbar").style.width=Math.min(100,n/150*100)+"%";
-  });
-  form.onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());saveAnswer("caption",data)};
+  if(form){
+   function currentDraft(){
+    const data=Object.fromEntries(new FormData(form).entries());
+    for(const flag of ["reviewVisual","reviewFacts","reviewSequence"])data[flag]=form.elements[flag]?.checked?"yes":"no";
+    return data;
+   }
+   function updateDraft(){
+    const obj=currentDraft();state.work.caption={...obj,_draft:true};saveWork();
+    const n=countWords(obj.captionText||"");
+    const counter=$("#wordcount"),bar=$("#wordbar"),feedback=$("#caption-word-feedback");
+    if(counter)counter.textContent=n+" kata";
+    if(bar)bar.style.width=Math.min(100,n/150*100)+"%";
+    if(feedback)feedback.textContent=n===0?"Mulai tulis narasimu":n<120?"Masih di bawah kisaran latihan":n<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan";
+   }
+   form.oninput=updateDraft;
+   form.onchange=updateDraft;
+   form.onsubmit=async e=>{
+    e.preventDefault();const data=currentDraft(),n=countWords(data.captionText||"");
+    const status=$("#caption-save-status");
+    if(n<50){if(status)status.textContent="Narasi terlalu pendek untuk latihan; tulis minimal 50 kata.";toast("Lengkapi narasi terlebih dahulu");return}
+    if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
+      if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
+    const result={...data,storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
+    await saveAnswer("caption",result);
+    if(status)status.textContent=state.online?"Permintaan simpan dikirim. Periksa pesan status di atas.":"Hasil disimpan di perangkat mode demo.";
+   };
+  }
  }
  if(state.active==="etika"){
   $("#ethics-form").onchange=e=>{const values=new FormData(e.currentTarget);state.work.etika={...(state.work.etika||{}),answers:ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)))};saveWork()};
@@ -756,7 +848,7 @@ function answerDetails(key,v){
 }
 if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
-   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Caption (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p></div>`;
+   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Narasi (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p><p><b>Perlu verifikasi:</b> ${escapeHtml(v.verification||"Tidak ada catatan")}</p></div>`;
  }
  if(key==="etika")return `<p class="small-note">Jawaban benar: <b>${Number(v.score)||0} dari 4</b></p>`;
  return `<p class="small-note">Latihan tersimpan.</p>`;
@@ -774,6 +866,19 @@ function lcdSpotlightContent(spot){
    <h1>${name}</h1><h2>${escapeHtml(a.title||"Sembilan Bingkai")}</h2>
    <section class="spotlight-notes"><strong>ALASAN EDITORIAL PESERTA</strong><p>${escapeHtml(a.reason||"Belum mencatat alasan.")}</p></section>
    <p class="spotlight-prompt">Diskusi: Mengapa foto pertama dan terakhir dipilih? Adakah informasi yang berulang?</p></aside></div>`;
+ }
+ if(spot.module==="caption"){
+  const ids=Array.isArray(a.storySelected)?a.storySelected.slice(0,9):[];
+  const samples=[ids[0],ids[4],ids[8]].filter(id=>Number.isInteger(id));
+  return `<div class="caption-spotlight"><div class="caption-spotlight-top">
+   <span class="kicker">SOROTAN KARYA · CAPTION LAB</span><h1>${name}</h1>
+   <p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
+   ${samples.length?`<div class="caption-spotlight-photos">${samples.map((id,i)=>{
+      const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption>${escapeHtml(item.title)}</figcaption></figure>`:"";
+    }).join("")}</div>`:""}
+   <div class="caption-spotlight-text">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
+   <div class="caption-spotlight-question">Diskusi: Klaim apa yang kuat dan informasi apa yang masih perlu diverifikasi?</div>
+  </div>`;
  }
  if(spot.module==="edfat"){
   return `<div class="spotlight-generic"><span class="kicker">SOROTAN KARYA · ${label}</span><h1>${name}</h1>
@@ -803,7 +908,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · LCD mengikuti presentasi trainer; peserta dapat mengerjakan latihan secara mandiri. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses peserta. LCD mengikuti slide yang Anda kendalikan; pekerjaan mandiri peserta tetap terbuka."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===5?captionTrainerPanel(data,isMentor):data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
 <h3>${state.spotlight?"Menampilkan karya: "+escapeHtml(state.spotlight.name):"LCD mengikuti presentasi trainer"}</h3>
 <p class="small-note">Pilih hasil peserta untuk diskusi. Sorotan tidak mengubah slide atau mode presentasi terakhir.</p></div>
 <button class="btn primary" id="stop-spotlight" ${!state.spotlight||isMentor?"disabled":""}>Kembali ke Presentasi</button></section><div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
@@ -852,11 +957,11 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=4){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:STORY_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=5){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:CAPTION_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage!==state.dashboard?.stage && stage>=1 && stage<=4){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:STORY_START},auth:true});
+     if(stage!==state.dashboard?.stage && stage>=1 && stage<=5){
+       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:CAPTION_START},auth:true});
      }
      await syncState();await fetchDashboard();render();
      toast("Tahap kelas berhasil diperbarui");
@@ -864,7 +969,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(STORY_END,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(CAPTION_END,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -894,6 +999,12 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
+ $$("[data-caption-step]").forEach(button=>button.onclick=()=>{
+    const next=state.presentation.slide+Number(button.dataset.captionStep);
+    if(next>=CAPTION_START&&next<=CAPTION_END)choosePresentation({view:"theory",slide:next});
+ });
+ $$("[data-caption-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.captionSlide)}));
+ $$("[data-caption-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.captionMode,slide:state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START}));
  $$("[data-story-step]").forEach(button=>button.onclick=()=>{
   const next=state.presentation.slide+Number(button.dataset.storyStep);
   if(next>=STORY_START&&next<=STORY_END)choosePresentation({view:"theory",slide:next});
@@ -1179,7 +1290,13 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  const camera=state.demoCamera;
- const content=stage===4&&state.presentation.view==="theory"
+ const content=stage===5&&state.presentation.view==="theory"
+    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 5 · CAPTION LAB</span><span class="theory-slide-indicator">SLIDE ${captionLabel(state.presentation.slide)} / ${CAPTION_SLIDES.length}</span></div>${captionTheoryContent(state.presentation.slide,"lcd")}`
+    :stage===5
+    ?`<div class="caption-lcd-mission"><span class="kicker">TAHAP 05 · MENULIS NARASI FOTO</span><h1>Sembilan foto. <em>Satu cerita yang akurat.</em></h1>
+      <p>Gunakan pilihan foto dari Meja Editor, isi unsur 5W+1H, lalu tulis narasi sekitar 150 kata. Tandai fakta yang masih perlu diperiksa.</p>
+      ${captionVisual(CAPTION_END)}<div class="theory-question"><span>DISKUSI KELAS</span><strong>Apa yang terlihat dalam foto, dan apa yang perlu ditanyakan kepada narasumber?</strong></div></div>`
+    :stage===4&&state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 4 · SEMBILAN BINGKAI</span><span class="theory-slide-indicator">SLIDE ${storyLabel(state.presentation.slide)} / ${STORY_SLIDES.length}</span></div>${storyTheoryContent(state.presentation.slide,"lcd")}`
    :stage===4
    ?`<div class="story-lcd-mission"><span class="kicker">TAHAP 04 · MEJA EDITOR FOTO</span><h1>Pilih sembilan. <em>Susun ceritanya.</em></h1>
@@ -1217,7 +1334,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":stage===4?"lcd-story-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":stage===4?"lcd-story-mode":stage===5?"lcd-caption-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>
