@@ -514,19 +514,62 @@ function answerDetails(key,v){
  if(key==="etika")return `<p class="small-note">Jawaban benar: <b>${Number(v.score)||0} dari 4</b></p>`;
  return `<p class="small-note">Latihan tersimpan.</p>`;
 }
+function rosterMessage(includeUsernames=false){
+ const list=state.dashboard?.participants||[];
+ return ["Daftar Peserta Lensa Muda — 16 November 2026","Total: "+list.length+" peserta","",...list.map((p,i)=>(i+1)+". "+p.name+" — "+p.school+" / "+p.className+(includeUsernames?" — "+(p.username||""): "")+" — "+(p.done||0)+"/6 modul"),"","Kelas Belajar Zonautara.com"].join("\n");
+}
+function participantFormHTML(p=null){
+ const isEdit=!!p;
+ return `<form id="${isEdit?"participant-edit-form":"participant-add-form"}" class="card participant-edit-form">
+ <h3>${isEdit?"Koreksi data peserta":"Tambah peserta"}</h3>
+ <p class="small-note">${isEdit?"Username dapat diperbaiki dan progres tidak berubah.":"Trainer dapat mendaftarkan peserta yang kesulitan memakai HP."}</p>
+ <div class="field-row">
+ <div class="field"><label for="manage-name">Nama lengkap</label><input id="manage-name" name="name" value="${escapeHtml(p?.name||"")}" required maxlength="90"></div>
+ <div class="field"><label for="manage-school">Sekolah</label><input id="manage-school" name="school" value="${escapeHtml(p?.school||"")}" required maxlength="140"></div>
+ <div class="field"><label for="manage-class">Kelas</label><input id="manage-class" name="className" value="${escapeHtml(p?.className||"")}" required maxlength="30"></div>
+ <div class="field"><label for="manage-username">Username</label><input id="manage-username" name="username" value="${/^[a-z]{3,20}$/.test(p?.username||"")?escapeHtml(p.username):""}" required pattern="[a-z]{3,20}" minlength="3" maxlength="20" autocapitalize="none" spellcheck="false" placeholder="contoh: jufri"><small>Huruf kecil, satu kata, 3–20 huruf. Username lama acak dapat diganti.</small></div></div>
+ <div class="actions"><button type="submit" class="btn primary">${isEdit?"Simpan perubahan":"Daftarkan peserta"}</button><button id="cancel-participant-edit" type="button" class="btn subtle">Batal</button></div></form>`;
+}
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${theoryTrainerPanel(data,isMentor)}${state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
-<p class="small-note">Username digunakan untuk masuk kembali. Jangan membagikan username peserta di ruang publik.</p>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${theoryTrainerPanel(data,isMentor)}${state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
+<div class="participant-management-tools"><button class="btn primary small" id="trainer-add-participant" ${isMentor?"disabled":""}>+ Tambah peserta</button><button class="btn small" id="print-participants">Cetak / Simpan PDF</button><button class="btn small subtle" id="share-participants-wa">Bagikan via WA</button><button class="btn small subtle" id="share-participants-email">Kirim via email</button></div><p class="small-note">Username terlihat pada daftar trainer. Untuk keamanan, daftar yang dibagikan melalui WA/email tidak menyertakan username; cetakan memuat username untuk administrasi internal.</p>
 <div class="field"><label for="participant-filter">Cari peserta</label><input id="participant-filter" type="search" placeholder="Nama, username, sekolah, atau kelas"></div>
 <div class="table-wrap participant-table"><table class="data-table"><thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th><th>Aksi</th></tr></thead><tbody>${(data.participants||[]).map(p=>`<tr data-participant-row="${escapeHtml((p.name+" "+(p.username||"")+" "+p.school+" "+p.className).toLowerCase())}"><td><b>${escapeHtml(p.name)}</b></td><td><code>${escapeHtml(p.username||"—")}</code></td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td><td><div class="participant-row-actions"><button class="btn small" data-inspect="${escapeHtml(p.id)}">Lihat</button>${p.username?`<button class="btn small subtle" data-copy-username="${escapeHtml(p.id)}">Salin</button>`:""}${!isMentor?`<button class="btn small subtle" data-edit-participant="${escapeHtml(p.id)}">Edit</button><button class="btn small danger" data-delete-participant="${escapeHtml(p.id)}">Hapus</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="center muted">Belum ada peserta terdaftar.</td></tr>`}</tbody></table></div>
-<div id="participant-management"></div><div id="inspect" style="margin-top:12px"></div></div></div>`;
+<div id="participant-management"></div><div id="inspect" style="margin-top:12px"></div></div>
+<section id="participant-print-sheet" class="participant-print-sheet"><h1>Daftar Peserta Lensa Muda</h1><p>Studio Foto Cerita · 16 November 2026 · Kelas Belajar Zonautara.com</p><table><thead><tr><th>No.</th><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th></tr></thead><tbody>${(data.participants||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.username||"—")}</td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td></tr>`).join("")}</tbody></table><p class="small-note">Dokumen internal, username merupakan akses akun peserta tanpa password.</p></section></div>`;
 }
 function bindDashboard(){
  $("#trainer-out").onclick=()=>{
    state.trainerToken="";
    sessionStorage.removeItem("lm26-trainer");sessionStorage.removeItem("lm26-role");
    state.dashboard=null;render();
+ };
+ const lockButton=$("#trainer-toggle-class-lock");
+ if(lockButton)lockButton.onclick=async()=>{
+  if(state.trainerRole!=="trainer"||!state.online)return;
+  const target=!state.dashboard.locked;
+  if(!confirm(target?"Kunci akses aplikasi peserta sekarang? Peserta tidak bisa masuk atau menyimpan jawaban.":"Buka lagi akses peserta untuk melanjutkan kelas?"))return;
+  try{await request("/api/class-lock",{method:"PUT",payload:{locked:target},auth:true});
+   await syncState();await fetchDashboard();render();toast(target?"Kelas terkunci":"Kelas dibuka kembali");
+  }catch(error){toast("Tidak dapat mengubah kunci: "+error.message)}
+ };
+ const print=$("#print-participants");if(print)print.onclick=()=>window.print();
+ const wa=$("#share-participants-wa");if(wa)wa.onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(rosterMessage()),"_blank","noopener,noreferrer");
+ const email=$("#share-participants-email");if(email)email.onclick=()=>{window.location.href="mailto:?subject="+encodeURIComponent("Daftar Peserta Lensa Muda")+"&body="+encodeURIComponent(rosterMessage())};
+ const add=$("#trainer-add-participant");
+ if(add)add.onclick=()=>{
+  if(state.trainerRole!=="trainer")return;
+  const area=$("#participant-management");area.innerHTML=participantFormHTML();
+  $("#cancel-participant-edit").onclick=()=>area.innerHTML="";
+  $("#participant-add-form").onsubmit=async event=>{
+   event.preventDefault();const payload=Object.fromEntries(new FormData(event.currentTarget).entries());
+   try{if(!state.online)throw Error("Perlu koneksi kelas");
+    await request("/api/trainer/participants",{method:"POST",payload,auth:true});
+    await fetchDashboard();render();toast("Peserta baru ditambahkan");
+   }catch(error){toast("Gagal menambah: "+error.message)}
+  };
+  area.scrollIntoView({block:"nearest",behavior:"smooth"});
  };
  $("#refresh-dashboard").onclick=async()=>{
    try{await fetchDashboard();render()}catch(e){toast(e.message)}
@@ -596,11 +639,7 @@ function bindDashboard(){
   if(state.trainerRole!=="trainer")return;
   const p=(state.dashboard.participants||[]).find(x=>x.id===btn.dataset.editParticipant);
   if(!p)return;const area=$("#participant-management");
-  area.innerHTML=`<form id="participant-edit-form" class="card participant-edit-form"><h3>Koreksi data peserta</h3><p class="small-note">Username dan progres tidak berubah.</p><div class="field-row">
-  <div class="field"><label for="manage-name">Nama</label><input id="manage-name" name="name" value="${escapeHtml(p.name)}" required maxlength="90"></div>
-  <div class="field"><label for="manage-school">Sekolah</label><input id="manage-school" name="school" value="${escapeHtml(p.school)}" required maxlength="140"></div>
-  <div class="field"><label for="manage-class">Kelas</label><input id="manage-class" name="className" value="${escapeHtml(p.className)}" required maxlength="30"></div></div>
-  <div class="actions"><button type="submit" class="btn primary">Simpan koreksi</button><button id="cancel-participant-edit" type="button" class="btn subtle">Batal</button></div></form>`;
+  area.innerHTML=participantFormHTML(p);
   $("#cancel-participant-edit").onclick=()=>area.innerHTML="";
   $("#participant-edit-form").onsubmit=async e=>{
    e.preventDefault();const payload=Object.fromEntries(new FormData(e.currentTarget).entries());
