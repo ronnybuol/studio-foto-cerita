@@ -1,6 +1,7 @@
 import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
+import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -86,7 +87,7 @@ async function syncState(){
     if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=EDFAT_END)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=STORY_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -114,7 +115,7 @@ function renderModule(){switch(state.active){
   case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
   case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
   case "edfat":return state.serverStage===3&&state.presentation.view==="theory"&&state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?edfatParticipantSlide():edfatPage();
-  case "story":return storyPage();
+  case "story":return state.serverStage===4&&state.presentation.view==="theory"&&state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?storyParticipantSlide():storyPage();
   case "caption":return captionPage();
   case "etika":return ethicsPage();
   default:return startPage();
@@ -462,13 +463,66 @@ const scale=near?1.4:1, shift=i%3===0?45:i%3===1?-30:0;
 return `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustrasi latihan foto cerita"><rect width="600" height="400" fill="${bg}"/><rect x="0" y="265" width="600" height="135" fill="${ground}"/><rect x="25" y="39" width="210" height="185" rx="5" fill="#34555b" stroke="#d2b890" stroke-width="10"/><rect x="42" y="55" width="175" height="150" fill="#d4d6b8"/><path d="M42 185 90 123l35 24 46-55 46 59v54H42" fill="#89a6a0"/><path d="M0 38h600" stroke="#524c3e" stroke-width="17"/><path d="M470 42v90M540 42v100" stroke="#d4b37c" stroke-width="6"/><path d="M452 136q15-31 36 0v30h-36zM520 143q15-29 36 0v29h-36z" fill="${accent}"/><g transform="translate(${shift} 0) translate(${detail?-60:30} ${detail?-55:5}) scale(${scale})"><ellipse cx="315" cy="340" rx="145" ry="22" fill="#3a3a3a" opacity=".3"/><path d="M225 280h220v28H225zM242 306h15v45h-15zM418 306h14v45h-14z" fill="#725039"/><path d="M283 290q-16-96 26-127 43-20 81 20l28 107z" fill="${accent}"/><path d="M304 166q-29-34-7-71 23-31 61-11 21 31 8 61l-17 26v15h-41z" fill="#c28c69"/><path d="M285 119q-15-53 38-59 55-5 54 56-33-27-53-24-15 20-39 27" fill="#282b2c"/><path d="M313 272q39-13 69-8" stroke="#cd9b73" stroke-width="18" stroke-linecap="round"/><path d="M362 273 415 243" stroke="#cfad8e" stroke-width="14" stroke-linecap="round"/><path d="M330 288 413 275 430 303 352 314" fill="#ab7648"/></g>${crowd?`<g fill="#a95838"><circle cx="515" cy="189" r="26"/><path d="M481 286q0-67 35-65 38 0 49 65z"/></g>`:""}<path d="M0 381h600" stroke="#856750" stroke-width="8" opacity=".3"/><text x="18" y="383" fill="#fff" font-family="Arial" font-size="13" font-weight="bold">ILUSTRASI LATIHAN • ${String(i+1).padStart(2,"0")}</text></svg>`;
 }
 function shotSrc(i){return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(shotSvg(i))}`}
-function storyPage(){
-const selected=state.work.story?.selected||[];
-return `${titleBlock("story")}<div class="info"><b>Tujuan simulasi:</b> pilih tepat 9 dari 12 ilustrasi sebuah sanggar kerajinan, urutkan dari pembuka hingga penutup. Semua ilustrasi sintetis ini hanya untuk belajar; <b>bukan foto karya lomba</b>. Bingkai disajikan landscape 3:2.</div><div class="story-head" style="margin-top:18px"><h3>Rangkaian cerita kamu</h3><span class="counter" id="story-count">${selected.length} / 9 terpilih</span></div><div class="dropzone"><div class="story-tray" id="selected-shots">${selected.map((id,i)=>renderShot(SHOTS.find(x=>x.id===id),true,i)).join("")||`<div class="empty" style="grid-column:1/-1">Belum ada foto. Pilih foto dari bank di bawah.</div>`}</div></div><div class="actions"><button class="btn primary" id="save-story" ${selected.length===9?"":"disabled"}>Simpan susunan 9 foto ✓</button><button class="btn subtle" id="reset-story">↺ Ulangi pilihan</button></div><hr class="rule"><div class="story-head"><h3>Bank ilustrasi foto</h3><span class="pill">${SHOTS.length} pilihan</span></div><div class="story-tray">${SHOTS.filter(x=>!selected.includes(x.id)).map(x=>renderShot(x,false)).join("")}</div><div class="info" style="margin-top:17px"><b>Catatan editor:</b> susunan ini contoh, bukan aturan baku. Foto pembuka memperkenalkan situasi, foto berikutnya memperdalam manusia/proses, dan penutup memberi kesan akhir. EDFAT membantu mencari variasi visual, bukan urutan wajib.</div>`;
+function storyTheoryContent(index,variant="lcd"){
+ const x=storySlide(index);
+ return `<div class="story-theory-layout story-theory-${variant}"><div class="story-theory-copy">
+ <span class="theory-kicker">BAB 4 · ${escapeHtml(x.tag)} · ${storyLabel(index)} / ${STORY_SLIDES.length}</span>
+ <h2>${escapeHtml(x.title)}</h2><p class="story-theory-lead">${escapeHtml(x.lead)}</p>
+ <ul class="story-theory-points">${x.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+ <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(x.prompt)}</strong></div></div>
+ ${storySlideVisual(index)}</div>`;
 }
-function renderShot(shot,selected,pos=0){
-if(!shot)return "";
-return `<article class="shot ${selected?"selected":""}"><figure><img alt="Ilustrasi simulasi: ${escapeHtml(shot.title)}" loading="lazy" src="${shotSrc(shot.i)}"></figure><div class="shot-meta">${selected?`<span class="photo-number">FOTO ${pos+1}</span>`:""}<strong>${escapeHtml(shot.title)}</strong><small>${escapeHtml(shot.type)} · ${escapeHtml(shot.desc)}</small><div class="shot-buttons">${selected?`<button data-move="${shot.id}" data-dir="-1" ${pos===0?"disabled":""} aria-label="Geser foto ${pos+1} ke kiri">←</button><button data-move="${shot.id}" data-dir="1" ${pos===8?"disabled":""} aria-label="Geser foto ${pos+1} ke kanan">→</button><button data-remove="${shot.id}" aria-label="Keluarkan foto">×</button>`:`<button data-pick="${shot.id}">+ Pilih</button>`}</div></div></article>`;
+function storyParticipantSlide(){
+ return `${titleBlock("story")}<section class="card story-learner-theory">
+ <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
+ ${storyTheoryContent(state.presentation.slide,"participant")}</section>`;
+}
+function storyTrainerPanel(data,isMentor){
+ const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
+ const x=storySlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card story-trainer-card"><div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 4</span>
+ <h2>Sembilan Bingkai</h2><p class="small-note">Enam slide mengedit cerita, dilanjutkan latihan 9 dari 12 foto.</p></div>
+ <span class="pill ${data.stage===4?"green":"gray"}">${data.stage===4?"● TAHAP 04 AKTIF":"BUKA TAHAP 04"}</span></div>
+ ${theory?`<div class="story-trainer-preview"><div class="story-trainer-notes"><span class="eyebrow">SLIDE ${storyLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+ <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>${storySlideVisual(i)}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-story-step="-1" ${i===STORY_START||isMentor?"disabled":""}>← Sebelumnya</button><strong>Slide ${storyLabel(i)} / 06</strong>
+ <button class="btn primary" data-story-step="1" ${i===STORY_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+ <div class="story-slide-dots">${STORY_SLIDES.map((x,j)=>`<button class="theory-dot" data-story-slide="${STORY_START+j}" aria-pressed="${i===STORY_START+j}" ${isMentor?"disabled":""}>${storyLabel(STORY_START+j)}</button>`).join("")}</div>
+ <div class="actions"><button class="btn primary" data-story-mode="simulator" ${isMentor?"disabled":""}>Buka meja editor peserta →</button></div>`:
+ `<div class="trainer-theory-compact"><div><strong>Meja editor peserta sedang terbuka</strong><p class="small-note">Peserta memilih, mengurutkan sembilan foto, memberi judul dan alasan editorial.</p></div>
+ <button class="btn subtle" data-story-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
+ <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan foto yang tidak dipilih. Kandidat 12 adalah detail alternatif dari foto 5, bukan foto peristiwa lain.</p></div>`}
+ </section>`;
+}
+function renderStoryShot(x,chosen=false,pos=0,total=0){
+ if(!x)return "";
+ return `<article class="story-candidate ${chosen?"story-candidate-selected":""}">
+ <div class="story-candidate-photo">${storyImage(x,"Foto "+x.id+": "+x.title)}${chosen?`<span class="story-position">${String(pos+1).padStart(2,"0")}</span>`:""}</div>
+ <div class="story-candidate-body"><span class="eyebrow">${escapeHtml(x.function)} · ${escapeHtml(x.role)}</span>
+ <h4>${escapeHtml(x.title)}</h4><p>${escapeHtml(x.desc)}</p><div class="story-candidate-actions">
+ ${chosen?`<button data-move="${x.id}" data-dir="-1" ${pos===0?"disabled":""} aria-label="Geser foto ke depan">↑</button>
+ <button data-move="${x.id}" data-dir="1" ${pos===total-1?"disabled":""} aria-label="Geser foto ke belakang">↓</button>
+ <button data-remove="${x.id}">Keluarkan</button>`:`<button data-pick="${x.id}">+ Pilih foto</button>`}</div></div></article>`;
+}
+function storyPage(){
+ const saved=state.work.story||{},selected=Array.isArray(saved.selected)?saved.selected.filter(id=>STORY_BANK.some(x=>x.id===id)):[];
+ const remaining=STORY_BANK.filter(x=>!selected.includes(x.id));
+ return `${titleBlock("story")}<section class="card story-editor-intro">
+ <span class="eyebrow">MEJA EDITOR · SEMBILAN BINGKAI</span><h2>12 kandidat. Pilih 9 yang bercerita.</h2>
+ <p>Jadilah editor foto latihan musik bambu Sangihe. Pilih sembilan foto yang saling melengkapi, susun urutannya, lalu jelaskan arah cerita.</p>
+ <p class="small-note">Foto asli: Ronny Adolof Buol, September 2017. Kandidat 12 merupakan potongan dari foto 5 yang sama. Susunan naratif bukan klaim urutan kronologis yang sudah terverifikasi.</p></section>
+ <section class="card story-editor-workspace"><div class="story-head"><h3>Rangkaian cerita kamu</h3><span class="counter" id="story-count">${selected.length} / 9 dipilih</span></div>
+ <p class="small-note">Gunakan tombol ↑ dan ↓ untuk mengurutkan foto.</p>
+ <div class="story-sequence" id="selected-shots">${selected.map((id,i)=>renderStoryShot(STORY_BANK.find(x=>x.id===id),true,i,selected.length)).join("")||`<div class="story-empty">Belum ada foto. Pilih dari bank foto di bawah.</div>`}</div>
+ <div class="story-editor-fields"><div class="field"><label for="story-title">Judul kerja cerita</label><input id="story-title" maxlength="110" value="${escapeHtml(saved.title||"")}" placeholder="Contoh: Menjaga bunyi bambu di Sangihe"></div>
+ <div class="field"><label for="story-reason">Mengapa foto-foto ini dipilih dan disusun demikian?</label>
+ <textarea id="story-reason" rows="4" placeholder="Jelaskan fungsi pembuka, perkembangan cerita, dan penutup…">${escapeHtml(saved.reason||"")}</textarea>
+ <small>Minimal 30 karakter, tidak ada satu susunan yang mutlak benar.</small></div></div>
+ <div class="actions"><button id="save-story" class="btn primary" ${selected.length===9?"":"disabled"}>Simpan sembilan foto ✓</button>
+ <button id="reset-story" class="btn subtle">↺ Ulangi pilihan</button></div><p class="small-note" id="story-status" role="status" aria-live="polite"></p></section>
+ <section class="card story-editor-bank"><div class="story-head"><h3>Bank foto dokumentasi</h3><span class="pill">${remaining.length} pilihan</span></div>
+ <div class="story-bank-grid">${remaining.map(x=>renderStoryShot(x)).join("")||`<div class="story-empty">Semua foto sudah dipilih.</div>`}</div></section>
+ <div class="info"><b>Catatan editor:</b> foto pembuka mengenalkan, bagian tengah mengembangkan, dan penutup memberi pemahaman. Jangan membuat cerita yang tidak didukung fakta.</div>`;
 }
 function captionPage(){
 const saved=state.work.caption||{};
