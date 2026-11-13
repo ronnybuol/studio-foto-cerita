@@ -538,3 +538,86 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  #participant-print-sheet tr{break-inside:avoid}
  #participant-print-sheet .small-note{font-size:9px;margin-top:12px}
 }
+
+
+/* BAB 2 — Bahasa Visual dan Laboratorium Komposisi */
+.composition-slide-layout{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(14px,2vw,28px);align-items:center;width:100%;min-width:0;min-height:0}
+.composition-slide-copy{min-width:0;display:flex;flex-direction:column;gap:10px}
+.composition-slide-copy h2{font-size:clamp(26px,3.4vw,49px);line-height:1.08;letter-spacing:-.6px;margin:5px 0}
+.composition-slide-copy .theory-lead{font-size:clamp(14px,1.65vw,23px);line-height:1.4;margin:0}
+.composition-slide-copy .theory-points{margin:0;padding-left:20px;font-size:clamp(13px,1.2vw,18px);line-height:1.48}
+.composition-slide-copy .theory-question{margin-top:8px}
+.comp-visual{min-width:0;max-width:100%;display:flex;flex-direction:column;gap:10px}
+.comp-visual figure{margin:0;min-width:0}
+.comp-photo-stage{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;background:#161b23;border-radius:12px}
+.comp-photo-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 50%;transition:transform .3s ease}
+.comp-rule-grid{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(90deg,transparent 33.2%,#fff9 33.2% 33.6%,transparent 33.6% 66.4%,#fff9 66.4% 66.8%,transparent 66.8%),linear-gradient(0deg,transparent 33.2%,#fff9 33.2% 33.6%,transparent 33.6% 66.4%,#fff9 66.4% 66.8%,transparent 66.8%)}
+.comp-grid-on .comp-rule-grid{opacity:1}
+.comp-natural-frame{position:absolute;inset:5% 7%;border:18px solid #2f251eaa;border-radius:45% 45% 5% 5%;box-shadow:0 0 0 30px #16140d55;opacity:0;pointer-events:none}
+.comp-frame-on .comp-natural-frame{opacity:1}
+.comp-zoom-on .comp-photo-stage img{transform:scale(1.6)}
+.comp-visual figcaption{font-size:11px;color:#aebac6;margin-top:7px}
+.comp-visual-labels{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.comp-visual-labels span{font-weight:750;color:#ec9259;font-size:clamp(10px,.9vw,13px);letter-spacing:.4px}
+.composition-trainer-card{margin-top:16px}
+.composition-trainer-preview{display:grid;grid-template-columns:minmax(0,.3fr) minmax(0,.7fr);gap:12px;min-height:0;max-height:min(69vh,600px);overflow:hidden}
+.composition-trainer-notes{display:flex;flex-direction:column;gap:8px;min-width:0}
+.composition-trainer-notes h3{font-size:clamp(20px,2.2vw,30px);line-height:1.15}
+.composition-trainer-notes .trainer-theory-note{margin-top:auto}
+.composition-trainer-preview .composition-slide-layout{grid-template-columns:1fr;gap:8px;max-height:100%;overflow:hidden}
+.composition-trainer-preview .composition-slide-copy{display:none}
+.composition-trainer-preview .comp-photo-stage{max-height:min(48vh,430px)}
+.composition-trainer-preview .comp-visual figcaption{font-size:10px}
+.composition-participant-theory{padding:clamp(12px,2vw,22px)}
+.composition-participant-theory .composition-slide-layout{align-items:start}
+.composition-lab-card{min-width:0}
+.composition-lab-intro h2{font-size:clamp(24px,3vw,32px);margin:6px 0}
+.composition-lab-intro p{font-size:14px;line-height:1.55;max-width:780px}
+.composition-lab-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr);gap:16px;align-items:start}
+.composition-lab-image{min-width:0}
+.composition-lab-image .scene{width:100%;max-width:100%;aspect-ratio:3/2;overflow:hidden;border-radius:12px}
+.composition-lab-image .scene .back,.composition-lab-image .scene .subject,.composition-lab-image .scene .motion{transform-origin:center;scale:var(--comp-zoom,1);translate:0 var(--comp-angle-y,0px);transition:scale .25s ease,translate .25s ease}
+.composition-lab-controls{display:flex;flex-direction:column;gap:11px;min-width:0}
+.composition-setting{padding:10px;background:#f5f5f3;border:1px solid #e3e3df;border-radius:10px;min-width:0}
+.composition-setting>strong{display:block;font-size:12px;margin-bottom:8px}
+.composition-setting .choice-set{display:flex;gap:6px;flex-wrap:wrap}
+.composition-setting .choice{font-size:12px;padding:8px 10px;min-height:40px}
+.composition-reflection{display:grid;gap:7px;margin-top:15px}
+.composition-reflection label{font-weight:800}
+.composition-reflection textarea{width:100%;box-sizing:border-box;min-width:0;resize:vertical;border:1px solid #d5d9df;border-radius:10px;padding:12px;font:inherit;font-size:16px;min-height:90px}
+.composition-reflection small{color:#647084}
+.composition-context{margin-top:14px}
+.lcd-composition-mode{min-height:0}
+.lcd-composition-mode .composition-slide-layout{flex:1;min-height:0;align-items:center}
+.lcd-composition-mode .comp-visual{min-height:0}
+.lcd-composition-mode .comp-photo-stage{max-height:min(54vh,550px)}
+.lcd-composition-lab{display:flex;flex-direction:column;gap:11px;min-width:0;flex:1;min-height:0}
+.lcd-composition-lab h1{font-size:clamp(33px,4vw,64px);line-height:1.08;margin:5px 0}
+.lcd-composition-lab h1 em{color:#ef7435}
+.lcd-composition-lab>p{font-size:clamp(16px,1.7vw,23px);max-width:1000px}
+.lcd-composition-lab .comp-visual{max-width:750px;max-height:min(49vh,500px)}
+.lcd-composition-lab .comp-photo-stage{max-height:100%}
+@media(max-width:900px){
+ .composition-slide-layout{grid-template-columns:1fr;gap:12px}
+ .composition-slide-copy h2{font-size:clamp(24px,5vw,35px)}
+ .composition-slide-copy .theory-lead{font-size:clamp(13px,2.7vw,17px)}
+ .composition-slide-copy .theory-points{font-size:13px}
+ .composition-lab-layout{grid-template-columns:1fr}
+ .composition-trainer-preview{grid-template-columns:1fr;max-height:none}
+ .composition-trainer-notes{display:none}
+ .composition-trainer-preview .composition-slide-layout{max-height:none}
+}
+@media(max-width:650px){
+ .composition-participant-theory{padding:12px}
+ .composition-slide-copy .theory-points{padding-left:18px}
+ .composition-slide-copy .theory-question{padding:12px}
+ .composition-lab-intro p{font-size:13px}
+ .composition-setting{padding:9px}
+ .composition-setting .choice-set{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .composition-setting .choice{width:100%;min-width:0;white-space:normal;font-size:12px}
+ .composition-reflection textarea{min-height:100px}
+ .comp-visual figcaption{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .comp-photo-stage img,.composition-lab-image .scene .back,.composition-lab-image .scene .subject,.composition-lab-image .scene .motion{transition:none}
+}
