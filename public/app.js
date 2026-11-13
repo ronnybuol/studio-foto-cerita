@@ -848,7 +848,7 @@ function answerDetails(key,v){
 }
 if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
-   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Caption (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p></div>`;
+   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Narasi (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p><p><b>Perlu verifikasi:</b> ${escapeHtml(v.verification||"Tidak ada catatan")}</p></div>`;
  }
  if(key==="etika")return `<p class="small-note">Jawaban benar: <b>${Number(v.score)||0} dari 4</b></p>`;
  return `<p class="small-note">Latihan tersimpan.</p>`;
@@ -866,6 +866,19 @@ function lcdSpotlightContent(spot){
    <h1>${name}</h1><h2>${escapeHtml(a.title||"Sembilan Bingkai")}</h2>
    <section class="spotlight-notes"><strong>ALASAN EDITORIAL PESERTA</strong><p>${escapeHtml(a.reason||"Belum mencatat alasan.")}</p></section>
    <p class="spotlight-prompt">Diskusi: Mengapa foto pertama dan terakhir dipilih? Adakah informasi yang berulang?</p></aside></div>`;
+ }
+ if(spot.module==="caption"){
+  const ids=Array.isArray(a.storySelected)?a.storySelected.slice(0,9):[];
+  const samples=[ids[0],ids[4],ids[8]].filter(id=>Number.isInteger(id));
+  return `<div class="caption-spotlight"><div class="caption-spotlight-top">
+   <span class="kicker">SOROTAN KARYA · CAPTION LAB</span><h1>${name}</h1>
+   <p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
+   ${samples.length?`<div class="caption-spotlight-photos">${samples.map((id,i)=>{
+      const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption>${escapeHtml(item.title)}</figcaption></figure>`:"";
+    }).join("")}</div>`:""}
+   <div class="caption-spotlight-text">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
+   <div class="caption-spotlight-question">Diskusi: Klaim apa yang kuat dan informasi apa yang masih perlu diverifikasi?</div>
+  </div>`;
  }
  if(spot.module==="edfat"){
   return `<div class="spotlight-generic"><span class="kicker">SOROTAN KARYA · ${label}</span><h1>${name}</h1>
