@@ -5,7 +5,7 @@ import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,stor
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const APP_RELEASE = "m04-20261113";
+const APP_RELEASE = "m04-independent-20261114";
 const STORAGE_USER = "lm26-user";
 const STORAGE_WORK = "lm26-work";
 const STORAGE_VIEW = "lm26-view";
@@ -59,6 +59,7 @@ let state = {
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
+  learnerViews:{},
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
   dashboard:null,justRegistered:false
 };
@@ -87,7 +88,7 @@ async function syncState(){
     const previousStage=state.serverStage;
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     state.spotlight=data.spotlight||null;
-    if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
+    // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
     if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=STORY_END)
@@ -101,6 +102,22 @@ async function syncState(){
   }
 }
 function pageMode(){const mode=location.hash.replace(/^#\//,"").split("/")[0];return ["trainer","lcd","peserta"].includes(mode)?mode:"peserta"}
+const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END]};
+function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
+function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
+function saveLearnerViews(){localStorage.setItem(learnerKey(),JSON.stringify(state.learnerViews))}
+function learnerRange(key){return LEARNER_RANGES[key]}
+function liveLearnerSlide(key){const r=learnerRange(key);return r&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?state.presentation.slide:r?.[0]||0}
+function learnerMode(key){const r=learnerRange(key);if(!r)return "practice";const v=state.learnerViews[key]?.mode;if(["practice","reference","follow"].includes(v))return v;
+ const draft=state.work[key];if(draft&&((draft._draft===true)||(key==="story"&&!draft.completedAt&&(draft.selected?.length||draft.title||draft.reason))))return "practice";
+ return state.presentation.view==="theory"&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?"follow":"practice"}
+function learnerSlide(key){const r=learnerRange(key);if(!r)return 0;const v=state.learnerViews[key],i=v?.mode==="reference"?v.slide:liveLearnerSlide(key);return Number.isInteger(i)&&i>=r[0]&&i<=r[1]?i:r[0]}
+function setLearnerMode(key,mode,slide){const r=learnerRange(key);if(!r)return;state.learnerViews[key]={mode,slide:Number.isInteger(slide)?Math.max(r[0],Math.min(r[1],slide)):learnerSlide(key)};saveLearnerViews();renderParticipant()}
+function learnerModeBar(key){const r=learnerRange(key);if(!r)return "";const mode=learnerMode(key),slide=learnerSlide(key),practice=mode==="practice";
+return `<nav class="learner-study-toolbar" aria-label="Mode belajar"><div class="learner-study-copy"><b>${practice?"Latihan mandiri":mode==="reference"?"Materi untuk dibaca sendiri":"Mengikuti presentasi kelas"}</b><span>${practice?"Latihan tidak berpindah ketika trainer membuka slide.":"Kamu bisa kembali ke latihan tanpa menghilangkan jawaban."}</span></div>
+<div class="learner-study-actions"><button class="btn small ${practice?"primary":"subtle"}" data-learner-mode="practice">Latihan saya</button><button class="btn small ${mode==="reference"?"primary":"subtle"}" data-learner-mode="reference">Baca materi</button><button class="btn small ${mode==="follow"?"primary":"subtle"}" data-learner-mode="follow">Ikuti trainer</button></div>
+${mode==="reference"?`<div class="learner-reference-nav"><button class="btn small subtle" data-reference-step="-1" ${slide===r[0]?"disabled":""}>← Sebelumnya</button><span>${slide-r[0]+1} / ${r[1]-r[0]+1}</span><button class="btn small subtle" data-reference-step="1" ${slide===r[1]?"disabled":""}>Berikutnya →</button></div>`:""}</nav>`}
+function bindLearnerMode(){const key=state.active;if(!learnerRange(key))return;$$("[data-learner-mode]").forEach(b=>b.onclick=()=>setLearnerMode(key,b.dataset.learnerMode,b.dataset.learnerMode==="reference"?learnerSlide(key):undefined));$$("[data-reference-step]").forEach(b=>b.onclick=()=>setLearnerMode(key,"reference",learnerSlide(key)+Number(b.dataset.referenceStep)))}
 function goModule(key){state.active=key;localStorage.setItem(STORAGE_VIEW,key);render();window.scrollTo({top:0,behavior:"smooth"})}
 function titleBlock(key){const s=STAGES.find(x=>x.key===key);return `<div class="module-top"><div><span class="eyebrow">MODUL ${STAGES.indexOf(s)} / 6</span><h1>${s.title}</h1><p>${s.blurb}</p></div><span class="pill">Latihan interaktif</span></div>`}
 function isUnlocked(key){return !state.locked&&(!state.online || STAGES.findIndex(x=>x.key===key)<=state.serverStage)}
@@ -112,16 +129,16 @@ function lessonLayout(){
  <div class="learner-account-panel"><p>${escapeHtml(state.user?.school||"")} · ${escapeHtml(state.user?.className||"")}</p><p>Username: <strong>${escapeHtml(state.user?.username||"—")}</strong></p>
  <form id="participant-rename-form"><label for="new-username">Ganti username</label><div class="learner-rename-row"><input id="new-username" name="username" pattern="[a-z]{3,20}" maxlength="20" required value="${/^[a-z]{3,20}$/.test(state.user?.username||"")?escapeHtml(state.user.username):""}" placeholder="contoh: jufri"><button class="btn small" type="submit">Simpan</button></div><small>3–20 huruf kecil, satu kata tanpa spasi.</small></form>
  <button class="btn small subtle" id="participant-switch-account">Keluar / ganti akun</button></div></details></div>
- <section class="lesson">${renderModule()}</section></div>`;
+ <section class="lesson">${learnerModeBar(state.active)}${renderModule()}</section></div>`;
 }
-function renderModule(){switch(state.active){
-  case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
-  case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
-  case "edfat":return state.serverStage===3&&state.presentation.view==="theory"&&state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?edfatParticipantSlide():edfatPage();
-  case "story":return state.serverStage===4&&state.presentation.view==="theory"&&state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?storyParticipantSlide():storyPage();
-  case "caption":return captionPage();
-  case "etika":return ethicsPage();
-  default:return startPage();
+function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode==="reference"||(mode==="follow"&&state.presentation.view==="theory"),slide=learnerSlide(key);switch(key){
+ case "kamera":return theory?theoryParticipantPage(slide):cameraPage();
+ case "komposisi":return theory?compositionParticipantPage(slide):compositionPage();
+ case "edfat":return theory?edfatParticipantSlide(slide):edfatPage();
+ case "story":return theory?storyParticipantSlide(slide):storyPage();
+ case "caption":return captionPage();
+ case "etika":return ethicsPage();
+ default:return startPage();
 }}
 function landing(){
   return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Daftar peserta baru →</button><button class="btn ghost-dark" id="start-login">Sudah punya username? Masuk</button></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
@@ -161,6 +178,7 @@ async function participantLogin(e){
   if(!state.online)throw Error("Login username memerlukan koneksi kelas.");
   const data=await request("/api/participant-login",{method:"POST",payload:{username}});
   state.user=data.user;state.justRegistered=false;
+  loadLearnerViews();
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   localStorage.setItem("lm26-last-username",state.user.username);
   const me=await request("/api/me");
@@ -209,8 +227,8 @@ function theorySlideContent(index,variant="lcd"){
    <div class="theory-visual">${theoryVisual(index,{sceneHTML,shotSrc})}</div>
  </div>`;
 }
-function theoryParticipantPage(){
- const i=state.presentation.slide,slide=THEORY_SLIDES[photoDetail(i)?.parent??i]||THEORY_SLIDES[0];
+function theoryParticipantPage(i=state.presentation.slide){
+ const slide=THEORY_SLIDES[photoDetail(i)?.parent??i]||THEORY_SLIDES[0];
  return `${titleBlock("kamera")}
   <div class="info" style="margin-bottom:14px"><b>Materi teori sedang berlangsung.</b> Ikuti pembahasan bersama trainer. Setelah slide terakhir, trainer akan membuka laboratorium kamera untuk latihan pribadi.</div>
   <div class="card theory-participant-card">${theorySlideContent(i,"participant")}</div>
@@ -323,8 +341,7 @@ function compositionSlideContent(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div></div>
  ${compositionVisual(index)}</div>`;
 }
-function compositionParticipantPage(){
- const i=state.presentation.slide;
+function compositionParticipantPage(i=state.presentation.slide){
  return `${titleBlock("komposisi")}<div class="card composition-participant-theory">
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Setelah teori, trainer membuka latihan mandiri.</p>
  ${compositionSlideContent(i,"participant")}</div>`;
@@ -414,10 +431,10 @@ function edfatSlideHTML(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(data.prompt)}</strong></div></div>
  ${edfatVisual(index)}</div>`;
 }
-function edfatParticipantSlide(){
+function edfatParticipantSlide(i=state.presentation.slide){
  return `${titleBlock("edfat")}<section class="card edfat-learner-theory">
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Trainer akan membuka Misi Detektif untuk latihan mandiri.</p>
- ${edfatSlideHTML(state.presentation.slide,"participant")}</section>`;
+ ${edfatSlideHTML(i,"participant")}</section>`;
 }
 function edfatTrainerPanel(data,isMentor){
  const active=data.stage===3;
@@ -475,10 +492,10 @@ function storyTheoryContent(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(x.prompt)}</strong></div></div>
  ${storySlideVisual(index)}</div>`;
 }
-function storyParticipantSlide(){
+function storyParticipantSlide(i=state.presentation.slide){
  return `${titleBlock("story")}<section class="card story-learner-theory">
  <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
- ${storyTheoryContent(state.presentation.slide,"participant")}</section>`;
+ ${storyTheoryContent(i,"participant")}</section>`;
 }
 function storyTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
@@ -565,9 +582,10 @@ function bindLessons(){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
   $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
    current.answers[input.dataset.edfatChoice]=input.value;
+   state.work.edfat={...current,_draft:true};saveWork();
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
-  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>current.reasons[textarea.dataset.edfatReason]=textarea.value);
+  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current,_draft:true};saveWork()});
   $("#save-edfat").onclick=()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
@@ -577,12 +595,12 @@ function bindLessons(){
  }
  if(state.active==="story"&&$("#save-story")){
   const current=()=>state.work.story||{};
-  const setSelected=selected=>{state.work.story={...current(),selected};saveWork();render()};
+  const setSelected=selected=>{state.work.story={...current(),selected,_draft:true};saveWork();render()};
   $$("[data-pick]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],id=Number(btn.dataset.pick);if(ids.length>=9){toast("Sudah sembilan foto. Keluarkan satu dahulu.");return}if(!ids.includes(id))setSelected([...ids,id])});
   $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected((current().selected||[]).filter(id=>id!==Number(btn.dataset.remove))));
   $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
   for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
-   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value};saveWork()};
+   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value,_draft:true};saveWork()};
   }
   $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
   $("#save-story").onclick=()=>{
@@ -603,6 +621,7 @@ function bindLessons(){
   form.onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());saveAnswer("caption",data)};
  }
  if(state.active==="etika"){
+  $("#ethics-form").onchange=e=>{const values=new FormData(e.currentTarget);state.work.etika={...(state.work.etika||{}),answers:ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)))};saveWork()};
   $("#ethics-form").onsubmit=e=>{
     e.preventDefault();const d=new FormData(e.currentTarget),answers=ETHICS.map((_,i)=>d.get("q"+i)===null?null:Number(d.get("q"+i)));
     if(answers.some(x=>x===null)){toast("Jawab semua pertanyaan terlebih dahulu");return}
@@ -624,10 +643,11 @@ async function signup(e){
   state.user={id:crypto.randomUUID(),...data,username:null,token:null};
  }
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+ loadLearnerViews();
  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
  state.work={};saveWork();state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
-function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
+function logout(){localStorage.removeItem(learnerKey());state.learnerViews={};state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
 function renderParticipant(){
  if(state.locked){$("#root").innerHTML=`<div class="page"><div class="card login-card class-closed"><span class="eyebrow">KELAS DITUTUP</span><h1>Kegiatan belajar telah selesai</h1><p>Akses peserta sedang dikunci oleh trainer. Terima kasih telah mengikuti Lensa Muda.</p></div></div>`;return}
  if(!state.user){
@@ -643,7 +663,11 @@ function renderParticipant(){
   return;
  }
  if(!isUnlocked(state.active))state.active=STAGES[Math.min(state.serverStage,6)].key;
- $("#root").innerHTML=lessonLayout();bindLessons();
+ if(learnerRange(state.active)&&!state.learnerViews[state.active]){
+   state.learnerViews[state.active]={mode:learnerMode(state.active),slide:liveLearnerSlide(state.active)};
+   saveLearnerViews();
+ }
+ $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
  const rename=$("#participant-rename-form");
@@ -1267,8 +1291,14 @@ setInterval(async()=>{
     lastPassivePoll=now;
     const prev=JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation});
     await syncState();
-    if(pageMode()==="peserta"&&prev!==JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation})){
-      renderParticipant();
+    if(pageMode()==="peserta"){
+      const before=JSON.parse(prev),stageChanged=before.stage!==state.serverStage,lockChanged=before.locked!==state.locked;
+       const slideChanged=JSON.stringify(before.presentation)!==JSON.stringify(state.presentation);
+       const startingLesson=stageChanged&&before.stage===0&&state.active==="mulai"&&state.serverStage>0;
+       if(startingLesson){state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
+       const accessRevoked=stageChanged&&!isUnlocked(state.active);
+       // Pembukaan tahap lanjut tidak menginterupsi peserta yang sedang menulis atau memilih foto.
+       if(lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
     }
   }
 },1800);
@@ -1277,14 +1307,21 @@ async function restoreParticipantSession(){
  try{
   const response=await request("/api/me");
   state.user={...state.user,...response.user,token:state.user.token};
-  state.work=response.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};
+  const serverAnswers=response.answers||{};
+  // Draf di perangkat tidak boleh ditimpa oleh jawaban tersimpan yang lebih lama di server.
+  for(const key of ["story","edfat","komposisi","caption","etika"]){
+   const local=state.work[key];
+   if(local&&(local._draft===true||(key==="story"&&!local.completedAt&&(local.selected?.length||local.title||local.reason))))serverAnswers[key]=local;
+  }
+  state.work=serverAnswers;state.composition={...state.composition,...(state.work.komposisi||{})};
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
+  loadLearnerViews();
  }catch(error){
   if(error.status!==401)return;
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
-  state.user=null;state.work={};
+  state.user=null;state.work={};state.learnerViews={};
   localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);
  }
 }
