@@ -580,10 +580,44 @@ function storyPage(){
  <div class="story-bank-grid">${remaining.map(x=>renderStoryShot(x)).join("")||`<div class="story-empty">Semua foto sudah dipilih.</div>`}</div></section>
  <div class="info"><b>Catatan editor:</b> foto pembuka mengenalkan, bagian tengah mengembangkan, dan penutup memberi pemahaman. Jangan membuat cerita yang tidak didukung fakta.</div>`;
 }
+function captionPhotoStrip(selected){
+ return `<div class="caption-photo-strip">${selected.map((id,i)=>{
+ const photo=STORY_BANK.find(x=>x.id===id);return !photo?"":`<figure class="caption-photo-tile">${storyImage(photo,"Foto urutan "+(i+1)+": "+photo.title)}
+ <figcaption><b>${String(i+1).padStart(2,"0")}</b> ${escapeHtml(photo.title)}</figcaption></figure>`;
+ }).join("")}</div>`;
+}
 function captionPage(){
-const saved=state.work.caption||{};
-const draft=saved.captionText||"";
-return `${titleBlock("caption")}<div class="info"><b>Satu caption untuk sembilan foto.</b> Masukkan data yang sudah kamu ketahui benar. Jika belum tahu, tulis “perlu verifikasi” dalam catatanmu, jangan mengarang informasi.</div><form id="caption-form" class="card" style="margin-top:16px"><h2>Catatan reporter: 5W+1H</h2><div class="field-row">${CAPTION_FIELDS.map(([key,label,placeholder])=>`<div class="field"><label for="cap-${key}">${label}</label><input id="cap-${key}" name="${key}" value="${escapeHtml(saved[key]||"")}" placeholder="${escapeHtml(placeholder)}" maxlength="500"></div>`).join("")}</div><hr class="rule"><div class="field"><label for="captionText">Caption final (satu narasi bersama)</label><textarea class="captionbox" id="captionText" name="captionText" placeholder="Tulis narasi yang memandu pembaca memahami seluruh rangkaian foto. Mulailah dari fakta terpenting…">${escapeHtml(draft)}</textarea><small><b id="wordcount">${countWords(draft)}</b> kata · target sekitar 150 kata (indikator latihan 120–180) · tidak ada teks otomatis dari AI</small><div class="progress-meter"><span id="wordbar" style="width:${Math.min(100,countWords(draft)/150*100)}%"></span></div></div><button class="btn primary" type="submit">Simpan caption ✓</button></form><div class="grid two" style="margin-top:14px"><div class="card"><h3>Caption bukan sekadar judul</h3><p class="small-note">Sampaikan siapa, apa, di mana, kapan, bagaimana, dan mengapa penting. Bedakan informasi yang kamu saksikan dan penjelasan yang kamu peroleh dari narasumber.</p></div><div class="card"><h3>Integritas karya</h3><p class="small-note">Pertahankan file asli beserta metadata. Jangan menambah, menghapus, atau memindahkan objek dan jangan menggunakan AI untuk menghasilkan karya lomba.</p></div></div>`;
+ const saved=state.work.caption||{},draft=saved.captionText||"",story=state.work.story||{};
+ const selected=Array.isArray(story.selected)?story.selected.filter(id=>STORY_BANK.some(x=>x.id===id)).slice(0,9):[];
+ const count=countWords(draft),validStory=selected.length===9;
+ return `${titleBlock("caption")}<section class="card caption-story-link">
+ <span class="eyebrow">DARI MODUL 04 KE MODUL 05</span><h2>Foto yang kamu pilih, cerita yang kamu tulis.</h2>
+ <p>${validStory?"Ini sembilan foto dari meja editormu, ditampilkan dalam urutan pilihanmu.":"Belum ada sembilan foto dari Modul 04. Kamu boleh mulai membuat catatan, tetapi sebaiknya lengkapi urutan fotomu lebih dulu."}</p>
+ ${validStory?`<div class="caption-story-title"><b>Judul kerja:</b> ${escapeHtml(story.title||"Belum ada judul")}</div>
+ ${captionPhotoStrip(selected)}`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
+ <p class="small-note">Foto dokumentasi: Ronny Adolof Buol · Sangihe, September 2017. Sembilan bingkai menjadi referensi, bukan bukti otomatis seluruh klaim dalam tulisan.</p></section>
+ <form id="caption-form" class="card caption-workspace">
+ <div class="story-head"><h2>Catatan fakta · 5W + 1H</h2><span class="pill">6 unsur</span></div>
+ <p class="small-note">Isi berdasarkan foto, catatan lapangan, dan informasi yang telah dipastikan. Jika masih belum diketahui, tulis “perlu verifikasi”. Jangan menebak.</p>
+ <div class="field-row">${CAPTION_FIELDS.map(([key,label,placeholder])=>`<div class="field">
+ <label for="cap-${key}">${label}</label><input id="cap-${key}" name="${key}" value="${escapeHtml(saved[key]||"")}" placeholder="${escapeHtml(placeholder)}" maxlength="500"></div>`).join("")}</div>
+ <div class="field"><label for="caption-verification">Fakta yang masih perlu diverifikasi</label>
+ <textarea id="caption-verification" name="verification" rows="3" maxlength="1800" placeholder="Contoh: nama dan peran orang dalam foto, nama lokasi yang lebih rinci, rincian penghargaan…">${escapeHtml(saved.verification||"")}</textarea>
+ <small>Tuliskan pertanyaan untuk narasumber atau data yang perlu diperiksa.</small></div>
+ <hr class="rule">
+ <div class="field"><label for="captionText">Narasi untuk sembilan foto (target sekitar 150 kata)</label>
+ <textarea class="captionbox" id="captionText" name="captionText" rows="9" maxlength="11000" placeholder="Mulailah dari fakta paling penting. Hubungkan orang, aktivitas, lokasi, dan proses yang terbukti dalam rangkaian foto…">${escapeHtml(draft)}</textarea>
+ <div class="caption-counter"><strong id="wordcount">${count} kata</strong><span id="caption-word-feedback">${count===0?"Mulai tulis narasimu":count<120?"Masih di bawah kisaran latihan":count<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan"}</span></div>
+ <div class="progress-meter"><span id="wordbar" style="width:${Math.min(100,count/150*100)}%"></span></div>
+ <small>Kisaran latihan 120–180 kata sebagai panduan, bukan aturan kaku. Prioritaskan akurasi. Aplikasi tidak menuliskan narasi otomatis.</small></div>
+ <div class="caption-review-list"><h3>Periksa sebelum menyimpan</h3>
+ <label><input type="checkbox" name="reviewVisual" value="yes" ${saved.reviewVisual==="yes"?"checked":""}> Semua pernyataan tentang foto sesuai yang terlihat.</label>
+ <label><input type="checkbox" name="reviewFacts" value="yes" ${saved.reviewFacts==="yes"?"checked":""}> Nama, tanggal, tempat, serta klaim lain telah diperiksa atau ditandai perlu verifikasi.</label>
+ <label><input type="checkbox" name="reviewSequence" value="yes" ${saved.reviewSequence==="yes"?"checked":""}> Narasi sesuai urutan dan gagasan sembilan foto.</label></div>
+ <div class="actions"><button class="btn primary" type="submit">Simpan hasil Caption Lab ✓</button></div>
+ <p class="small-note" role="status" id="caption-save-status" aria-live="polite">Draf tersimpan di perangkat saat kamu mengetik. Tekan Simpan untuk mengirim hasil ke trainer.</p>
+ </form>
+ <section class="card caption-reminder"><h3>Catatan editorial</h3><p>Rangkaian ini dokumentasi musik bambu Sangihe, September 2017. Nama, gelar, tujuan kegiatan, dan rincian penghargaan tidak boleh ditambahkan sebagai fakta tanpa sumber yang dapat diperiksa.</p></section>`;
 }
 function countWords(v){return v.trim()?v.trim().split(/\s+/).length:0}
 function ethicsPage(){
@@ -650,11 +684,33 @@ function bindLessons(){
  }
  if(state.active==="caption"){
   const form=$("#caption-form");
-  form.addEventListener("input",()=>{
-    const obj=Object.fromEntries(new FormData(form).entries());state.work.caption=obj;saveWork();
-    const n=countWords(obj.captionText||"");$("#wordcount").textContent=n;$("#wordbar").style.width=Math.min(100,n/150*100)+"%";
-  });
-  form.onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());saveAnswer("caption",data)};
+  if(form){
+   function currentDraft(){
+    const data=Object.fromEntries(new FormData(form).entries());
+    for(const flag of ["reviewVisual","reviewFacts","reviewSequence"])data[flag]=form.elements[flag]?.checked?"yes":"no";
+    return data;
+   }
+   function updateDraft(){
+    const obj=currentDraft();state.work.caption={...obj,_draft:true};saveWork();
+    const n=countWords(obj.captionText||"");
+    const counter=$("#wordcount"),bar=$("#wordbar"),feedback=$("#caption-word-feedback");
+    if(counter)counter.textContent=n+" kata";
+    if(bar)bar.style.width=Math.min(100,n/150*100)+"%";
+    if(feedback)feedback.textContent=n===0?"Mulai tulis narasimu":n<120?"Masih di bawah kisaran latihan":n<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan";
+   }
+   form.oninput=updateDraft;
+   form.onchange=updateDraft;
+   form.onsubmit=async e=>{
+    e.preventDefault();const data=currentDraft(),n=countWords(data.captionText||"");
+    const status=$("#caption-save-status");
+    if(n<50){if(status)status.textContent="Narasi terlalu pendek untuk latihan; tulis minimal 50 kata.";toast("Lengkapi narasi terlebih dahulu");return}
+    if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
+      if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
+    const result={...data,storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
+    await saveAnswer("caption",result);
+    if(status)status.textContent=state.online?"Permintaan simpan dikirim. Periksa pesan status di atas.":"Hasil disimpan di perangkat mode demo.";
+   };
+  }
  }
  if(state.active==="etika"){
   $("#ethics-form").onchange=e=>{const values=new FormData(e.currentTarget);state.work.etika={...(state.work.etika||{}),answers:ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)))};saveWork()};
