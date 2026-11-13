@@ -295,3 +295,23 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
  .lcd-photo-detail .photo-detail-question span{font-size:12px}
  .lcd-photo-detail .lcd-bottom .lcd-join{display:none}
 }
+
+
+/* Visualisasi kontrol kamera (LCD): hanya indikator, interaksi tetap di dashboard trainer. */
+.lcd-camera-control{display:grid;grid-template-columns:clamp(48px,5vw,72px) minmax(0,1fr);column-gap:12px;row-gap:4px;align-items:center;margin-top:5px;min-width:0}
+.lcd-camera-dial{grid-row:1/4;position:relative;width:clamp(48px,5vw,72px);height:clamp(48px,5vw,72px);border-radius:50%;background:repeating-conic-gradient(from -135deg,#89939f 0deg 2deg,#222c36 2deg 35deg);border:5px solid #35404a;box-shadow:0 0 0 2px #14191f,inset 0 0 0 6px #171f28;display:grid;place-items:center;overflow:hidden}
+.lcd-iris-ring{width:76%;height:76%;border-radius:50%;display:grid;place-items:center;background:repeating-conic-gradient(from 12deg,#a3adb7 0deg 38deg,#606b76 38deg 45deg);box-shadow:inset 0 0 0 4px #171c23}
+.lcd-iris-opening{height:var(--iris-size);width:var(--iris-size);background:#0a0d11;clip-path:polygon(25% 0%,75% 0%,100% 25%,100% 75%,75% 100%,25% 100%,0 75%,0 25%);transition:height .35s ease,width .35s ease;box-shadow:0 0 0 1px #000}
+.lcd-setting-dial{background:repeating-conic-gradient(from -135deg,#9daab9 0deg 2deg,#26313d 2deg 30deg)}
+.lcd-dial-center{font-size:12px;font-weight:950;letter-spacing:-.5px;position:absolute;background:#202832;border-radius:50%;width:56%;height:56%;display:grid;place-items:center;color:#f0f4f8}
+.lcd-dial-pointer{position:absolute;inset:0;transform:rotate(var(--dial-angle));transition:transform .35s ease;z-index:2}
+.lcd-dial-pointer:before{content:"";position:absolute;top:4px;left:calc(50% - 3px);width:6px;height:13px;border-radius:4px;background:#ff9555;box-shadow:0 0 7px #f17235}
+.lcd-camera-track{position:relative;width:100%;height:7px;background:#46505d;border-radius:12px;align-self:end}
+.lcd-camera-track-fill{position:absolute;inset:0 auto 0 0;background:#f07b3e;border-radius:inherit;transition:width .35s ease}
+.lcd-camera-track-thumb{position:absolute;top:50%;height:14px;width:14px;background:#fff;border:3px solid #f07b3e;border-radius:50%;transform:translate(-50%,-50%);transition:left .35s ease;box-shadow:0 1px 6px #0008}
+.lcd-camera-scale{display:flex;justify-content:space-between;gap:5px;color:#c0c9d4;font-weight:650;font-size:10px}
+.lcd-camera-control-label{grid-column:2;font-size:9px!important;letter-spacing:.7px;color:#ffb88b!important;font-weight:800}
+.lcd-reading:has(.lcd-camera-control){gap:5px}
+@media(max-width:1050px){.lcd-camera-control{column-gap:8px;grid-template-columns:48px minmax(0,1fr)}.lcd-camera-dial{width:48px;height:48px}.lcd-camera-scale{font-size:9px}}
+@media(max-width:650px){.lcd-camera-control{grid-template-columns:40px minmax(0,1fr);gap:5px}.lcd-camera-dial{width:40px;height:40px;border-width:3px}.lcd-dial-center{font-size:9px}.lcd-camera-control-label{font-size:8px!important}}
+@media(prefers-reduced-motion:reduce){.lcd-iris-opening,.lcd-dial-pointer,.lcd-camera-track-fill,.lcd-camera-track-thumb{transition:none}}
