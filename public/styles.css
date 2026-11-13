@@ -654,3 +654,79 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .composition-demo-controls .composition-setting .choice-set{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  .composition-demo-controls .choice{width:100%;white-space:normal}
 }
+
+
+/* Modul 03 — Detektif EDFAT: foto asli ditampilkan utuh di LCD dan HP */
+.edfat-slide{display:grid;grid-template-columns:minmax(0,.83fr) minmax(0,1.17fr);gap:clamp(14px,2.3vw,32px);align-items:center;min-width:0;width:100%;min-height:0}
+.edfat-slide-copy{display:flex;flex-direction:column;gap:12px;min-width:0}
+.edfat-slide-copy h2{font-size:clamp(27px,3.8vw,53px);line-height:1.07;letter-spacing:-.8px;margin:5px 0}
+.edfat-lead{font-size:clamp(15px,1.6vw,24px);line-height:1.46;margin:0;color:#eef2f5}
+.edfat-points{padding:0;margin:0;list-style:none;display:grid;gap:9px}
+.edfat-points li{font-size:clamp(13px,1.25vw,18px);line-height:1.4;padding-left:20px;position:relative;color:#dbe2e8}
+.edfat-points li:before{content:"";position:absolute;left:0;top:.55em;background:#ef7939;width:8px;height:8px;border-radius:50%}
+.edfat-slide-copy .theory-question{margin-top:4px}
+.edfat-figure{min-width:0;max-width:100%;margin:0;display:flex;flex-direction:column;gap:7px}
+.edfat-photo{width:100%;max-height:min(60vh,570px);aspect-ratio:3/2;background:#151920;overflow:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.edfat-photo img{width:100%;height:100%;object-fit:contain;display:block}
+.edfat-figure figcaption{font-size:11px;color:#afbdc9;line-height:1.4}
+.edfat-trainer-card{margin-top:16px}
+.edfat-trainer-preview{display:grid;grid-template-columns:minmax(0,.32fr) minmax(0,.68fr);gap:15px;min-width:0;align-items:start}
+.edfat-trainer-preview .edfat-photo{max-height:min(50vh,450px)}
+.edfat-trainer-preview .edfat-figure figcaption{color:#667387}
+.edfat-trainer-notes{min-width:0;display:flex;flex-direction:column;gap:12px}
+.edfat-trainer-notes h3{font-size:clamp(19px,2vw,28px);line-height:1.15}
+.edfat-trainer-notes .trainer-theory-note{margin-top:10px}
+.edfat-slide-dots{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.edfat-slide-dots .theory-dot{min-width:46px}
+.edfat-trainer-mission{margin-top:15px;padding:14px;border:1px solid #e1e1df;border-radius:12px}
+.edfat-learner-theory{padding:clamp(13px,2vw,24px)}
+.edfat-learner-theory .edfat-slide{align-items:start}
+.edfat-learner-theory .edfat-slide-copy h2{color:#1b2028}
+.edfat-learner-theory .edfat-lead,.edfat-learner-theory .edfat-points li{color:#283442!important;opacity:1!important}
+.edfat-learner-theory .theory-kicker{color:#b44d23}
+.edfat-learner-theory .edfat-figure figcaption{color:#58677a}
+.edfat-mission-intro h2{font-size:clamp(24px,3vw,36px);margin:8px 0}
+.edfat-mission-intro p{font-size:15px;line-height:1.5}
+.edfat-case-list{display:grid;gap:16px;margin-top:16px}
+.edfat-case{min-width:0}
+.edfat-case-top h3{font-size:clamp(18px,2vw,25px);line-height:1.3;margin:9px 0 15px}
+.edfat-case .edfat-figure{max-width:850px;margin-bottom:15px}
+.edfat-case .edfat-photo{max-height:480px}
+.edfat-case .edfat-figure figcaption{color:#58677a}
+.edfat-options{border:0;padding:0;margin:12px 0;display:flex;flex-wrap:wrap;gap:7px;min-width:0}
+.edfat-options legend{font-weight:750;padding:0 0 9px}
+.edfat-option{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #d5d9dc;border-radius:9px;background:#f7f7f7;min-height:43px;padding:0 14px}
+.edfat-option input{position:absolute;opacity:0;width:1px;height:1px}
+.edfat-option:has(input:checked){background:#1d222b;color:#fff;border-color:#1d222b}
+.edfat-option:has(input:focus-visible){outline:3px solid #ed7935;outline-offset:3px}
+.edfat-case>label{font-weight:750;display:block;margin:12px 0 7px}
+.edfat-case textarea{font:inherit;font-size:16px;box-sizing:border-box;width:100%;max-width:100%;min-height:82px;border:1px solid #cfd3d8;border-radius:9px;padding:12px;resize:vertical}
+.edfat-submit{margin-top:16px}
+.edfat-answer-review p{padding:7px 0;margin:0;border-bottom:1px solid #eee}
+.lcd-edfat-mode .edfat-slide{flex:1}
+.lcd-edfat-mode .edfat-photo{max-height:min(56vh,560px)}
+.edfat-lcd-mission{display:flex;flex-direction:column;gap:12px;align-items:flex-start;flex:1;min-height:0}
+.edfat-lcd-mission h1{font-size:clamp(30px,4.2vw,64px);line-height:1.1;margin:5px 0}
+.edfat-lcd-mission h1 em{color:#ed7935}
+.edfat-lcd-mission>p{font-size:clamp(15px,1.6vw,22px);max-width:850px}
+.edfat-lcd-mission .edfat-figure{width:min(100%,850px)}
+.edfat-lcd-mission .edfat-photo{max-height:min(44vh,440px)}
+@media(max-width:900px){
+ .edfat-slide{grid-template-columns:1fr}
+ .edfat-slide-copy h2{font-size:clamp(24px,5vw,38px)}
+ .edfat-lead{font-size:clamp(14px,2.8vw,18px)}
+ .edfat-points li{font-size:14px}
+ .edfat-trainer-preview{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+ .edfat-slide{gap:13px}
+ .edfat-learner-theory{padding:12px}
+ .edfat-slide-copy{gap:9px}
+ .edfat-slide-copy h2{font-size:25px}
+ .edfat-lead{font-size:15px}
+ .edfat-points li{font-size:13px}
+ .edfat-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .edfat-option{padding:0 7px;min-width:0}
+ .edfat-case{padding:13px}
+ .edfat-case .edfat-photo{max-height:none}
+}
