@@ -739,7 +739,7 @@ function bindDashboard(){
   if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
   if(caption)caption.textContent=example.caption;
   $$("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
-  for(const key of ["position","distance","angle"])$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
+  for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
  }
  $$("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
   const key=btn.dataset.demoComp;
@@ -747,7 +747,7 @@ function bindDashboard(){
   if(key==="frame")state.demoComposition.preview="frame";
   refreshTrainerDemo();saveCompositionDemo();
  });
- for(const key of ["position","distance","angle"])$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
+ for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
   state.demoComposition[key]=btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)];
   state.demoComposition.preview=key;refreshTrainerDemo();saveCompositionDemo();
  });
