@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readFileSync,existsSync} from "node:fs";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storyAsset,storyImage,storySlideVisual} from "../public/story.js";
 
 test("Modul 04 menyediakan enam slide dan dua belas kandidat foto dengan sembilan pilihan",()=>{
@@ -43,4 +43,24 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(css.includes('.story-learner-theory .story-theory-lead'));
  assert.ok(api.includes('data.slide>44'));
  assert.ok(api.includes('data.selected.length!==9'));
+});
+
+test("Semua foto Modul 04 benar-benar ada di public/assets/composition",()=>{
+ for(const image of STORY_BANK){
+  const relative=".."+storyAsset(image);
+  const file=new URL(relative,import.meta.url);
+  assert.ok(existsSync(file),"Aset foto hilang: "+storyAsset(image));
+ }
+ for(let i=STORY_START;i<=STORY_END;i++){
+  const id=storySlide(i).image;
+  const file=new URL("../public/assets/composition/sangihe-2017-"+id+".webp",import.meta.url);
+  assert.ok(existsSync(file),"Foto slide hilang: "+id);
+ }
+});
+test("Dashboard Modul 04 tampil pada tahap 04 atau lebih tinggi dan penanda rilis jelas",()=>{
+ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
+ assert.ok(app.includes("data.stage>=4?storyTrainerPanel(data,isMentor)"));
+ assert.ok(app.includes('APP_RELEASE = "m04-20261113"'));
+ assert.ok(html.includes('app.js?v=20261113-m04'));
 });
