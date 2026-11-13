@@ -144,13 +144,13 @@ test("trainer mengendalikan 8 slide teori dan beralih ke simulator tanpa menghap
  const mentor=(await call(env,"/lensa-muda/api/login","POST",{pin:"mentor-67890"})).data;
  const forbidden=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:2},mentor.token);
  assert.equal(forbidden.status,403);
- const invalid=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:28},trainer.token);
+ const invalid=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:32},trainer.token);
  assert.equal(invalid.status,400);
  const detailSlide=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:20},trainer.token);
  assert.equal(detailSlide.status,200);
- const compSlide=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:27},trainer.token);
+ const compSlide=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:31},trainer.token);
  assert.equal(compSlide.status,200);
- assert.deepEqual((await call(env,"/api/state")).data.presentation,{view:"theory",slide:27});
+ assert.deepEqual((await call(env,"/api/state")).data.presentation,{view:"theory",slide:31});
  const presentation=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:4},trainer.token);
  assert.equal(presentation.status,200);
  assert.deepEqual((await call(env,"/lensa-muda/api/state")).data.presentation,{view:"theory",slide:4});
