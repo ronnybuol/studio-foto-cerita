@@ -40,7 +40,7 @@ test("simulator trainer, peserta dan LCD menggunakan foto yang sama tanpa merusa
   }
   assert.match(js,/function photoSceneHTML/);
   assert.match(js,/photo-camera-scene/);
-  assert.match(js,/sceneHTML\("compositionScene","showgrid"\)/);
+  assert.match(js,/sceneHTML\("compositionScene",c\.grid\?"showgrid":""\)/);
   assert.match(js,/state\.active==="kamera" && \$\("#aperture"\)/);
   assert.match(js,/SIMULASI FOTO GENERATIF/);
 });
