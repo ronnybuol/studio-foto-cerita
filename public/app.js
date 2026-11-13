@@ -5,7 +5,7 @@ import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,stor
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const APP_RELEASE = "m04-20261113";
+const APP_RELEASE = "m04-independent-20261114";
 const STORAGE_USER = "lm26-user";
 const STORAGE_WORK = "lm26-work";
 const STORAGE_VIEW = "lm26-view";
