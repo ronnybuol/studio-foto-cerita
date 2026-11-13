@@ -129,7 +129,7 @@ function lessonLayout(){
  <button class="btn small subtle" id="participant-switch-account">Keluar / ganti akun</button></div></details></div>
  <section class="lesson">${learnerModeBar(state.active)}${renderModule()}</section></div>`;
 }
-function renderModule(){const key=state.active,theory=learnerMode(key)!=="practice",slide=learnerSlide(key);switch(key){
+function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode==="reference"||(mode==="follow"&&state.presentation.view==="theory"),slide=learnerSlide(key);switch(key){
  case "kamera":return theory?theoryParticipantPage(slide):cameraPage();
  case "komposisi":return theory?compositionParticipantPage(slide):compositionPage();
  case "edfat":return theory?edfatParticipantSlide(slide):edfatPage();
@@ -580,9 +580,10 @@ function bindLessons(){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
   $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
    current.answers[input.dataset.edfatChoice]=input.value;
+   state.work.edfat={...current};saveWork();
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
-  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>current.reasons[textarea.dataset.edfatReason]=textarea.value);
+  $("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current};saveWork()});
   $("#save-edfat").onclick=()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
@@ -618,6 +619,7 @@ function bindLessons(){
   form.onsubmit=e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form).entries());saveAnswer("caption",data)};
  }
  if(state.active==="etika"){
+  $("#ethics-form").onchange=e=>{const values=new FormData(e.currentTarget);state.work.etika={...(state.work.etika||{}),answers:ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)))};saveWork()};
   $("#ethics-form").onsubmit=e=>{
     e.preventDefault();const d=new FormData(e.currentTarget),answers=ETHICS.map((_,i)=>d.get("q"+i)===null?null:Number(d.get("q"+i)));
     if(answers.some(x=>x===null)){toast("Jawab semua pertanyaan terlebih dahulu");return}
@@ -659,6 +661,10 @@ function renderParticipant(){
   return;
  }
  if(!isUnlocked(state.active))state.active=STAGES[Math.min(state.serverStage,6)].key;
+ if(learnerRange(state.active)&&!state.learnerViews[state.active]){
+   state.learnerViews[state.active]={mode:learnerMode(state.active),slide:liveLearnerSlide(state.active)};
+   saveLearnerViews();
+ }
  $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
