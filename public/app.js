@@ -310,7 +310,7 @@ function updateCamera(){
 function compositionSlideContent(index,variant="lcd"){
  const slide=compositionSlide(index);
  return `<div class="composition-slide-layout composition-slide-${variant}">
- <div class="composition-slide-copy"><span class="theory-kicker">BAB 2 · ${escapeHtml(slide.eyebrow)} · ${compositionLabel(index)}/07</span>
+ <div class="composition-slide-copy"><span class="theory-kicker">BAB 2 · ${escapeHtml(slide.eyebrow)} · ${compositionLabel(index)} / ${COMPOSITION_SLIDES.length}</span>
  <h2>${escapeHtml(slide.title)}</h2><p class="theory-lead">${escapeHtml(slide.lead)}</p>
  <ul class="theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div></div>
@@ -327,21 +327,33 @@ function compositionTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=COMPOSITION_START&&state.presentation.slide<=COMPOSITION_END?state.presentation.slide:COMPOSITION_START;
  const slide=compositionSlide(i),theory=state.presentation.view==="theory";
  return `<section class="card composition-trainer-card"><div class="trainer-demo-heading">
- <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 2</span><h2>Bahasa Visual: Komposisi Foto</h2><p class="small-note">Tujuh slide dengan foto besar dan catatan pemandu diskusi.</p></div>
+ <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 2</span><h2>Bahasa Visual: Komposisi Foto</h2><p class="small-note">Sebelas tampilan foto dokumentasi, termasuk sub-slide perbandingan, dan catatan pemandu diskusi.</p></div>
  <span class="pill ${active?"green":"gray"}">${active?"● TAHAP 02 AKTIF":"BUKA TAHAP 02"}</span></div>
- ${theory?`<div class="composition-trainer-preview"><div class="composition-trainer-notes"><span class="eyebrow">SLIDE ${compositionLabel(i)}/07</span><h3>${escapeHtml(slide.title)}</h3><div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
+ ${theory?`<div class="composition-trainer-preview"><div class="composition-trainer-notes"><span class="eyebrow">SLIDE ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</span><h3>${escapeHtml(slide.title)}</h3><div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
  ${compositionSlideContent(i,"trainer")}</div>
- <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / 07</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
- <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${String(j+1).padStart(2,"0")}</button>`).join("")}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
+ <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${compositionLabel(COMPOSITION_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
  `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>`}
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
 }
+function compositionExample(c){
+ const selected=c.preview||"distance";
+ const maps={
+  position:{left:["8798","Tokoh di kiri: ruang bercerita"],center:["8851","Pemain lebih dominan di tengah"],right:["8980","Tokoh di samping materi ajar"]},
+  distance:{wide:["9053","Foto lebar: ruang dan kegiatan"],medium:["9010","Foto sedang: hubungan peserta dan instruktur"],close:["8878","Foto dekat: bentuk instrumen bambu"]},
+  angle:{eye:["9053","Tinjauan ruang dari posisi biasa"],low:["8868","Sudut dengan foreground besar"],high:["8878","Sudut lebih tinggi mengamati pola alat"]},
+  frame:{"true":["8824","Bingkai alami dari alat musik"],"false":["9053","Tanpa bingkai foreground yang dominan"]}
+ };
+ const value=selected==="frame"?String(!!c.frame):String(c[selected]||"wide");
+ const [photo,caption]=maps[selected]?.[value]||maps.distance.wide;
+ return {photo,caption};
+}
 function compositionPage(){
  const c=state.composition;
  return `${titleBlock("komposisi")}<div class="card composition-lab-card">
- <div class="composition-lab-intro"><span class="eyebrow">LABORATORIUM KOMPOSISI</span><h2>Ubah bingkai. Jelaskan pilihanmu.</h2><p>Amati ilustrasi pengrajin lalu ubah satu pengaturan. Komposisi yang baik menjelaskan kegiatan, bukan sekadar terlihat indah.</p></div>
- <div class="composition-lab-layout"><div class="composition-lab-image">${sceneHTML("compositionScene",c.grid?"showgrid":"")}<p class="small-note">Ilustrasi simulasi, bukan foto peristiwa nyata.</p></div>
+ <div class="composition-lab-intro"><span class="eyebrow">LABORATORIUM KOMPOSISI</span><h2>Bandingkan foto. Jelaskan pilihanmu.</h2><p>Ketuk pengaturan untuk melihat contoh dokumentasi yang berbeda dari kegiatan musik bambu di Sangihe. Bukan satu foto yang diubah menjadi adegan lain: setiap pilihan menampilkan foto asli yang membantu memahami tekniknya.</p></div>
+ <div class="composition-lab-layout"><div class="composition-lab-image"><div class="comp-visual ${c.grid?"comp-grid-on":""}" id="compositionScene"><figure><div class="comp-photo-stage"><img id="comp-example-image" src="/lensa-muda/assets/composition/sangihe-2017-${compositionExample(c).photo}.webp" alt="Contoh foto dokumentasi musik bambu Sangihe" decoding="async"><div class="comp-rule-grid"></div></div><figcaption>Musik bambu Sangihe, September 2017 · Foto: Ronny Adolof Buol</figcaption></figure></div><p class="comp-example-caption" id="comp-example-caption">${compositionExample(c).caption}</p><p class="small-note">Kumpulan foto asli dari satu rangkaian kegiatan. Pengaturan menampilkan contoh teknik, bukan merekayasa subjek di foto.</p></div>
  <div class="composition-lab-controls">
  <div class="composition-setting"><strong>01 · Garis dan bingkai</strong><div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${c.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${c.frame}">▣ Framing</button></div></div>
  <div class="composition-setting"><strong>02 · Letak subjek</strong><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${c.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div></div>
@@ -354,14 +366,15 @@ function compositionPage(){
 }
 function updateComposition(){
  const sc=$("#compositionScene");if(!sc)return;
- sc.classList.toggle("showgrid",state.composition.grid);sc.classList.toggle("showframe",state.composition.frame);
- const x={left:-85,center:0,right:85}[state.composition.position]??0;
- const zoom={wide:1,medium:1.12,close:1.32}[state.composition.distance]??1;
- const y={eye:0,low:-20,high:20}[state.composition.angle]??0;
- sc.style.setProperty("--comp-zoom",String(zoom));sc.style.setProperty("--comp-angle-y",y+"px");
- const subject=sc.querySelector(".subject"),motion=sc.querySelector(".motion");
- if(subject)subject.style.transform=`translateX(${x}px)`;
- if(motion)motion.style.transform=`translateX(${x}px)`;
+ sc.classList.toggle("comp-grid-on",!!state.composition.grid);
+ const example=compositionExample(state.composition);
+ const image=$("#comp-example-image"),caption=$("#comp-example-caption");
+ if(image){
+  const url="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
+  if(!image.src.endsWith(url))image.src=url;
+  image.alt="Dokumentasi Sangihe, "+example.caption;
+ }
+ if(caption)caption.textContent=example.caption;
 }
 function edfatPage(){
 const facts=[
@@ -414,12 +427,12 @@ function bindLessons(){
   updateCamera();
  }
  if(state.active==="komposisi"&&$("#compositionScene")){
-  $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
+  $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];if(key==="frame")state.composition.preview="frame";btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
   for(const attr of ["position","distance","angle"]){
-   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
   }
   const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
-  $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""};goModule("komposisi")};
+  $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:"",preview:"distance"};goModule("komposisi")};
   $("#save-comp").onclick=()=>{const reason=(state.composition.reason||"").trim();if(reason.length<15){toast("Tuliskan alasan minimal 15 karakter");return}saveAnswer("komposisi",{...state.composition,reason})};
   updateComposition();
  }
@@ -884,9 +897,9 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
  const content=stage===2 && state.presentation.view==="theory"
-    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / 07</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
+    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
-    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati aktivitas pengrajin, lalu pilih posisi, jarak, framing, dan sudut yang paling jelas menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+1)}
+    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+9)}
       <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
     :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`

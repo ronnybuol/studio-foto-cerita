@@ -33,14 +33,15 @@ test("slide exposure menampilkan foto generatif dan bukan URL remote",()=>{
   assert.match(theoryVisual(5),/iso-tinggi/);
 });
 
-test("simulator trainer, peserta dan LCD menggunakan foto yang sama tanpa merusak modul komposisi",()=>{
+test("simulator kamera tetap memakai foto Modul 01, lab komposisi memakai foto Sangihe",()=>{
   const js=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
   for(const id of ["cameraScene","trainerCameraScene","lcdCameraScene"]){
     assert.ok(js.includes('photoSceneHTML("'+id+'")'),id);
   }
   assert.match(js,/function photoSceneHTML/);
   assert.match(js,/photo-camera-scene/);
-  assert.match(js,/sceneHTML\("compositionScene",c\.grid\?"showgrid":""\)/);
+  assert.ok(js.includes('id="comp-example-image"'));
+  assert.ok(js.includes("function compositionExample(c)"));
   assert.match(js,/state\.active==="kamera" && \$\("#aperture"\)/);
   assert.match(js,/SIMULASI FOTO GENERATIF/);
 });
