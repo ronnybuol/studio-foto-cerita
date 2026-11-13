@@ -157,7 +157,7 @@ async function participantLogin(e){
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   localStorage.setItem("lm26-last-username",state.user.username);
   const me=await request("/api/me");
-  state.work=me.answers||{};saveWork();
+  state.work=me.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};saveWork();
   state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active);
   render();toast("Selamat datang kembali, "+state.user.name);
  }catch(error){toast(error.message);button.disabled=false;button.textContent="Masuk ke kelas →"}
@@ -988,7 +988,7 @@ async function restoreParticipantSession(){
  try{
   const response=await request("/api/me");
   state.user={...state.user,...response.user,token:state.user.token};
-  state.work=response.answers||{};
+  state.work=response.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
