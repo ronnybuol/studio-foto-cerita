@@ -40,7 +40,8 @@ test("simulator kamera tetap memakai foto Modul 01, lab komposisi memakai foto S
   }
   assert.match(js,/function photoSceneHTML/);
   assert.match(js,/photo-camera-scene/);
-  assert.ok(js.includes('id="comp-example-image"'));\n  assert.ok(js.includes("function compositionExample(c)"));
+  assert.ok(js.includes('id="comp-example-image"'));
+  assert.ok(js.includes("function compositionExample(c)"));
   assert.match(js,/state\.active==="kamera" && \$\("#aperture"\)/);
   assert.match(js,/SIMULASI FOTO GENERATIF/);
 });
