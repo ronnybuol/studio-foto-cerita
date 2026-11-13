@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import handler from "../src/index.js";
 
 function mockEnv(){
- const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map()};
+ const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map(),usernameSchema:false};
  const DB={prepare(sql){
    return {bind(...args){
      return {
@@ -15,19 +15,29 @@ function mockEnv(){
          }
          if(sql.includes("COUNT(*) AS total"))return {total:data.participants.length};
          if(sql.includes("WHERE token_hash=?"))return data.participants.find(p=>p.token_hash===args[0])||null;
+         if(sql.includes("WHERE session_id=? AND username=?")){const p=data.participants.find(p=>p.session_id===args[0]&&p.username===args[1]);return p?{id:p.id,username:p.username,name:p.name,school:p.school,className:p.class_name}:null}
+         if(sql.includes("SELECT id FROM participants WHERE id=?"))return data.participants.find(p=>p.id===args[0])||null;
          if(sql.includes("SELECT failures"))return data.loginAttempts.get(args[0])||null;
          return null;
        },
        async all(){
-         if(sql.includes("FROM participants WHERE session_id=?"))return {results:data.participants.map(p=>({id:p.id,name:p.name,school:p.school,className:p.class_name}))};
+         if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};
+         if(sql.includes("SELECT stage,payload FROM answers WHERE participant_id=?"))return {results:data.answers.filter(a=>a.participant_id===args[0]).map(a=>({stage:a.stage,payload:a.payload}))};
+         if(sql.includes("FROM participants WHERE session_id=?"))return {results:data.participants.map(p=>({id:p.id,username:p.username,name:p.name,school:p.school,className:p.class_name}))};
          if(sql.includes("FROM answers a JOIN participants"))return {results:data.answers};
          return {results:[]};
        },
        async run(){
          if(sql.includes("INSERT INTO participants")){
-           const [id,session_id,name,school,class_name,token_hash,created_at]=args;
-           data.participants.push({id,session_id,name,school,class_name,token_hash,created_at});
+           const [id,session_id,name,school,class_name,token_hash,username,created_at]=args;
+           data.participants.push({id,session_id,name,school,class_name,token_hash,username,created_at});
          }
+         if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;
+         if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});
+         if(sql.includes("UPDATE participants SET token_hash=")){const p=data.participants.find(x=>x.id===args[1]);if(p)p.token_hash=args[0]}
+         if(sql.includes("UPDATE participants SET name=")){const p=data.participants.find(x=>x.id===args[3]);if(p){p.name=args[0];p.school=args[1];p.class_name=args[2]}}
+         if(sql.includes("DELETE FROM answers WHERE participant_id"))data.answers=data.answers.filter(a=>a.participant_id!==args[0]);
+         if(sql.includes("DELETE FROM participants WHERE id="))data.participants=data.participants.filter(p=>p.id!==args[0]);
          if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
          if(sql.includes("UPDATE sessions SET camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
@@ -161,4 +171,42 @@ test("PIN benar tetap diterima setelah percobaan gagal mencapai ambang pembatasa
  assert.equal(valid.data.role,"trainer");
  const dashboard=await call(env,"/lensa-muda/api/dashboard","GET",undefined,valid.data.token);
  assert.equal(dashboard.status,200);
+});
+
+test("username acak memungkinkan login ulang dan memulihkan progres peserta",async()=>{
+ const env=mockEnv();
+ const reg=await call(env,"/api/participants","POST",{name:"Lia",school:"SMA 1",className:"XI"});
+ assert.equal(reg.status,201);
+ assert.match(reg.data.user.username,/^LM-[0-9A-F]{12}$/);
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ await call(env,"/api/state","PUT",{stage:1},trainer.token);
+ const saved=await call(env,"/api/answers/kamera","PUT",{a:0,s:3,i:2},reg.data.user.token);
+ assert.equal(saved.status,200);
+ const bad=await call(env,"/api/participant-login","POST",{username:"LM-AAAAAAAAAAAA"});
+ assert.equal(bad.status,401);
+ const login=await call(env,"/api/participant-login","POST",{username:reg.data.user.username.toLowerCase()});
+ assert.equal(login.status,200);
+ assert.equal(login.data.user.id,reg.data.user.id);
+ const me=await call(env,"/api/me","GET",undefined,login.data.user.token);
+ assert.deepEqual(me.data.answers.kamera,{a:0,s:3,i:2});
+ const stale=await call(env,"/api/me","GET",undefined,reg.data.user.token);
+ assert.equal(stale.status,401);
+});
+test("hanya trainer dapat mengedit atau menghapus peserta dan jawabannya",async()=>{
+ const env=mockEnv();
+ const reg=(await call(env,"/api/participants","POST",{name:"Nina",school:"SMK 1",className:"X"})).data.user;
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
+ const path="/api/participants/"+reg.id;
+ assert.equal((await call(env,path,"DELETE")).status,401);
+ assert.equal((await call(env,path,"DELETE",undefined,mentor.token)).status,403);
+ const edit=await call(env,path,"PATCH",{name:"Nina Baru",school:"SMK 2",className:"XI"},trainer.token);
+ assert.equal(edit.status,200);
+ const dash=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.equal(dash.data.participants[0].name,"Nina Baru");
+ assert.equal(dash.data.participants[0].username,reg.username);
+ const del=await call(env,path,"DELETE",undefined,trainer.token);
+ assert.equal(del.status,200);
+ assert.equal((await call(env,"/api/state")).data.count,0);
+ assert.equal((await call(env,"/api/me","GET",undefined,reg.token)).status,401);
 });
