@@ -179,3 +179,14 @@ Materi diperluas dari pertanyaan tunggal menjadi tujuh slide yang mengikuti peng
 Tidak ada migrasi D1, unggah R2, perubahan izin, atau modifikasi aset Modul 01–02. Hanya batas indeks presentasi diperluas ke 38.
 
 **QA setelah deployment:** tahap 03 menampilkan slide pembuka di trainer/LCD/HP; semua tujuh slide dapat dipindahkan tanpa menggeser viewport; transisi ke Misi Detektif mengubah tampilan LCD dan peserta; semua lima pertanyaan dapat dipilih, alasan wajib diisi, lalu hasil tersimpan dan terbaca di dashboard.
+
+
+## Modul 04 – Sembilan Bingkai (versi alur lengkap)
+
+Modul ini mengubah simulasi sederhana menjadi meja editor foto berorientasi tugas. Trainer membuka **04 · Sembilan Bingkai** dan dapat memandu **enam slide presentasi** (indeks 39–44): kerja editor, foto pembuka, variasi, alur, pilihan redaksi, lalu praktik. LCD dan peserta mengikuti tahap/slide dari server, seperti Modul 02 dan 03.
+
+Pada praktik, peserta memilih **tepat 9 dari 12 kandidat** foto dokumentasi musik bambu Sangihe karya Ronny Adolof Buol (September 2017), menyusun urutannya dengan tombol ↑ ↓ yang cocok untuk layar sentuh, menulis judul kerja minimal 5 karakter dan alasan editorial minimal 30 karakter, lalu menyimpan hasil melalui kunci D1 `story` yang sudah ada. Trainer melihat urutan, judul, dan alasan masing-masing peserta di menu progres. Data susunan lama (`selected` saja) masih dapat dibaca.
+
+Penting: kandidat 12 adalah **potongan alternatif dari foto kandidat 5**, bukan dokumentasi peristiwa berbeda, dan telah diberi label. Simulasi menyusun alur naratif, **bukan klaim kronologi** yang tidak terverifikasi. Tidak ada foto asli yang ditimpa, migrasi D1, atau perubahan bucket R2.
+
+**Uji produksi:** tahap 04 langsung menampilkan slide pengantar; pindah antar enam slide; buka meja editor; pada HP pilih 9 foto, geser urutan dengan ↑ ↓, isi judul dan alasan, simpan; trainer membaca kembali hasil peserta. Uji layout HP 320–430 piksel dan LCD 16:9 setelah Cloudflare menayangkan commit.
