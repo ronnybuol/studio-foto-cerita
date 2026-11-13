@@ -671,13 +671,13 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
   const n=state.presentation.slide+Number(button.dataset.compSlideStep);
   if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
  });
- $("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
- $("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
- $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
+ $$("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
+ $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
