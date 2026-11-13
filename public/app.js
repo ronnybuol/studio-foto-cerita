@@ -986,13 +986,13 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $("[data-caption-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-caption-step]").forEach(button=>button.onclick=()=>{
     const next=state.presentation.slide+Number(button.dataset.captionStep);
     if(next>=CAPTION_START&&next<=CAPTION_END)choosePresentation({view:"theory",slide:next});
  });
- $("[data-caption-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.captionSlide)}));
- $("[data-caption-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.captionMode,slide:state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START}));
- $("[data-story-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-caption-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.captionSlide)}));
+ $$("[data-caption-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.captionMode,slide:state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START}));
+ $$("[data-story-step]").forEach(button=>button.onclick=()=>{
   const next=state.presentation.slide+Number(button.dataset.storyStep);
   if(next>=STORY_START&&next<=STORY_END)choosePresentation({view:"theory",slide:next});
  });
