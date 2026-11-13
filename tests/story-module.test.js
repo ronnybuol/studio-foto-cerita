@@ -47,7 +47,7 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
 
 test("Semua foto Modul 04 benar-benar ada di public/assets/composition",()=>{
  for(const image of STORY_BANK){
-  const relative=".."+storyAsset(image);
+  const relative="../public"+storyAsset(image).replace(/^\/lensa-muda/,"");
   const file=new URL(relative,import.meta.url);
   assert.ok(existsSync(file),"Aset foto hilang: "+storyAsset(image));
  }
