@@ -79,7 +79,7 @@ function compositionFromCamera(raw){
 }
 
 function presentationFromCamera(value){
-  return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=31?value.slide:0};
+  return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=38?value.slide:0};
 }
 function validCamera(value){
   return value&&typeof value==="object"&&!Array.isArray(value)
@@ -306,7 +306,7 @@ async function handleApi(req,env){
     if(!user)return failure("Autentikasi trainer diperlukan",401);
     if(user.role!=="trainer")return failure("Hanya trainer boleh mengendalikan materi",403);
     const data=await bodyJson(req);
-    if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>31)
+    if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>38)
       return failure("Mode presentasi atau nomor slide tidak valid",400);
     try{
       await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?),updated_at=? WHERE id=?")

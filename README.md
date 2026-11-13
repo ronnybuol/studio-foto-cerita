@@ -166,3 +166,16 @@ Pemeriksaan akhir: pastikan 11 URL foto valid, validasi GitHub Actions, lalu mer
 - Pada **Tahap 02**, trainer membuka mode **Latihan komposisi** untuk menampilkan panel demonstrasi di dashboard. Tombol yang sama dapat digunakan trainer, dan foto contoh serta garisnya mengikuti di LCD melalui polling yang telah tersedia. Peserta tetap memakai kontrol mandiri di HP: aksi peserta tidak menulis ke demo kelas.
 - State demo komposisi disimpan dalam `sessions.camera_json.composition` melalui `PUT /api/demo-composition` khusus trainer. Statusnya diekspos lewat `GET /api/state` dan dashboard. Tidak perlu migrasi D1 ataupun perubahan R2, token, atau tahapan.
 - Uji langkah: buka tahap 02 → klik **Buka latihan komposisi peserta** → pada trainer klik **Lebar / Sedang / Dekat**, lalu **Framing** dan **Garis sepertiga** → amati perubahan foto/overlay pada LCD sambil peserta mencoba pengaturan sendiri di HP. Tes otomatis meliputi hak akses, persistensi, isolasi kamera, tombol frontend, dan CSS.
+
+
+## Modul 03 – Detektif EDFAT (Entire, Detail, Frame, Angle, Time)
+
+Materi diperluas dari pertanyaan tunggal menjadi tujuh slide yang mengikuti pengendalian trainer: pengantar dan lima cara mengamati foto (Entire, Detail, Frame, Angle, Time), kemudian Misi Detektif. Menggunakan foto dokumentasi Sangihe, September 2017 karya Ronny Adolof Buol, dari sebelas aset Modul 02 yang sudah berada di repositori; bukan ilustrasi peristiwa rekayasa.
+
+**Cara menjalankan:** trainer membuka **03 · Detektif EDFAT**. Presentasi otomatis diposisikan ke indeks 32 (pengantar). Tombol navigasi membuka indeks 32–38, sinkron ke LCD dan tampilan peserta. Saat siap latihan, tekan **Buka Misi Detektif peserta**. Peserta melihat lima foto individual, memilih kategori EDFAT yang paling dominan dan menulis alasan minimal 12 karakter untuk tiap foto. Simpan melalui tombol di bagian bawah; jawaban disimpan di D1 pada kunci `edfat` yang sudah tersedia dan dapat dibaca di progres trainer. Peserta lama yang memiliki jawaban EDFAT format lama tetap terbaca.
+
+**Catatan fasilitasi:** EDFAT adalah cara mengamati dan merencanakan liputan, bukan klasifikasi mutlak atau kuis hafalan. Penilaian utamakan rujukan ke hal yang benar-benar terlihat pada foto, tidak menebak fakta yang belum diverifikasi. Satu foto mungkin memuat lebih dari satu pendekatan. Diskusikan bagaimana foto Entire dan Detail saling mengisi untuk membangun rangkaian sembilan bingkai cerita budaya Sulawesi Utara.
+
+Tidak ada migrasi D1, unggah R2, perubahan izin, atau modifikasi aset Modul 01–02. Hanya batas indeks presentasi diperluas ke 38.
+
+**QA setelah deployment:** tahap 03 menampilkan slide pembuka di trainer/LCD/HP; semua tujuh slide dapat dipindahkan tanpa menggeser viewport; transisi ke Misi Detektif mengubah tampilan LCD dan peserta; semua lima pertanyaan dapat dipilih, alasan wajib diisi, lalu hasil tersimpan dan terbaca di dashboard.

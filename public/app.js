@@ -1,5 +1,6 @@
 import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
+import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -85,7 +86,7 @@ async function syncState(){
     if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=COMPOSITION_END)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=EDFAT_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -112,7 +113,7 @@ function lessonLayout(){
 function renderModule(){switch(state.active){
   case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
   case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
-  case "edfat":return edfatPage();
+  case "edfat":return state.serverStage===3&&state.presentation.view==="theory"&&state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?edfatParticipantSlide():edfatPage();
   case "story":return storyPage();
   case "caption":return captionPage();
   case "etika":return ethicsPage();
@@ -400,15 +401,58 @@ function updateComposition(){
  }
  if(caption)caption.textContent=example.caption;
 }
+function edfatSlideHTML(index,variant="lcd"){
+ const data=edfatSlide(index);
+ return `<div class="edfat-slide edfat-slide-${variant}">
+ <div class="edfat-slide-copy"><span class="theory-kicker">BAB 3 · ${escapeHtml(data.tag)} · ${edfatLabel(index)}/${EDFAT_SLIDES.length}</span>
+ <h2>${escapeHtml(data.title)}</h2><p class="edfat-lead">${escapeHtml(data.lead)}</p>
+ <ul class="edfat-points">${data.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+ <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(data.prompt)}</strong></div></div>
+ ${edfatVisual(index)}</div>`;
+}
+function edfatParticipantSlide(){
+ return `${titleBlock("edfat")}<section class="card edfat-learner-theory">
+ <p class="small-note">Amati foto dan diskusikan pertanyaannya. Trainer akan membuka Misi Detektif untuk latihan mandiri.</p>
+ ${edfatSlideHTML(state.presentation.slide,"participant")}</section>`;
+}
+function edfatTrainerPanel(data,isMentor){
+ const active=data.stage===3;
+ const i=state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?state.presentation.slide:EDFAT_START;
+ const slide=edfatSlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card edfat-trainer-card"><div class="trainer-demo-heading">
+ <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 3</span><h2>Detektif EDFAT</h2><p class="small-note">Tujuh slide observasi, satu foto besar per slide, lalu lima misi foto individu.</p></div>
+ <span class="pill ${active?"green":"gray"}">${active?"● TAHAP 03 AKTIF":"BUKA TAHAP 03"}</span></div>
+ ${theory?`<div class="edfat-trainer-preview">
+ <div class="edfat-trainer-notes"><span class="eyebrow">SLIDE ${edfatLabel(i)}/07</span><h3>${escapeHtml(slide.title)}</h3>
+ <div class="trainer-theory-note"><b>PANDUAN TRAINER</b><p>${escapeHtml(slide.trainer)}</p></div></div>
+ ${edfatVisual(i)}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-edfat-slide-step="-1" ${i===EDFAT_START||isMentor?"disabled":""}>← Sebelumnya</button><strong>Slide ${edfatLabel(i)} / 07</strong><button class="btn primary" data-edfat-slide-step="1" ${i===EDFAT_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+ <div class="edfat-slide-dots">${EDFAT_SLIDES.map((x,j)=>`<button class="theory-dot" data-edfat-slide="${EDFAT_START+j}" aria-pressed="${i===EDFAT_START+j}" ${isMentor?"disabled":""} title="${escapeHtml(x.title)}">${edfatLabel(EDFAT_START+j)}</button>`).join("")}</div>
+ <div class="actions"><button class="btn primary" data-edfat-mode="simulator" ${isMentor?"disabled":""}>Buka Misi Detektif peserta →</button></div>`:
+ `<div class="trainer-theory-compact"><div><strong>Misi Detektif sedang terbuka</strong><p class="small-note">Peserta menilai lima foto, memilih pendekatan dominan, dan menulis alasan. Jawaban terlihat pada manajemen peserta.</p></div>
+ <button class="btn subtle" data-edfat-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
+ <div class="edfat-trainer-mission"><span class="eyebrow">TANTANGAN UNTUK DISKUSI KELAS</span>
+ <p>Apakah satu foto bisa mengandung lebih dari satu unsur EDFAT? Mintalah peserta menjelaskan informasi apa yang terlihat.</p></div>`}
+ <p class="small-note">LCD dan peserta mengikuti mode trainer. Misi peserta dikerjakan sendiri pada perangkat masing-masing.</p>
+ </section>`;
+}
 function edfatPage(){
-const facts=[
- ["E","Entire","Lihat peristiwa secara utuh. Di mana berlangsung? Siapa saja yang hadir?"],
- ["D","Detail","Temukan petunjuk kecil yang penting: tangan, alat, tekstur, ekspresi."],
- ["F","Frame","Gunakan objek di depan/belakang untuk memberi lapisan konteks."],
- ["A","Angle","Ubah sudut pandang untuk memperlihatkan informasi yang berbeda."],
- ["T","Time","Tunggu momen yang paling menjelaskan tindakan atau emosi."]
-];
-return `${titleBlock("edfat")}<div class="grid" style="margin-bottom:16px">${facts.map(([key,name,desc])=>`<div class="card"><div class="eyebrow" style="font-size:26px">${key}</div><h3>${name}</h3><p class="small-note">${desc}</p></div>`).join("")}</div><div class="card"><h2>Detektif EDFAT</h2><p class="small-note">Seorang fotografer mendekat untuk memperlihatkan pahatan halus pada alat musik yang sedang dibuat. Pendekatan utama yang sedang ia cari adalah…</p><div class="quiz-visual">${shotSvg(5)}</div><div class="choice-set">${["Entire","Detail","Frame","Angle","Time"].map(x=>`<button class="choice" data-edfat="${x}">${x}</button>`).join("")}</div><div id="edfat-feedback" class="info" style="display:none"></div><div class="actions"><button class="btn primary" id="save-edfat">Simpan jawaban ✓</button></div></div><p class="small-note" style="margin-top:15px">Catatan: satu foto bisa mengandung lebih dari satu pendekatan. EDFAT adalah alat bantu saat meliput, bukan kategori penilaian yang kaku.</p>`;
+ const saved=state.work.edfat||{},answers=saved.answers||{},reasons=saved.reasons||{};
+ const cases=EDFAT_CASES.map((x,i)=>`<section class="edfat-case card" data-edfat-case="${x.id}">
+ <div class="edfat-case-top"><span class="eyebrow">KASUS ${String(i+1).padStart(2,"0")} / ${EDFAT_CASES.length}</span><h3>${escapeHtml(x.question)}</h3></div>
+ <figure class="edfat-figure"><div class="edfat-photo"><img src="${edfatPhoto(x.image)}" alt="Foto kasus ${i+1} dari dokumentasi musik bambu Sangihe" loading="lazy" decoding="async"></div>
+ <figcaption>Foto: Ronny Adolof Buol · Sangihe, September 2017</figcaption></figure>
+ <fieldset class="edfat-options"><legend>Pendekatan yang paling menonjol</legend>
+ ${EDFAT_OPTIONS.map(option=>`<label class="edfat-option"><input type="radio" name="edfat-${x.id}" value="${option}" data-edfat-choice="${x.id}" ${answers[x.id]===option?"checked":""}><span>${option}</span></label>`).join("")}</fieldset>
+ <label for="edfat-reason-${x.id}">Petunjuk apa pada foto yang mendukung pilihanmu?</label>
+ <textarea id="edfat-reason-${x.id}" data-edfat-reason="${x.id}" rows="2" placeholder="Tuliskan apa yang benar-benar terlihat pada foto…">${escapeHtml(reasons[x.id]||"")}</textarea>
+ </section>`).join("");
+ return `${titleBlock("edfat")}<div class="card edfat-mission-intro"><span class="eyebrow">MISI DETEKTIF · 5 KASUS FOTO</span>
+ <h2>Satu foto, banyak petunjuk.</h2><p>Amati setiap foto musik bambu Sangihe. Pilih pendekatan EDFAT yang paling menonjol, lalu jelaskan petunjuk visual yang mendukung jawabanmu.</p>
+ <p class="small-note">EDFAT bukan label mutlak. Penilaian terutama pada alasan pengamatan, bukan sekadar pilihan istilah.</p></div>
+ <div class="edfat-case-list">${cases}</div>
+ <div class="card edfat-submit"><p><strong>${Object.keys(answers).length} dari ${EDFAT_CASES.length} kasus dipilih.</strong> Alasan harus memuat minimal 12 karakter setiap kasus.</p>
+ <div class="actions"><button id="save-edfat" class="btn primary">Simpan hasil penyelidikan ✓</button></div><p id="edfat-feedback" class="small-note" role="status" aria-live="polite"></p></div>`;
 }
 function shotSvg(i){
 const palettes=[["#779da2","#e4c08f","#ae633e"],["#697c7d","#c9aa7c","#af6d38"],["#496e73","#e0bb8e","#cc6638"],["#8a9d92","#dcc6a3","#976a52"],["#485b5d","#d4ad77","#9c5132"],["#6d817c","#e2af7b","#b87948"]];
@@ -460,12 +504,19 @@ function bindLessons(){
   $("#save-comp").onclick=()=>{const reason=(state.composition.reason||"").trim();if(reason.length<15){toast("Tuliskan alasan minimal 15 karakter");return}saveAnswer("komposisi",{...state.composition,reason})};
   updateComposition();
  }
- if(state.active==="edfat"){
-  let answer=state.work.edfat?.answer||null;
-  $$("[data-edfat]").forEach(btn=>{btn.setAttribute("aria-pressed",String(btn.dataset.edfat===answer));btn.onclick=()=>{
-    answer=btn.dataset.edfat;$$("[data-edfat]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));
-    const feedback=$("#edfat-feedback");feedback.style.display="block";feedback.textContent=answer==="Detail"?"Tepat! Mendekat untuk memperlihatkan pahatan adalah pendekatan Detail.":"Coba lagi. Perhatikan petunjuk kecil yang dipotret dari jarak dekat."; }});
-  $("#save-edfat").onclick=()=>answer?saveAnswer("edfat",{answer}):toast("Pilih jawaban lebih dahulu");
+ if(state.active==="edfat"&&$("#save-edfat")){
+  const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
+  $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
+   current.answers[input.dataset.edfatChoice]=input.value;
+   const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
+  });
+  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>current.reasons[textarea.dataset.edfatReason]=textarea.value);
+  $("#save-edfat").onclick=()=>{
+   const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
+   if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
+   saveAnswer("edfat",{...current,completedAt:new Date().toISOString()});
+   const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lima hasil pengamatan sudah disimpan. Trainer dapat membaca seluruh alasanmu.";
+  };
  }
  if(state.active==="story"){
   $$("[data-pick]").forEach(b=>b.onclick=()=>{const arr=state.work.story?.selected||[];if(arr.length>=9){toast("Sudah sembilan foto. Keluarkan satu lebih dulu.");return}state.work.story={selected:[...arr,Number(b.dataset.pick)]};saveWork();render()});
@@ -592,7 +643,9 @@ function answerDetails(key,v){
    return `<div class="response-pills"><span>BUKAAN <b>f/${APERTURE[v.a]}</b></span><span>RANA <b>${SHUTTERS[v.s].l}s</b></span><span>ISO <b>${ISOS[v.i]}</b></span><span>EV <b>${exposureText(v)}</b></span></div>`;
  }
  if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
- if(key==="edfat")return `<p class="small-note">Pilihan EDFAT: <b>${escapeHtml(v.answer||"–")}</b></p>`;
+ if(key==="edfat")return Array.isArray(EDFAT_CASES)&&v.answers
+ ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
+ :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
    const ids=Array.isArray(v.selected)?v.selected:[];
    return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(SHOTS.find(s=>s.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>`;
@@ -622,7 +675,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
 <div class="participant-management-tools"><button class="btn primary small" id="trainer-add-participant" ${isMentor?"disabled":""}>+ Tambah peserta</button><button class="btn small" id="print-participants">Cetak / Simpan PDF</button><button class="btn small subtle" id="share-participants-wa">Bagikan via WA</button><button class="btn small subtle" id="share-participants-email">Kirim via email</button></div><p class="small-note">Username terlihat pada daftar trainer. Untuk keamanan, daftar yang dibagikan melalui WA/email tidak menyertakan username; cetakan memuat username untuk administrasi internal.</p>
 <div class="field"><label for="participant-filter">Cari peserta</label><input id="participant-filter" type="search" placeholder="Nama, username, sekolah, atau kelas"></div>
 <div class="table-wrap participant-table"><table class="data-table"><thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th><th>Aksi</th></tr></thead><tbody>${(data.participants||[]).map(p=>`<tr data-participant-row="${escapeHtml((p.name+" "+(p.username||"")+" "+p.school+" "+p.className).toLowerCase())}"><td><b>${escapeHtml(p.name)}</b></td><td><code>${escapeHtml(p.username||"—")}</code></td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td><td><div class="participant-row-actions"><button class="btn small" data-inspect="${escapeHtml(p.id)}">Lihat</button>${p.username?`<button class="btn small subtle" data-copy-username="${escapeHtml(p.id)}">Salin</button>`:""}${!isMentor?`<button class="btn small subtle" data-edit-participant="${escapeHtml(p.id)}">Edit</button><button class="btn small danger" data-delete-participant="${escapeHtml(p.id)}">Hapus</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="center muted">Belum ada peserta terdaftar.</td></tr>`}</tbody></table></div>
@@ -667,11 +720,11 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage===1||stage===2){state.presentation={view:"theory",slide:stage===1?0:COMPOSITION_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage===1||stage===2||stage===3){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:EDFAT_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage!==state.dashboard?.stage && (stage===1||stage===2)){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:COMPOSITION_START},auth:true});
+     if(stage!==state.dashboard?.stage && (stage===1||stage===2||stage===3)){
+       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:EDFAT_START},auth:true});
      }
      await syncState();await fetchDashboard();render();
      toast("Tahap kelas berhasil diperbarui");
@@ -679,7 +732,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(COMPOSITION_END,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(EDFAT_END,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -709,6 +762,12 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
+ $$("[data-edfat-slide-step]").forEach(button=>button.onclick=()=>{
+  const n=state.presentation.slide+Number(button.dataset.edfatSlideStep);
+  if(n>=EDFAT_START&&n<=EDFAT_END)choosePresentation({view:"theory",slide:n});
+ });
+ $$("[data-edfat-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.edfatSlide)}));
+ $$("[data-edfat-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.edfatMode,slide:state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?state.presentation.slide:EDFAT_START}));
  $$("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
   const n=state.presentation.slide+Number(button.dataset.compSlideStep);
   if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
@@ -960,7 +1019,14 @@ function lcdPage(){
  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
- const content=stage===2 && state.presentation.view==="theory"
+ const content=stage===3&&state.presentation.view==="theory"
+   ?`<div class="lcd-theory-intro"><span class="kicker">BAB 3 · DETEKTIF EDFAT</span><span class="theory-slide-indicator">SLIDE ${edfatLabel(state.presentation.slide)} / ${EDFAT_SLIDES.length}</span></div>${edfatSlideHTML(state.presentation.slide,"lcd")}`
+   :stage===3
+   ?`<div class="edfat-lcd-mission"><span class="kicker">TAHAP 03 · MISI DETEKTIF</span><h1>Amati. Temukan petunjuk. <em>Jelaskan alasan.</em></h1>
+   <p>Lima foto, lima pendekatan EDFAT. Peserta memilih sendiri dari HP dan menjelaskan petunjuk nyata pada foto.</p>
+   ${edfatVisual(EDFAT_END)}
+   <div class="theory-question"><span>DISKUSI KELAS</span><strong>Apakah satu foto hanya dapat memuat satu unsur EDFAT?</strong></div></div>`
+   :stage===2 && state.presentation.view==="theory"
     ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
     ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")}
@@ -984,7 +1050,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>
