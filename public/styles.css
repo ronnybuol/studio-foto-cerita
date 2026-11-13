@@ -315,3 +315,67 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
 @media(max-width:1050px){.lcd-camera-control{column-gap:8px;grid-template-columns:48px minmax(0,1fr)}.lcd-camera-dial{width:48px;height:48px}.lcd-camera-scale{font-size:9px}}
 @media(max-width:650px){.lcd-camera-control{grid-template-columns:40px minmax(0,1fr);gap:5px}.lcd-camera-dial{width:40px;height:40px;border-width:3px}.lcd-dial-center{font-size:9px}.lcd-camera-control-label{font-size:8px!important}}
 @media(prefers-reduced-motion:reduce){.lcd-iris-opening,.lcd-dial-pointer,.lcd-camera-track-fill,.lcd-camera-track-thumb{transition:none}}
+
+
+/* Lensa Muda — pengaturan simulator peserta di layar kecil, tanpa mengubah kendali LCD. */
+.lesson,.lab-layout,.participant-camera-page,.participant-camera-card{min-width:0}
+.participant-camera-page .module-top{margin-bottom:12px}
+.participant-camera-page .module-top h1{font-size:clamp(23px,2.8vw,35px)}
+.participant-camera-page .module-top p{font-size:clamp(12px,1.2vw,15px)}
+.participant-camera-card{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.85fr);grid-template-areas:"intro intro" "photo controls" "status controls" "actions actions";gap:12px;align-items:start}
+.participant-camera-intro{grid-area:intro;margin:0!important;font-size:13px}
+.participant-camera-image{grid-area:photo;min-width:0;width:100%}
+.participant-camera-image .scene{width:100%;max-width:100%;height:auto;aspect-ratio:3/2;border-radius:12px}
+.participant-camera-card>.statline{grid-area:status;min-width:0;margin:0;gap:12px}
+.participant-camera-card>.statline strong{flex:none;white-space:nowrap}
+.participant-camera-controls{grid-area:controls;display:grid;grid-template-columns:1fr;min-width:0;margin:0;gap:10px}
+.participant-camera-controls .control{min-width:0;padding:11px}
+.participant-camera-controls .control label{font-size:13px;align-items:center;flex-wrap:wrap}
+.participant-camera-controls .control input[type=range]{display:block;width:100%;height:34px;margin:8px 0 4px;cursor:pointer;touch-action:pan-x}
+.participant-camera-controls .control output{font-size:clamp(15px,1.65vw,21px);white-space:nowrap}
+.participant-camera-controls .control small{min-height:0;font-size:12px}
+.participant-camera-actions{grid-area:actions;margin-top:2px}
+.participant-camera-notes{margin-top:12px}
+.participant-camera-notes .card{min-width:0}
+.theory-layout-participant,.theory-participant-card{min-width:0}
+.theory-layout-participant .theory-visual{min-width:0;max-height:min(46svh,430px);overflow:hidden}
+.theory-layout-participant .theory-visual img{max-width:100%;max-height:36svh;object-fit:contain}
+.theory-layout-participant .theory-light-grid,.theory-layout-participant .theory-two-scenes{min-width:0}
+.theory-layout-participant .photo-detail-layout{max-height:min(55svh,540px)}
+@media(max-width:900px){
+ .participant-camera-card{grid-template-columns:minmax(0,1fr) minmax(250px,.9fr);gap:10px}
+ .participant-camera-controls .control{padding:9px}
+ .participant-camera-card>.statline{flex-wrap:wrap}
+}
+@media(max-width:700px){
+ .lab-layout:has(.participant-camera-page) .side{min-width:0}
+ .lab-layout:has(.participant-camera-page) .side h3{display:none}
+ .lab-layout:has(.participant-camera-page) .side .user-chip{display:none}
+ .lab-layout:has(.participant-camera-page) .side-nav{margin:0;max-width:100%;overflow-x:auto;scrollbar-width:thin}
+ .participant-camera-page .module-top{margin-bottom:8px}
+ .participant-camera-page .module-top h1{margin:2px 0 5px;font-size:clamp(23px,6vw,30px)}
+ .participant-camera-page .module-top p{font-size:12px;line-height:1.4}
+ .participant-camera-card{grid-template-columns:minmax(0,1fr);grid-template-areas:"intro" "photo" "status" "controls" "actions";padding:12px;gap:9px}
+ .participant-camera-intro{font-size:12px;padding:9px 11px;line-height:1.45}
+ .participant-camera-image .scene{aspect-ratio:3/2;border-radius:9px}
+ .participant-camera-card>.statline{flex-direction:row;align-items:center;padding:9px 11px;gap:8px}
+ .participant-camera-card>.statline span{font-size:11px}
+ .participant-camera-card>.statline .small-note{display:none}
+ .participant-camera-card>.statline strong{font-size:18px}
+ .participant-camera-controls{gap:8px}
+ .participant-camera-controls .control{padding:9px 11px}
+ .participant-camera-controls .control input[type=range]{height:36px;margin:5px 0}
+ .participant-camera-controls .control small{font-size:11px}
+ .participant-camera-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .participant-camera-actions .btn{min-width:0;white-space:normal;padding:9px 6px;font-size:12px;min-height:44px}
+ .participant-camera-notes{grid-template-columns:1fr;margin-top:10px}
+ .theory-layout-participant .theory-visual{max-height:none}
+ .theory-layout-participant .theory-visual img{max-height:35svh}
+}
+@media(max-width:370px){
+ .participant-camera-card{padding:9px}
+ .participant-camera-intro{font-size:11px}
+ .participant-camera-actions{grid-template-columns:1fr}
+ .participant-camera-page .module-top h1{font-size:23px}
+ .scene.photo-camera-scene>.view-label{font-size:7px;padding:5px;max-width:94%}
+}
