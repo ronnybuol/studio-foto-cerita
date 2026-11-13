@@ -453,7 +453,7 @@ function bindLessons(){
  if(state.active==="komposisi"&&$("#compositionScene")){
   $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];if(key==="frame")state.composition.preview="frame";btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
   for(const attr of ["position","distance","angle"]){
-   $$$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
   }
   const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
   $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:"",preview:"distance"};goModule("komposisi")};
