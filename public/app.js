@@ -572,12 +572,24 @@ function bindLessons(){
    const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lima hasil pengamatan sudah disimpan. Trainer dapat membaca seluruh alasanmu.";
   };
  }
- if(state.active==="story"){
-  $$("[data-pick]").forEach(b=>b.onclick=()=>{const arr=state.work.story?.selected||[];if(arr.length>=9){toast("Sudah sembilan foto. Keluarkan satu lebih dulu.");return}state.work.story={selected:[...arr,Number(b.dataset.pick)]};saveWork();render()});
-  $$("[data-remove]").forEach(b=>b.onclick=()=>{const arr=state.work.story?.selected||[];state.work.story={selected:arr.filter(x=>x!==Number(b.dataset.remove))};saveWork();render()});
-  $$("[data-move]").forEach(b=>b.onclick=()=>{const arr=[...(state.work.story?.selected||[])],idx=arr.indexOf(Number(b.dataset.move)),target=idx+Number(b.dataset.dir);if(target<0||target>=arr.length)return;[arr[idx],arr[target]]=[arr[target],arr[idx]];state.work.story={selected:arr};saveWork();render()});
-  $("#reset-story").onclick=()=>{state.work.story={selected:[]};saveWork();render()};
-  $("#save-story").onclick=()=>{const selected=state.work.story?.selected||[];if(selected.length!==9)return;saveAnswer("story",{selected})};
+ if(state.active==="story"&&$("#save-story")){
+  const current=()=>state.work.story||{};
+  const setSelected=selected=>{state.work.story={...current(),selected};saveWork();render()};
+  $$("[data-pick]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],id=Number(btn.dataset.pick);if(ids.length>=9){toast("Sudah sembilan foto. Keluarkan satu dahulu.");return}if(!ids.includes(id))setSelected([...ids,id])});
+  $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected((current().selected||[]).filter(id=>id!==Number(btn.dataset.remove))));
+  $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
+  for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
+   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value};saveWork()};
+  }
+  $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
+  $("#save-story").onclick=()=>{
+   const data=current(),ids=data.selected||[],title=(data.title||"").trim(),reason=(data.reason||"").trim();
+   const status=$("#story-status");
+   if(ids.length!==9){if(status)status.textContent="Pilih tepat sembilan foto.";return}
+   if(title.length<5||reason.length<30){if(status)status.textContent="Lengkapi judul minimal 5 karakter dan alasan urutan minimal 30 karakter.";toast("Lengkapi judul dan alasan");return}
+   saveAnswer("story",{selected:ids,title,reason,completedAt:new Date().toISOString()});
+   if(status)status.textContent="Sembilan foto dan alasan editorial tersimpan.";
+  };
  }
  if(state.active==="caption"){
   const form=$("#caption-form");
@@ -701,10 +713,11 @@ function answerDetails(key,v){
  ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
-   const ids=Array.isArray(v.selected)?v.selected:[];
-   return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(SHOTS.find(s=>s.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>`;
- }
- if(key==="caption"){
+ const ids=Array.isArray(v.selected)?v.selected:[];
+ return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>
+ <div class="small-note"><b>Judul kerja:</b> ${escapeHtml(v.title||"Belum ditulis")}<p><b>Alasan urutan:</b> ${escapeHtml(v.reason||"Belum ditulis")}</p></div>`;
+}
+if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
    return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Caption (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p></div>`;
  }
