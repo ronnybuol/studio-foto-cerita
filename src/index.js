@@ -89,9 +89,9 @@ async function recordBadLogin(env,id){
       .bind(id,now,now,15*60*1000,now,15*60*1000,now).run();
 }
 async function clearBadLogin(env,id){await env.DB.prepare("DELETE FROM login_attempts WHERE id=?").bind(id).run()}
-let usernameSchemaReady=false;
+const verifiedUsernameDatabases=new WeakSet();
 async function ensureUsernameSchema(env){
-  if(usernameSchemaReady)return;
+  if(verifiedUsernameDatabases.has(env.DB))return;
   // Migrasi aditif: aman bila Worker baru aktif sebelum migrasi manual D1.
   const schema=await env.DB.prepare("PRAGMA table_info(participants)").all();
   const columns=schema.results||[];
@@ -101,7 +101,7 @@ async function ensureUsernameSchema(env){
   }
   await env.DB.prepare("UPDATE participants SET username='LM-' || UPPER(HEX(RANDOMBLOB(6))) WHERE username IS NULL").run();
   await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username ON participants(session_id,username)").run();
-  usernameSchemaReady=true;
+  verifiedUsernameDatabases.add(env.DB);
 }
 async function handleApi(req,env){
   if(!env.DB)return failure("Database D1 belum terpasang",503);
@@ -184,7 +184,7 @@ async function handleApi(req,env){
       env.DB.prepare("SELECT id,username,name,school,class_name AS className FROM participants WHERE session_id=? ORDER BY created_at ASC").bind(SESSION_ID).all(),
       env.DB.prepare("SELECT a.participant_id,a.stage,a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.session_id=?").bind(SESSION_ID).all()
     ]);
-    const map=new Map((rows.results||[]).map(row=>[row.id,{...row,done:0,answers:{}}]));
+    const map=new Map((rows.results||[]).map(row=>[row.id,{...row,username:user.role==="trainer"?row.username:null,done:0,answers:{}}]));
     for(const record of answers.results||[]){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
