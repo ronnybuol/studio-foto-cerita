@@ -781,6 +781,7 @@ function renderDashboard(){
 <section id="participant-print-sheet" class="participant-print-sheet"><h1>Daftar Peserta Lensa Muda</h1><p>Studio Foto Cerita · 16 November 2026 · Kelas Belajar Zonautara.com</p><table><thead><tr><th>No.</th><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th></tr></thead><tbody>${(data.participants||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.username||"—")}</td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td></tr>`).join("")}</tbody></table><p class="small-note">Dokumen internal, username merupakan akses akun peserta tanpa password.</p></section></div>`;
 }
 function bindDashboard(){
+ const isMentor=state.trainerRole==="mentor";
  $("#trainer-out").onclick=()=>{
    state.trainerToken="";
    sessionStorage.removeItem("lm26-trainer");sessionStorage.removeItem("lm26-role");
