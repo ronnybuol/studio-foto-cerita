@@ -338,14 +338,30 @@ function compositionTrainerPanel(data,isMentor){
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
 }
 function compositionPage(){
-return `${titleBlock("komposisi")}<div class="card"><p class="small-note">Ubah garis bantu, bingkai dalam bingkai, dan posisi subjek. Tidak semua foto harus mengikuti rule of thirds; tentukan mana yang paling baik menjelaskan peristiwa.</p>${sceneHTML("compositionScene","showgrid")}<div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${state.composition.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${state.composition.frame}">▣ Bingkai alami</button></div><div class="eyebrow">Letak subjek</div><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${state.composition.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div><div class="info">Coba tempatkan tokoh di sisi kiri atau kanan dan biarkan ruang untuk alat kerja. Tanyakan: apakah bingkai memperjelas informasi atau justru memotong bagian penting?</div><div class="actions"><button class="btn primary" id="save-comp">Simpan pilihan komposisi ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>Jarak dan sudut</h3><p class="small-note">Foto lebar memberi konteks, foto dekat menunjukkan detail. Sudut rendah dapat mengubah kesan subjek; pilih angle untuk menjelaskan, bukan sekadar dramatis.</p></div><div class="card"><h3>Ketika memotret budaya</h3><p class="small-note">Jangan sampai upaya memperoleh komposisi bagus membuat kita mengganggu ritual atau mengatur ulang kejadian yang seharusnya spontan.</p></div></div>`;
+ const c=state.composition;
+ return `${titleBlock("komposisi")}<div class="card composition-lab-card">
+ <div class="composition-lab-intro"><span class="eyebrow">LABORATORIUM KOMPOSISI</span><h2>Ubah bingkai. Jelaskan pilihanmu.</h2><p>Amati ilustrasi pengrajin lalu ubah satu pengaturan. Komposisi yang baik menjelaskan kegiatan, bukan sekadar terlihat indah.</p></div>
+ <div class="composition-lab-layout"><div class="composition-lab-image">${sceneHTML("compositionScene",c.grid?"showgrid":"")}<p class="small-note">Ilustrasi simulasi, bukan foto peristiwa nyata.</p></div>
+ <div class="composition-lab-controls">
+ <div class="composition-setting"><strong>01 · Garis dan bingkai</strong><div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${c.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${c.frame}">▣ Framing</button></div></div>
+ <div class="composition-setting"><strong>02 · Letak subjek</strong><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${c.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div></div>
+ <div class="composition-setting"><strong>03 · Jarak pengambilan</strong><div class="choice-set">${[["wide","Lebar"],["medium","Sedang"],["close","Dekat"]].map(([v,t])=>`<button class="choice" data-distance="${v}" aria-pressed="${c.distance===v}">${t}</button>`).join("")}</div></div>
+ <div class="composition-setting"><strong>04 · Sudut pandang</strong><div class="choice-set">${[["eye","Setinggi mata"],["low","Rendah"],["high","Tinggi"]].map(([v,t])=>`<button class="choice" data-angle="${v}" aria-pressed="${c.angle===v}">${t}</button>`).join("")}</div></div>
+ </div></div>
+ <div class="composition-reflection"><label for="comp-reason">Mengapa komposisi itu dipilih?</label><textarea id="comp-reason" rows="3" placeholder="Informasi apa yang ingin kamu perlihatkan: tokoh, tempat, alat kerja, atau detail?">${escapeHtml(c.reason||"")}</textarea><small>Minimal 15 karakter. Jelaskan informasi yang diperlihatkan.</small></div>
+ <div class="actions"><button class="btn subtle" id="reset-comp">↺ Atur ulang</button><button class="btn primary" id="save-comp">Simpan keputusan komposisi ✓</button></div></div>
+ <div class="grid two composition-context"><div class="card"><h3>Informasi dalam bingkai</h3><p class="small-note">Lebar memperlihatkan tempat. Dekat menyoroti proses. Jangan hilangkan konteks penting.</p></div><div class="card"><h3>Hormati budaya</h3><p class="small-note">Berpindah posisi boleh, tetapi jangan mengganggu ritual atau mengatur ulang kejadian demi foto.</p></div></div>`;
 }
 function updateComposition(){
-const sc=$("#compositionScene");if(!sc)return;
-sc.classList.toggle("showgrid",state.composition.grid);sc.classList.toggle("showframe",state.composition.frame);
-const x={left:-85,center:0,right:85}[state.composition.position];
-sc.querySelector(".subject").style.transform=`translateX(${x}px)`;
-sc.querySelector(".motion").style.transform=`translateX(${x}px)`;
+ const sc=$("#compositionScene");if(!sc)return;
+ sc.classList.toggle("showgrid",state.composition.grid);sc.classList.toggle("showframe",state.composition.frame);
+ const x={left:-85,center:0,right:85}[state.composition.position]??0;
+ const zoom={wide:1,medium:1.12,close:1.32}[state.composition.distance]??1;
+ const y={eye:0,low:-20,high:20}[state.composition.angle]??0;
+ sc.style.setProperty("--comp-zoom",String(zoom));sc.style.setProperty("--comp-angle-y",y+"px");
+ const subject=sc.querySelector(".subject"),motion=sc.querySelector(".motion");
+ if(subject)subject.style.transform=`translateX(${x}px)`;
+ if(motion)motion.style.transform=`translateX(${x}px)`;
 }
 function edfatPage(){
 const facts=[
@@ -397,10 +413,15 @@ function bindLessons(){
   $("#save-camera").onclick=()=>saveAnswer("kamera",{...state.camera,at:new Date().toISOString()});
   updateCamera();
  }
- if(state.active==="komposisi"){
+ if(state.active==="komposisi"&&$("#compositionScene")){
   $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
-  $$("[data-position]").forEach(btn=>btn.onclick=()=>{state.composition.position=btn.dataset.position;$$("[data-position]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
-  $("#save-comp").onclick=()=>saveAnswer("komposisi",{...state.composition});updateComposition();
+  for(const attr of ["position","distance","angle"]){
+   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+  }
+  const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
+  $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""};goModule("komposisi")};
+  $("#save-comp").onclick=()=>{const reason=(state.composition.reason||"").trim();if(reason.length<15){toast("Tuliskan alasan minimal 15 karakter");return}saveAnswer("komposisi",{...state.composition,reason})};
+  updateComposition();
  }
  if(state.active==="edfat"){
   let answer=state.work.edfat?.answer||null;
@@ -532,7 +553,7 @@ function answerDetails(key,v){
    if(!ok)return `<p class="small-note">Data kamera tidak lengkap.</p>`;
    return `<div class="response-pills"><span>BUKAAN <b>f/${APERTURE[v.a]}</b></span><span>RANA <b>${SHUTTERS[v.s].l}s</b></span><span>ISO <b>${ISOS[v.i]}</b></span><span>EV <b>${exposureText(v)}</b></span></div>`;
  }
- if(key==="komposisi")return `<p class="small-note">Posisi subjek: <b>${escapeHtml(v.position||"–")}</b> · Garis sepertiga: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p>`;
+ if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
  if(key==="edfat")return `<p class="small-note">Pilihan EDFAT: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
    const ids=Array.isArray(v.selected)?v.selected:[];
