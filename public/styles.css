@@ -730,3 +730,79 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .edfat-case{padding:13px}
  .edfat-case .edfat-photo{max-height:none}
 }
+
+
+/* Modul 04: meja editor 9 bingkai dan slide proyektor */
+.story-theory-layout{display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:clamp(14px,2vw,28px);align-items:center;min-width:0;width:100%;min-height:0}
+.story-theory-copy{display:flex;flex-direction:column;gap:11px;min-width:0}
+.story-theory-copy h2{font-size:clamp(27px,3.7vw,52px);line-height:1.08;margin:4px 0}
+.story-theory-lead{font-size:clamp(15px,1.6vw,23px);line-height:1.45;color:#f0f2f5;margin:0}
+.story-theory-points{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+.story-theory-points li{color:#dbe1e9;position:relative;padding-left:20px;font-size:clamp(13px,1.28vw,18px);line-height:1.4}
+.story-theory-points li:before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;border-radius:50%;background:#ee7836}
+.story-slide-figure{margin:0;min-width:0;display:flex;flex-direction:column;gap:6px}
+.story-photo{position:relative;aspect-ratio:3/2;max-width:100%;width:100%;max-height:min(57vh,560px);background:#141b22;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.story-photo img{max-width:100%;width:100%;height:100%;object-fit:contain;display:block}
+.story-slide-figure figcaption{color:#c1cbd5;font-size:11px}
+.story-trainer-card{margin-top:16px}
+.story-trainer-preview{display:grid;grid-template-columns:minmax(0,.32fr) minmax(0,.68fr);gap:14px;min-width:0}
+.story-trainer-preview .story-slide-figure figcaption{color:#667383}
+.story-trainer-notes{min-width:0;display:flex;flex-direction:column;gap:10px}
+.story-trainer-notes h3{font-size:clamp(20px,2vw,28px)}
+.story-slide-dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}
+.story-trainer-tip{background:#f8f5ef;border:1px solid #eae0d4;padding:13px;border-radius:10px;margin-top:12px}
+.story-trainer-tip p{font-size:13px;margin:8px 0 0}
+.story-learner-theory{padding:clamp(12px,2vw,22px)}
+.story-learner-theory .story-theory-layout{align-items:start}
+.story-learner-theory .story-theory-copy h2{color:#171c25}
+.story-learner-theory .story-theory-lead,.story-learner-theory .story-theory-points li{color:#263342!important;opacity:1!important}
+.story-learner-theory .theory-kicker{color:#b74820}
+.story-learner-theory .story-slide-figure figcaption{color:#58677a}
+.story-editor-intro{margin-bottom:14px}
+.story-editor-intro h2{font-size:clamp(23px,3.4vw,34px);margin:9px 0}
+.story-editor-intro p{line-height:1.5}
+.story-editor-workspace{margin-bottom:14px}
+.story-sequence,.story-bank-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;min-width:0}
+.story-sequence{background:#f8f4ee;border:1px dashed #d1beab;border-radius:12px;padding:12px;min-height:115px}
+.story-empty{grid-column:1/-1;padding:22px;text-align:center;color:#586474;font-size:13px}
+.story-candidate{border:1px solid #dfe1e2;border-radius:12px;background:#fff;overflow:hidden;min-width:0}
+.story-candidate-selected{border-color:#e47836}
+.story-candidate-photo{position:relative}
+.story-candidate-photo .story-photo{max-height:none;aspect-ratio:3/2;border-radius:0}
+.story-candidate-photo .story-photo img{object-fit:contain}
+.story-candidate-photo .story-photo-crop img{object-fit:cover;transform:scale(1.75);transform-origin:55% 45%}
+.story-position{position:absolute;top:8px;left:8px;border-radius:6px;padding:5px 9px;background:#191d24;color:white;font-size:13px;font-weight:800}
+.story-candidate-body{padding:11px;min-width:0}
+.story-candidate-body .eyebrow{font-size:10px}
+.story-candidate-body h4{font-size:15px;line-height:1.25;margin:7px 0;overflow-wrap:anywhere}
+.story-candidate-body p{font-size:12px;line-height:1.4;margin:0;color:#55616e;min-height:34px}
+.story-candidate-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.story-candidate-actions button{border:1px solid #d7d9dc;border-radius:8px;background:#f5f5f4;color:#171c26;padding:9px 11px;min-height:39px;font-weight:700;cursor:pointer}
+.story-candidate-actions button:disabled{opacity:.3;cursor:default}
+.story-candidate-actions button[data-pick]{background:#e96b2b;color:#fff;border-color:#e96b2b}
+.story-editor-fields{margin-top:18px}
+.story-editor-fields textarea{font:inherit;font-size:16px;min-height:115px;resize:vertical;width:100%;box-sizing:border-box}
+.story-editor-fields input{font-size:16px}
+.story-editor-fields small{color:#637083}
+.story-editor-bank{margin-bottom:14px}
+.lcd-story-mode .story-theory-layout{flex:1}
+.lcd-story-mode .story-photo{max-height:min(56vh,565px)}
+.story-lcd-mission{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0;min-height:0}
+.story-lcd-mission h1{font-size:clamp(30px,4vw,64px);line-height:1.1;margin:5px 0}
+.story-lcd-mission h1 em{color:#e97736}
+.story-lcd-mission>p{font-size:clamp(15px,1.6vw,22px);max-width:850px}
+.story-lcd-mission .story-slide-figure{width:min(100%,850px)}
+.story-lcd-mission .story-photo{max-height:min(43vh,455px)}
+@media(max-width:900px){.story-theory-layout,.story-trainer-preview{grid-template-columns:1fr}.story-theory-copy h2{font-size:clamp(24px,5vw,36px)}.story-theory-lead{font-size:16px}.story-theory-points li{font-size:14px}}
+@media(max-width:650px){
+ .story-learner-theory{padding:12px}.story-theory-copy{gap:8px}.story-theory-copy h2{font-size:25px}
+ .story-sequence,.story-bank-grid{grid-template-columns:minmax(0,1fr);gap:10px}.story-sequence{padding:8px}
+ .story-candidate{display:grid;grid-template-columns:minmax(0,.44fr) minmax(0,.56fr);align-items:start}
+ .story-candidate-body{padding:9px}.story-candidate-body h4{font-size:13px;margin:4px 0}
+ .story-candidate-body p{font-size:11px;min-height:0}
+ .story-candidate-actions button{min-height:37px;padding:7px 9px}
+ .story-candidate-photo .story-photo{height:100%;min-height:135px;aspect-ratio:auto}
+ .story-candidate-photo .story-photo img{object-fit:cover}
+ .story-editor-intro h2{font-size:25px}
+}
+@media(max-width:365px){.story-candidate{grid-template-columns:1fr}.story-candidate-photo .story-photo{min-height:0;aspect-ratio:3/2}.story-candidate-photo .story-photo img{object-fit:contain}}
