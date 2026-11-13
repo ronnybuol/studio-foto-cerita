@@ -506,11 +506,11 @@ function bindLessons(){
  }
  if(state.active==="edfat"&&$("#save-edfat")){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
-  $("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
+  $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
    current.answers[input.dataset.edfatChoice]=input.value;
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
-  $("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>current.reasons[textarea.dataset.edfatReason]=textarea.value);
+  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>current.reasons[textarea.dataset.edfatReason]=textarea.value);
   $("#save-edfat").onclick=()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
@@ -762,13 +762,13 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $("[data-edfat-slide-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-edfat-slide-step]").forEach(button=>button.onclick=()=>{
   const n=state.presentation.slide+Number(button.dataset.edfatSlideStep);
   if(n>=EDFAT_START&&n<=EDFAT_END)choosePresentation({view:"theory",slide:n});
  });
- $("[data-edfat-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.edfatSlide)}));
- $("[data-edfat-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.edfatMode,slide:state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?state.presentation.slide:EDFAT_START}));
- $("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-edfat-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.edfatSlide)}));
+ $$("[data-edfat-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.edfatMode,slide:state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?state.presentation.slide:EDFAT_START}));
+ $$("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
   const n=state.presentation.slide+Number(button.dataset.compSlideStep);
   if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
  });
