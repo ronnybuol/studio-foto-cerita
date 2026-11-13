@@ -108,7 +108,9 @@ function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
 function saveLearnerViews(){localStorage.setItem(learnerKey(),JSON.stringify(state.learnerViews))}
 function learnerRange(key){return LEARNER_RANGES[key]}
 function liveLearnerSlide(key){const r=learnerRange(key);return r&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?state.presentation.slide:r?.[0]||0}
-function learnerMode(key){const r=learnerRange(key);if(!r)return "practice";const v=state.learnerViews[key]?.mode;if(["practice","reference","follow"].includes(v))return v;return state.presentation.view==="theory"&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?"follow":"practice"}
+function learnerMode(key){const r=learnerRange(key);if(!r)return "practice";const v=state.learnerViews[key]?.mode;if(["practice","reference","follow"].includes(v))return v;
+ const draft=state.work[key];if(draft&&((draft._draft===true)||(key==="story"&&!draft.completedAt&&(draft.selected?.length||draft.title||draft.reason))))return "practice";
+ return state.presentation.view==="theory"&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?"follow":"practice"}
 function learnerSlide(key){const r=learnerRange(key);if(!r)return 0;const v=state.learnerViews[key],i=v?.mode==="reference"?v.slide:liveLearnerSlide(key);return Number.isInteger(i)&&i>=r[0]&&i<=r[1]?i:r[0]}
 function setLearnerMode(key,mode,slide){const r=learnerRange(key);if(!r)return;state.learnerViews[key]={mode,slide:Number.isInteger(slide)?Math.max(r[0],Math.min(r[1],slide)):learnerSlide(key)};saveLearnerViews();renderParticipant()}
 function learnerModeBar(key){const r=learnerRange(key);if(!r)return "";const mode=learnerMode(key),slide=learnerSlide(key),practice=mode==="practice";
@@ -580,10 +582,10 @@ function bindLessons(){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
   $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
    current.answers[input.dataset.edfatChoice]=input.value;
-   state.work.edfat={...current};saveWork();
+   state.work.edfat={...current,_draft:true};saveWork();
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
-  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current};saveWork()});
+  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current,_draft:true};saveWork()});
   $("#save-edfat").onclick=()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
@@ -593,12 +595,12 @@ function bindLessons(){
  }
  if(state.active==="story"&&$("#save-story")){
   const current=()=>state.work.story||{};
-  const setSelected=selected=>{state.work.story={...current(),selected};saveWork();render()};
+  const setSelected=selected=>{state.work.story={...current(),selected,_draft:true};saveWork();render()};
   $$("[data-pick]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],id=Number(btn.dataset.pick);if(ids.length>=9){toast("Sudah sembilan foto. Keluarkan satu dahulu.");return}if(!ids.includes(id))setSelected([...ids,id])});
   $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected((current().selected||[]).filter(id=>id!==Number(btn.dataset.remove))));
   $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
   for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
-   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value};saveWork()};
+   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value,_draft:true};saveWork()};
   }
   $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
   $("#save-story").onclick=()=>{
@@ -1302,7 +1304,13 @@ async function restoreParticipantSession(){
  try{
   const response=await request("/api/me");
   state.user={...state.user,...response.user,token:state.user.token};
-  state.work=response.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};
+  const serverAnswers=response.answers||{};
+  // Draf di perangkat tidak boleh ditimpa oleh jawaban tersimpan yang lebih lama di server.
+  for(const key of ["story","edfat","komposisi","caption","etika"]){
+   const local=state.work[key];
+   if(local&&(local._draft===true||(key==="story"&&!local.completedAt&&(local.selected?.length||local.title||local.reason))))serverAnswers[key]=local;
+  }
+  state.work=serverAnswers;state.composition={...state.composition,...(state.work.komposisi||{})};
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
