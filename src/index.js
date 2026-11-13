@@ -147,8 +147,16 @@ async function handleApi(req,env){
     try{await ensureUsernameSchema(env)}
     catch(error){console.error("Username migration:",error?.message);return failure("Persiapan username D1 gagal. Periksa migrasi 0002 sebelum melanjutkan.",503)}
   }
+  let lockReady=true;
   try{await ensureLockSchema(env)}
-  catch(error){console.error("Class lock migration:",error?.message);return failure("Penyimpanan status kelas belum siap",503)}
+  catch(error){console.error("Class lock migration:",error?.message);lockReady=false}
+  // Bila migrasi gagal, trainer masih bisa masuk untuk memperbaiki konfigurasi.
+  // Permintaan peserta harus gagal aman, bukan diam-diam membuka kelas.
+  const participantAction=(method==="POST"&&["/api/participants","/api/participant-login"].includes(path))||
+    (method==="GET"&&path==="/api/me")||
+    (method==="PATCH"&&path==="/api/me/username")||
+    (method==="PUT"&&path.startsWith("/api/answers/"));
+  if(!lockReady&&(participantAction||path==="/api/class-lock"))return failure("Status kunci kelas belum siap di D1. Hubungi trainer.",503);
   if(method==="PUT"&&path==="/api/class-lock"){
    const admin=await access(req,env);
    if(!admin)return failure("Autentikasi trainer diperlukan",401);
@@ -159,13 +167,8 @@ async function handleApi(req,env){
     .bind(data.locked?1:0,new Date().toISOString(),SESSION_ID).run();
    return output({ok:true,locked:data.locked});
   }
-  const locked=await classLocked(env);
-  if(locked&&(
-    (method==="POST"&&["/api/participants","/api/participant-login"].includes(path))||
-    (method==="GET"&&path==="/api/me")||
-    (method==="PATCH"&&path==="/api/me/username")||
-    (method==="PUT"&&path.startsWith("/api/answers/"))
-  ))return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
+  const locked=lockReady?await classLocked(env):false;
+  if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const camera=await liveCamera(env);
