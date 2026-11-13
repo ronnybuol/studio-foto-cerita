@@ -917,7 +917,27 @@ function bindDashboard(){
  const resetDemo=$("#reset-demo-composition");
  if(resetDemo)resetDemo.onclick=()=>{state.demoComposition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"};refreshTrainerDemo();saveCompositionDemo()};
 
- $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ async function changeSpotlight(participantId,module){
+  if(isMentor)return;
+  if(!state.online){toast("Koneksi kelas diperlukan untuk sorotan LCD");return}
+  try{
+   const result=await request("/api/spotlight",{method:"PUT",payload:{participantId,module},auth:true});
+   state.spotlight=result.spotlight||null;state.dashboard.spotlight=state.spotlight;
+   const banner=$("#trainer-spotlight-status");
+   if(banner){
+    banner.querySelector("h3").textContent=state.spotlight?"Menampilkan karya: "+state.spotlight.name:"LCD mengikuti presentasi trainer";
+    const stop=$("#stop-spotlight");if(stop)stop.disabled=!state.spotlight;
+   }
+   toast(state.spotlight?"Karya "+state.spotlight.name+" ditampilkan di LCD":"LCD kembali ke presentasi terakhir");
+  }catch(error){toast("Gagal menampilkan karya: "+error.message)}
+ }
+ const stopSpotlight=$("#stop-spotlight");
+ if(stopSpotlight)stopSpotlight.onclick=()=>changeSpotlight(null,null);
+ function bindSpotlight(scope){
+  scope.querySelectorAll("[data-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
+ }
+ bindSpotlight(document);
+ $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
@@ -926,6 +946,7 @@ function bindDashboard(){
        ?Object.entries(answers).map(([key,v])=>`<div class="response-group"><strong>${escapeHtml(STAGES.find(s=>s.key===key)?.name||key)}</strong>${answerDetails(key,v)}${!isMentor&&SPOTLIGHT_MODULES.includes(key)?`<button class="btn small primary" data-spotlight-id="${escapeHtml(p.id)}" data-spotlight-module="${escapeHtml(key)}">Tampilkan hasil di LCD</button>`:""}</div>`).join("")
        :"Belum ada hasil tersimpan."
    }</div>`;
+   bindSpotlight($("#inspect"));
  });
  const filter=$("#participant-filter");
  if(filter)filter.oninput=()=>{const q=filter.value.trim().toLowerCase();$$("[data-participant-row]").forEach(tr=>tr.hidden=!tr.dataset.participantRow.includes(q))};
