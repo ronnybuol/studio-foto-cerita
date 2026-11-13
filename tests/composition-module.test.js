@@ -38,6 +38,6 @@ test("setiap slide memakai foto asli Sangihe yang dipilih, bukan foto Modul 01",
   const asset=compositionImageUrl(i);
   assert.ok(asset.startsWith("/lensa-muda/assets/composition/"));
   assert.ok(asset.endsWith(".webp"));
-  assert.doesNotMatch(compositionVisual(i),/assets\\/camera\\/base\\.webp/);
+  assert.ok(!compositionVisual(i).includes("assets/camera/base.webp"));
  }
 });
