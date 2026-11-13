@@ -802,7 +802,7 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .story-candidate-body p{font-size:11px;min-height:0}
  .story-candidate-actions button{min-height:37px;padding:7px 9px}
  .story-candidate-photo .story-photo{height:100%;min-height:135px;aspect-ratio:auto}
- .story-candidate-photo .story-photo img{object-fit:cover}
+ .story-candidate-photo .story-photo img{object-fit:contain}
  .story-editor-intro h2{font-size:25px}
 }
 @media(max-width:365px){.story-candidate{grid-template-columns:1fr}.story-candidate-photo .story-photo{min-height:0;aspect-ratio:3/2}.story-candidate-photo .story-photo img{object-fit:contain}}
