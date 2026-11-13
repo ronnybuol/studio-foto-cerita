@@ -515,6 +515,41 @@ function storyTrainerPanel(data,isMentor){
  <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan foto yang tidak dipilih. Kandidat 12 adalah detail alternatif dari foto 5, bukan foto peristiwa lain.</p></div>`}
  </section>`;
 }
+function captionTheoryContent(index,variant="lcd"){
+ const slide=captionSlide(index);
+ return `<div class="caption-theory-layout caption-theory-${variant}"><div class="caption-theory-copy">
+  <span class="theory-kicker">BAB 5 · ${escapeHtml(slide.tag)} · ${captionLabel(index)} / ${CAPTION_SLIDES.length}</span>
+  <h2>${escapeHtml(slide.title)}</h2><p class="caption-theory-lead">${escapeHtml(slide.lead)}</p>
+  <ul class="caption-theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div>
+ </div>${captionVisual(index)}</div>`;
+}
+function captionParticipantSlide(index){
+ return `${titleBlock("caption")}<section class="card caption-learner-theory">
+   <p class="small-note">Tinjau foto dan diskusikan pertanyaan bersama kelas. Kamu juga boleh membuka teori sendiri lalu kembali menulis.</p>
+   ${captionTheoryContent(index,"participant")}</section>`;
+}
+function captionTrainerPanel(data,isMentor){
+ const i=state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START;
+ const x=captionSlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card caption-trainer-card"><div class="trainer-demo-heading">
+ <div><span class="eyebrow">PRESENTASI · BAB 5</span><h2>Caption Lab</h2>
+ <p class="small-note">Enam slide untuk memahami 5W+1H, verifikasi, dan menulis narasi foto dari sembilan bingkai.</p></div>
+ <span class="pill green">● MODUL 05 SIAP</span></div>
+ ${theory?`<div class="caption-trainer-preview"><div class="caption-trainer-notes">
+   <span class="eyebrow">SLIDE ${captionLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+   <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>
+   ${captionVisual(i)}</div><div class="trainer-slide-nav">
+   <button class="btn subtle" data-caption-step="-1" ${i===CAPTION_START||isMentor?"disabled":""}>← Sebelumnya</button>
+   <strong>Slide ${captionLabel(i)} / 06</strong>
+   <button class="btn primary" data-caption-step="1" ${i===CAPTION_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+   <div class="story-slide-dots">${CAPTION_SLIDES.map((x,j)=>`<button class="theory-dot" data-caption-slide="${CAPTION_START+j}" aria-pressed="${i===CAPTION_START+j}" ${isMentor?"disabled":""}>${captionLabel(CAPTION_START+j)}</button>`).join("")}</div>
+   <div class="actions"><button class="btn primary" data-caption-mode="simulator" ${isMentor?"disabled":""}>Buka Caption Lab peserta →</button></div>`
+ :`<div class="trainer-theory-compact"><div><strong>Caption Lab mandiri sedang terbuka</strong>
+ <p class="small-note">Peserta meninjau sembilan foto, mencatat 5W+1H, dan menyusun narasi. Perubahan slide trainer tidak mengganggu mereka.</p></div>
+ <button class="btn subtle" data-caption-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>`}
+ </section>`;
+}
 function renderStoryShot(x,chosen=false,pos=0,total=0){
  if(!x)return "";
  return `<article class="story-candidate ${chosen?"story-candidate-selected":""}">
