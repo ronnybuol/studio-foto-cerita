@@ -60,3 +60,24 @@ test("panel LCD memiliki indikator kamera visual yang mengikuti pembaruan pollin
  assert.ok(source.includes('id="lcd-track-'));
  assert.ok(source.includes('id="lcd-thumb-'));
 });
+
+
+test("teks LCD menyampaikan informasi kepada peserta, bukan instruksi pengoperasian trainer",()=>{
+ assert.doesNotMatch(source,/IKUT TRAINER/);
+ assert.doesNotMatch(source,/Peragaan langsung dikendalikan trainer/);
+ assert.ok(source.includes("Amati bagaimana bukaan, kecepatan rana, dan ISO memengaruhi foto."));
+});
+
+test("simulator peserta mempertahankan kontrol independen, tombol simpan, dan bingkai responsif",()=>{
+ assert.ok(source.includes('class="participant-camera-page"'));
+ assert.ok(source.includes('class="card participant-camera-card"'));
+ assert.ok(source.includes('class="control-grid participant-camera-controls"'));
+ for(const id of ["aperture","shutter","iso"]){
+   assert.ok(source.includes('id="'+id+'" type="range"'));
+ }
+ assert.ok(source.includes('id="save-camera"'));
+ assert.ok(source.includes('id="reset-camera"'));
+ assert.ok(source.includes('state.camera[key]=Number(e.target.value);updateCamera()'));
+ assert.ok(source.includes('saveAnswer("kamera",{...state.camera'));
+ assert.ok(source.includes('const c=state.demoCamera;'));
+});
