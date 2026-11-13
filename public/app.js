@@ -453,7 +453,7 @@ function bindLessons(){
  if(state.active==="komposisi"&&$("#compositionScene")){
   $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];if(key==="frame")state.composition.preview="frame";btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
   for(const attr of ["position","distance","angle"]){
-   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+   $$$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
   }
   const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
   $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:"",preview:"distance"};goModule("komposisi")};
@@ -714,7 +714,7 @@ function bindDashboard(){
   if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
  });
  $$("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
- $("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
+ $$("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
  let savingComposition=false,queuedComposition=false;
  async function saveCompositionDemo(){
   if(savingComposition){queuedComposition=true;return}
@@ -738,10 +738,10 @@ function bindDashboard(){
   const image=scene.querySelector("img");
   if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
   if(caption)caption.textContent=example.caption;
-  $("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
+  $$("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
   for(const key of ["position","distance","angle"])$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
  }
- $("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
   const key=btn.dataset.demoComp;
   state.demoComposition[key]=!state.demoComposition[key];
   if(key==="frame")state.demoComposition.preview="frame";
