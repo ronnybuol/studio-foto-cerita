@@ -64,6 +64,20 @@ async function stageState(env){
 }
 const DEFAULT_CAMERA = Object.freeze({a:1,s:3,i:1});
 const DEFAULT_PRESENTATION = Object.freeze({view:"theory",slide:0});
+const DEFAULT_COMPOSITION = Object.freeze({grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"});
+function validComposition(c){
+ return !!c&&typeof c==="object"&&!Array.isArray(c)
+   &&typeof c.grid==="boolean"&&typeof c.frame==="boolean"
+   &&["left","center","right"].includes(c.position)
+   &&["wide","medium","close"].includes(c.distance)
+   &&["eye","low","high"].includes(c.angle)
+   &&["position","distance","angle","frame"].includes(c.preview);
+}
+function compositionFromCamera(raw){
+ let data;try{data=JSON.parse(raw||"null")}catch{return {...DEFAULT_COMPOSITION}}
+ return validComposition(data?.composition)?data.composition:{...DEFAULT_COMPOSITION};
+}
+
 function presentationFromCamera(value){
   return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=31?value.slide:0};
 }
@@ -81,6 +95,15 @@ async function liveCamera(env){
     if(/no such column:\s*camera_json/i.test(String(error?.message)))return {...DEFAULT_CAMERA};
     throw error;
   }
+}
+async function liveComposition(env){
+ try{
+  const row=await env.DB.prepare("SELECT camera_json FROM sessions WHERE id=?").bind(SESSION_ID).first();
+  return compositionFromCamera(row?.camera_json);
+ }catch(error){
+  if(/no such column:\s*camera_json/i.test(String(error?.message)))return {...DEFAULT_COMPOSITION};
+  throw error;
+ }
 }
 async function loginsTooMany(env,id){
   const row=await env.DB.prepare("SELECT failures, window_start FROM login_attempts WHERE id=?").bind(id).first();
@@ -171,8 +194,8 @@ async function handleApi(req,env){
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
-    const camera=await liveCamera(env);
-    return output({stage,locked,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    const [camera,composition]=await Promise.all([liveCamera(env),liveComposition(env)]);
+    return output({stage,locked,composition,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -242,8 +265,8 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    const camera=await liveCamera(env);
-    return output({stage,locked,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
+    const [camera,composition]=await Promise.all([liveCamera(env),liveComposition(env)]);
+    return output({stage,locked,composition,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
   }
   if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
     const admin=await access(req,env);
@@ -294,6 +317,21 @@ async function handleApi(req,env){
       throw error;
     }
     return output({ok:true,presentation:{view:data.view,slide:data.slide}});
+  }
+  if(method==="PUT"&&path==="/api/demo-composition"){
+    const user=await access(req,env);
+    if(!user)return failure("Autentikasi trainer diperlukan",401);
+    if(user.role!=="trainer")return failure("Hanya trainer dapat mengendalikan demonstrasi komposisi",403);
+    const data=await bodyJson(req);
+    if(!validComposition(data))return failure("Pengaturan komposisi tidak valid",400);
+    try{
+      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.composition',json(?)),updated_at=? WHERE id=?")
+       .bind(JSON.stringify(data),new Date().toISOString(),SESSION_ID).run();
+    }catch(error){
+      if(/no such column:\s*camera_json/i.test(String(error?.message)))return failure("Kolom camera_json belum aktif",503);
+      throw error;
+    }
+    return output({ok:true,composition:data});
   }
   if(method==="PUT"&&path==="/api/demo-camera"){
     const user=await access(req,env);

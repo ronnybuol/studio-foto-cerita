@@ -49,6 +49,7 @@ const SHOTS = [
 let state = {
   online:false,serverStage:0,count:0,demoStage:6,role:"participant",locked:false,
   demoCamera:{a:1,s:3,i:1},
+  demoComposition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"},
   presentation:{view:"theory",slide:0},
   user:readJSON(STORAGE_USER,null),work:readJSON(STORAGE_WORK,{}),
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
@@ -82,6 +83,7 @@ async function syncState(){
     const previousStage=state.serverStage;
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
+    if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
     if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=COMPOSITION_END)
       state.presentation=data.presentation;
@@ -334,7 +336,7 @@ function compositionTrainerPanel(data,isMentor){
  <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
  <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${compositionLabel(COMPOSITION_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
- `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>`}
+ `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>${compositionTrainerDemoPanel(data,isMentor)}`}
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
 }
 function compositionExample(c){
@@ -348,6 +350,28 @@ function compositionExample(c){
  const value=selected==="frame"?String(!!c.frame):String(c[selected]||"wide");
  const [photo,caption]=maps[selected]?.[value]||maps.distance.wide;
  return {photo,caption};
+}
+function compositionDemoPreview(c,id){
+ const example=compositionExample(c);
+ return `<div class="composition-live-scene"><div class="comp-visual ${c.grid?"comp-grid-on":""}" id="${id}">
+ <figure><div class="comp-photo-stage"><img src="/lensa-muda/assets/composition/sangihe-2017-${example.photo}.webp" alt="Foto dokumentasi Sangihe: ${escapeHtml(example.caption)}"><div class="comp-rule-grid"></div></div>
+ <figcaption>Musik bambu Sangihe, September 2017 · Foto: Ronny Adolof Buol</figcaption></figure></div>
+ <strong class="comp-example-caption" id="${id}-caption">${escapeHtml(example.caption)}</strong></div>`;
+}
+function compositionDemoControls(c,disabled){
+ return `<div class="composition-demo-controls">
+ <div class="composition-setting"><strong>Garis dan framing</strong><div class="choice-set">
+ <button class="choice" data-demo-comp="grid" aria-pressed="${c.grid}" ${disabled?"disabled":""}>▦ Garis sepertiga</button>
+ <button class="choice" data-demo-comp="frame" aria-pressed="${c.frame}" ${disabled?"disabled":""}>▣ Framing</button></div></div>
+ ${[["position","Letak subjek",[["left","Kiri"],["center","Tengah"],["right","Kanan"]]],["distance","Jarak pengambilan",[["wide","Lebar"],["medium","Sedang"],["close","Dekat"]]],["angle","Sudut pandang",[["eye","Setinggi mata"],["low","Rendah"],["high","Tinggi"]]]].map(([key,label,choices])=>`<div class="composition-setting"><strong>${label}</strong><div class="choice-set">${choices.map(([value,title])=>`<button class="choice" data-demo-${key}="${value}" aria-pressed="${c[key]===value}" ${disabled?"disabled":""}>${title}</button>`).join("")}</div></div>`).join("")}
+ <button class="btn subtle" id="reset-demo-composition" ${disabled?"disabled":""}>↺ Atur ulang demonstrasi</button></div>`;
+}
+function compositionTrainerDemoPanel(data,isMentor){
+ const c=state.demoComposition;
+ return `<section class="composition-trainer-demo" aria-label="Demonstrasi komposisi langsung">
+ <div class="composition-demo-heading"><h3>Demonstrasi komposisi langsung</h3><p class="small-note">Klik tombol untuk mengubah contoh pada LCD. Latihan pribadi peserta tetap mandiri.</p></div>
+ <div class="composition-demo-layout">${compositionDemoPreview(c,"trainerCompositionDemo")}${compositionDemoControls(c,isMentor)}</div>
+ <p class="small-note" id="composition-demo-status">Perubahan sinkron melalui koneksi kelas.</p></section>`;
 }
 function compositionPage(){
  const c=state.composition;
@@ -429,7 +453,7 @@ function bindLessons(){
  if(state.active==="komposisi"&&$("#compositionScene")){
   $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];if(key==="frame")state.composition.preview="frame";btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
   for(const attr of ["position","distance","angle"]){
-   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
   }
   const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
   $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:"",preview:"distance"};goModule("komposisi")};
@@ -524,6 +548,7 @@ async function fetchDashboard(){
  state.dashboard=await request("/api/dashboard",{auth:true});
  state.serverStage=state.dashboard.stage;state.count=state.dashboard.count;
  if(state.dashboard.camera)state.demoCamera=state.dashboard.camera;
+ if(state.dashboard.composition)state.demoComposition=state.dashboard.composition;
  if(state.dashboard.presentation)state.presentation=state.dashboard.presentation;
 }
 function trainerCameraPanel(data,isMentor){
@@ -690,6 +715,45 @@ function bindDashboard(){
  });
  $$("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
  $$("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
+ let savingComposition=false,queuedComposition=false;
+ async function saveCompositionDemo(){
+  if(savingComposition){queuedComposition=true;return}
+  savingComposition=true;
+  do{
+   queuedComposition=false;
+   const snapshot={...state.demoComposition};
+   try{
+    if(!state.online)throw Error("Koneksi kelas belum tersedia");
+    await request("/api/demo-composition",{method:"PUT",payload:snapshot,auth:true});
+    const status=$("#composition-demo-status");if(status)status.textContent="Tersinkron dengan LCD";
+   }catch(error){const status=$("#composition-demo-status");if(status)status.textContent="Gagal sinkron: "+error.message}
+  }while(queuedComposition);
+  savingComposition=false;
+ }
+ function refreshTrainerDemo(){
+  const scene=$("#trainerCompositionDemo"),caption=$("#trainerCompositionDemo-caption");
+  if(!scene)return;
+  const example=compositionExample(state.demoComposition);
+  scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
+  const image=scene.querySelector("img");
+  if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
+  if(caption)caption.textContent=example.caption;
+  $$("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
+  for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
+ }
+ $$("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
+  const key=btn.dataset.demoComp;
+  state.demoComposition[key]=!state.demoComposition[key];
+  if(key==="frame")state.demoComposition.preview="frame";
+  refreshTrainerDemo();saveCompositionDemo();
+ });
+ for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
+  state.demoComposition[key]=btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)];
+  state.demoComposition.preview=key;refreshTrainerDemo();saveCompositionDemo();
+ });
+ const resetDemo=$("#reset-demo-composition");
+ if(resetDemo)resetDemo.onclick=()=>{state.demoComposition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"};refreshTrainerDemo();saveCompositionDemo()};
+
  $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
@@ -899,7 +963,7 @@ function lcdPage(){
  const content=stage===2 && state.presentation.view==="theory"
     ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
-    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+9)}
+    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")}
       <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
     :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
@@ -942,6 +1006,14 @@ function paintLcdCamera(){
  $("#lcd-iso-tip").textContent=ISOS[c.i]>=1600?"Noise semakin jelas":ISOS[c.i]<=200?"Noise rendah":"Noise sedang";
  paintCameraDials(c);
 }
+function paintLcdComposition(){
+ const scene=$("#lcdCompositionDemo"),caption=$("#lcdCompositionDemo-caption");if(!scene)return;
+ const example=compositionExample(state.demoComposition);
+ scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
+ const image=scene.querySelector("img");
+ if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp")){image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";image.alt=example.caption}
+ if(caption)caption.textContent=example.caption;
+}
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
  $("#lcd-refresh").onclick=refreshLCD;
@@ -950,6 +1022,7 @@ function renderLCD(){
    $("#root").requestFullscreen?.().catch(()=>toast("Mode layar penuh tidak tersedia di browser ini"));
  };
  paintLcdCamera();
+ paintLcdComposition();
 }
 let lcdPolling=false;
 async function refreshLCD(){
@@ -957,6 +1030,7 @@ async function refreshLCD(){
  lcdPolling=true;
  const prevStage=state.online?state.serverStage:state.demoStage;
  const prevCamera=JSON.stringify(state.demoCamera);
+ const prevComposition=JSON.stringify(state.demoComposition);
  const prevPresentation=JSON.stringify(state.presentation);
  try{
    await syncState();
@@ -965,6 +1039,7 @@ async function refreshLCD(){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
+      if(prevComposition!==JSON.stringify(state.demoComposition))paintLcdComposition();
      const count=$(".lcd-participants");
      if(count)count.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar · 16 November 2026`;
    }

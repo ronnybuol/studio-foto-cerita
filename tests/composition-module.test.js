@@ -50,3 +50,18 @@ test("laboratorium peserta mengganti contoh foto nyata saat kontrol dipilih",()=
  assert.ok(source.includes('state.composition.preview="frame"'));
  assert.ok(source.includes('sc.classList.toggle("comp-grid-on"'));
 });
+
+
+test("tombol peserta memakai semua pilihan; teks terang LCD tak bocor ke kartu putih; demo trainer dan LCD sinkron",()=>{
+ const source=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.ok(source.includes('state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach'));
+ assert.ok(source.includes('function compositionDemoControls('));
+ assert.ok(source.includes('function compositionTrainerDemoPanel('));
+ assert.ok(source.includes('"/api/demo-composition"'));
+ assert.ok(source.includes('function paintLcdComposition('));
+ assert.ok(source.includes('prevComposition!==JSON.stringify(state.demoComposition)'));
+ assert.ok(source.includes('compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")'));
+ assert.ok(css.includes('.composition-participant-theory .composition-slide-copy .theory-lead'));
+ assert.ok(css.includes('color:#27313d!important'));
+});
