@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   title TEXT NOT NULL,
   event_date TEXT NOT NULL,
   active_stage INTEGER NOT NULL DEFAULT 0 CHECK(active_stage BETWEEN 0 AND 6),
+  is_locked INTEGER NOT NULL DEFAULT 0 CHECK(is_locked IN (0,1)),
   camera_json TEXT NOT NULL DEFAULT '{"a":1,"s":3,"i":1}',
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
