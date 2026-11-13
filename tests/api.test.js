@@ -45,6 +45,7 @@ function mockEnv(){
          if(sql.includes("UPDATE sessions SET camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
            if(sql.includes("'$.view'"))data.camera={...data.camera,view:args[0],slide:args[1]};
+           else if(sql.includes("'$.composition'"))data.camera={...data.camera,composition:JSON.parse(args[0])};
            else if(sql.includes("'$.a'"))data.camera={...data.camera,a:args[0],s:args[1],i:args[2]};
            else data.camera=JSON.parse(args[0]);
          }
@@ -268,4 +269,23 @@ test("trainer dapat menambahkan peserta dan peserta lama dapat memilih username 
  assert.equal(change.data.username,"nusaku");
  assert.equal((await call(env,"/api/participant-login","POST",{username:"nusaku"})).status,200);
  assert.equal((await call(env,"/api/participants","POST",payload)).status,201);
+});
+
+test("demonstrasi komposisi tersimpan dan terlihat pada state LCD; hanya trainer dapat mengubah",async()=>{
+ const env=mockEnv();
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
+ const composition={grid:false,frame:true,position:"left",distance:"close",angle:"low",preview:"frame"};
+ assert.equal((await call(env,"/api/demo-composition","PUT",composition)).status,401);
+ assert.equal((await call(env,"/api/demo-composition","PUT",composition,mentor.token)).status,403);
+ assert.equal((await call(env,"/api/demo-composition","PUT",{...composition,preview:"unknown"},trainer.token)).status,400);
+ assert.equal((await call(env,"/api/demo-composition","PUT",composition,trainer.token)).status,200);
+ const state=await call(env,"/api/state");
+ assert.deepEqual(state.data.composition,composition);
+ const dashboard=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.deepEqual(dashboard.data.composition,composition);
+ assert.deepEqual(state.data.camera,{a:1,s:3,i:1});
+ const editCamera=await call(env,"/api/demo-camera","PUT",{a:3,s:4,i:5},trainer.token);
+ assert.equal(editCamera.status,200);
+ assert.deepEqual((await call(env,"/api/state")).data.composition,composition);
 });
