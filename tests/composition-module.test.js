@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual,compositionImageUrl} from "../public/composition.js";
 
-test("Bab 2 punya tujuh slide unik dan visual lokal berlabel simulasi",()=>{
+test("Bab 2 punya 11 slide foto dokumentasi unik dari Sangihe",()=>{
  assert.equal(COMPOSITION_START,21);
  assert.equal(COMPOSITION_END,31);
  assert.equal(COMPOSITION_SLIDES.length,11);
@@ -40,4 +40,13 @@ test("setiap slide memakai foto asli Sangihe yang dipilih, bukan foto Modul 01",
   assert.ok(asset.endsWith(".webp"));
   assert.ok(!compositionVisual(i).includes("assets/camera/base.webp"));
  }
+});
+
+test("laboratorium peserta mengganti contoh foto nyata saat kontrol dipilih",()=>{
+ const source=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ assert.ok(source.includes("function compositionExample(c)"));
+ assert.ok(source.includes('id="comp-example-image"'));
+ assert.ok(source.includes('state.composition.preview=attr'));
+ assert.ok(source.includes('state.composition.preview="frame"'));
+ assert.ok(source.includes('sc.classList.toggle("comp-grid-on"'));
 });
