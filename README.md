@@ -205,3 +205,12 @@ Setelah peserta menyimpan tugas, trainer dapat memilih **Tampilkan di LCD** pada
 Karena sorotan memang ditujukan untuk diskusi kelas, jawaban yang dipilih trainer ditampilkan pada endpoint state publik yang sama dengan LCD. Jangan sorot jawaban yang memuat informasi pribadi atau keterangan sensitif. Foto Modul 04 tetap memakai aset Sangihe asli dan tampil `object-fit: contain`; kandidat detail alternatif yang memang berasal dari foto sama tetap diberi perlakuan khusus.
 
 **Uji:** buka tahap 04 dan salah satu slide, buka hasil peserta, tekan Tampilkan di LCD; LCD berganti setelah polling (sekitar beberapa detik). Pilih peserta lain, pastikan hasil berganti. Tekan Kembali ke Presentasi dan pastikan slide lama muncul tanpa diulang dari awal. Verifikasi pada jendela LCD fullscreen dan dashboard di perangkat trainer terpisah.
+
+
+## Latihan peserta tidak lagi terganggu saat trainer mengganti slide
+
+Pada modul 01–04, peserta mendapat kontrol **Latihan saya**, **Baca materi**, dan **Ikuti trainer**. Setelah peserta masuk latihan, perpindahan slide dari dashboard trainer hanya mengubah LCD; pekerjaan mandiri di HP/laptop tidak dipindahkan otomatis. Baca materi memungkinkan peserta menjelajahi seluruh slide modul sendiri dengan Sebelumnya/Berikutnya, lalu kembali ke latihan tanpa kehilangan pilihan sembilan foto, draf alasan, atau isian EDFAT. Ikuti trainer merupakan pilihan sadar untuk kembali mengikuti perubahan presentasi.
+
+Mode belajar disimpan lokal dengan kunci ID peserta+modul. State `presentation` server dan D1 tetap menjadi acuan LCD, bukan pemaksa tampilan praktik peserta. Pembukaan modul berikutnya juga tidak memindahkan peserta dari tugas yang sedang dikerjakan; pembukaan tahap pertama dari orientasi tetap mengantar peserta ke modul aktif. Penutupan/lock kelas tetap berlaku. Draf baru disimpan lokal; untuk mengirim jawaban akhir ke dashboard trainer, peserta tetap perlu memakai tombol **Simpan**.
+
+Uji praktik: buka Modul 04, pilih beberapa foto dan tulis judul/alasan, ubah slide di trainer; HP harus tetap pada latihan. Tekan Baca materi, pindah slide sendiri, lalu Latihan saya; seluruh isian masih ada. Tekan Ikuti trainer lalu ubah slide; HP harus mengikuti. Ulangi pada Modul 01–03.
