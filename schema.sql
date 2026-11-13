@@ -14,8 +14,11 @@ CREATE TABLE IF NOT EXISTS participants (
   school TEXT NOT NULL,
   class_name TEXT NOT NULL,
   token_hash TEXT NOT NULL UNIQUE,
+  username TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username ON participants(session_id,username);
 
 CREATE INDEX IF NOT EXISTS idx_participants_session ON participants(session_id,created_at);
 
