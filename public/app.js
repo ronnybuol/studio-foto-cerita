@@ -115,7 +115,7 @@ function learnerModeBar(key){const r=learnerRange(key);if(!r)return "";const mod
 return `<nav class="learner-study-toolbar" aria-label="Mode belajar"><div class="learner-study-copy"><b>${practice?"Latihan mandiri":mode==="reference"?"Materi untuk dibaca sendiri":"Mengikuti presentasi kelas"}</b><span>${practice?"Latihan tidak berpindah ketika trainer membuka slide.":"Kamu bisa kembali ke latihan tanpa menghilangkan jawaban."}</span></div>
 <div class="learner-study-actions"><button class="btn small ${practice?"primary":"subtle"}" data-learner-mode="practice">Latihan saya</button><button class="btn small ${mode==="reference"?"primary":"subtle"}" data-learner-mode="reference">Baca materi</button><button class="btn small ${mode==="follow"?"primary":"subtle"}" data-learner-mode="follow">Ikuti trainer</button></div>
 ${mode==="reference"?`<div class="learner-reference-nav"><button class="btn small subtle" data-reference-step="-1" ${slide===r[0]?"disabled":""}>← Sebelumnya</button><span>${slide-r[0]+1} / ${r[1]-r[0]+1}</span><button class="btn small subtle" data-reference-step="1" ${slide===r[1]?"disabled":""}>Berikutnya →</button></div>`:""}</nav>`}
-function bindLearnerMode(){const key=state.active;if(!learnerRange(key))return;$("[data-learner-mode]").forEach(b=>b.onclick=()=>setLearnerMode(key,b.dataset.learnerMode,b.dataset.learnerMode==="reference"?learnerSlide(key):undefined));$("[data-reference-step]").forEach(b=>b.onclick=()=>setLearnerMode(key,"reference",learnerSlide(key)+Number(b.dataset.referenceStep)))}
+function bindLearnerMode(){const key=state.active;if(!learnerRange(key))return;$$("[data-learner-mode]").forEach(b=>b.onclick=()=>setLearnerMode(key,b.dataset.learnerMode,b.dataset.learnerMode==="reference"?learnerSlide(key):undefined));$$("[data-reference-step]").forEach(b=>b.onclick=()=>setLearnerMode(key,"reference",learnerSlide(key)+Number(b.dataset.referenceStep)))}
 function goModule(key){state.active=key;localStorage.setItem(STORAGE_VIEW,key);render();window.scrollTo({top:0,behavior:"smooth"})}
 function titleBlock(key){const s=STAGES.find(x=>x.key===key);return `<div class="module-top"><div><span class="eyebrow">MODUL ${STAGES.indexOf(s)} / 6</span><h1>${s.title}</h1><p>${s.blurb}</p></div><span class="pill">Latihan interaktif</span></div>`}
 function isUnlocked(key){return !state.locked&&(!state.online || STAGES.findIndex(x=>x.key===key)<=state.serverStage)}
@@ -583,7 +583,7 @@ function bindLessons(){
    state.work.edfat={...current};saveWork();
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
-  $("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current};saveWork()});
+  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current};saveWork()});
   $("#save-edfat").onclick=()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
