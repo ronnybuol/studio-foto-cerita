@@ -641,6 +641,29 @@ function lcdFooter(stage,count,link,qr){
    onerror="this.style.display='none';this.parentElement.textContent='Buka tautan kelas'"></div></div>
  </div>`;
 }
+function cameraDialHTML(key,index){
+ const iris=key==="a";
+ return `<div class="lcd-camera-control" data-camera-control="${key}" aria-hidden="true">
+  <div class="lcd-camera-dial ${iris?"lcd-aperture-dial":"lcd-setting-dial"}" id="lcd-dial-${key}" style="--dial-angle:${-135+index*45}deg;--iris-size:${10+((6-index)/6)*41}%">
+   ${iris?`<div class="lcd-iris-ring"><div class="lcd-iris-opening"></div></div>`:`<div class="lcd-dial-pointer"></div><div class="lcd-dial-center">${key==="s"?"S":"ISO"}</div>`}
+  </div>
+  <div class="lcd-camera-track"><div class="lcd-camera-track-fill" id="lcd-track-${key}" style="width:${index/6*100}%"></div><span class="lcd-camera-track-thumb" id="lcd-thumb-${key}" style="left:${index/6*100}%"></span></div>
+  <div class="lcd-camera-scale"><span>${key==="a"?"f/1.8":key==="s"?"1/15":"100"}</span><span>${key==="a"?"f/16":key==="s"?"1/1000":"6400"}</span></div>
+  <span class="lcd-camera-control-label">${key==="a"?"DIAFRAGMA":key==="s"?"DIAL RANA":"DIAL ISO"} · IKUT TRAINER</span>
+ </div>`;
+}
+function paintCameraDials(camera){
+ for(const key of ["a","s","i"]){
+  const index=camera[key];
+  const dial=$("#lcd-dial-"+key),fill=$("#lcd-track-"+key),thumb=$("#lcd-thumb-"+key);
+  if(dial){
+   dial.style.setProperty("--dial-angle",(-135+index*45)+"deg");
+   if(key==="a")dial.style.setProperty("--iris-size",(10+((6-index)/6)*41)+"%");
+  }
+  if(fill)fill.style.width=(index/6*100)+"%";
+  if(thumb)thumb.style.left=(index/6*100)+"%";
+ }
+}
 function lcdPage(){
  const stage=state.online?state.serverStage:state.demoStage;
  const step=STAGES[stage]||STAGES[0];
@@ -659,9 +682,9 @@ function lcdPage(){
         <div class="lcd-camera-photo">${photoSceneHTML("lcdCameraScene")}
           <div class="lcd-camera-note">Ilustrasi simulasi · bukan hasil kamera sungguhan</div></div>
         <div class="lcd-camera-readouts">
-          <div class="lcd-reading"><span>APERTURE / BUKAAN</span><strong id="lcd-aperture">f/${APERTURE[camera.a]}</strong><small id="lcd-aperture-tip">Kedalaman ruang</small></div>
-          <div class="lcd-reading"><span>SHUTTER SPEED</span><strong id="lcd-shutter">${SHUTTERS[camera.s].l}s</strong><small id="lcd-shutter-tip">Gerak objek</small></div>
-          <div class="lcd-reading"><span>ISO</span><strong id="lcd-iso">${ISOS[camera.i]}</strong><small id="lcd-iso-tip">Penguatan sinyal</small></div>
+          <div class="lcd-reading"><span>APERTURE / BUKAAN</span><strong id="lcd-aperture">f/${APERTURE[camera.a]}</strong><small id="lcd-aperture-tip">Kedalaman ruang</small>${cameraDialHTML("a",camera.a)}</div>
+          <div class="lcd-reading"><span>SHUTTER SPEED</span><strong id="lcd-shutter">${SHUTTERS[camera.s].l}s</strong><small id="lcd-shutter-tip">Gerak objek</small>${cameraDialHTML("s",camera.s)}</div>
+          <div class="lcd-reading"><span>ISO</span><strong id="lcd-iso">${ISOS[camera.i]}</strong><small id="lcd-iso-tip">Penguatan sinyal</small>${cameraDialHTML("i",camera.i)}</div>
           <div class="lcd-reading lcd-ev-reading"><span>PERUBAHAN EXPOSURE</span><strong id="lcd-ev">${exposureText(camera)}</strong><small>Relatif terhadap f/2.8 · 1/125 · ISO 200</small></div>
         </div>
       </div>`
@@ -688,6 +711,7 @@ function paintLcdCamera(){
  $("#lcd-aperture-tip").textContent=APERTURE[c.a]<=2.8?"Latar lebih blur":APERTURE[c.a]>=11?"Area fokus lebih luas":"Kedalaman ruang sedang";
  $("#lcd-shutter-tip").textContent=SHUTTERS[c.s].t>=1/30?"Gerak mudah kabur":SHUTTERS[c.s].t<=1/500?"Gerak dibekukan":"Perhatikan gerakan";
  $("#lcd-iso-tip").textContent=ISOS[c.i]>=1600?"Noise semakin jelas":ISOS[c.i]<=200?"Noise rendah":"Noise sedang";
+ paintCameraDials(c);
 }
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
