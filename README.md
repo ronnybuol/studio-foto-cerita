@@ -190,3 +190,7 @@ Pada praktik, peserta memilih **tepat 9 dari 12 kandidat** foto dokumentasi musi
 Penting: kandidat 12 adalah **potongan alternatif dari foto kandidat 5**, bukan dokumentasi peristiwa berbeda, dan telah diberi label. Simulasi menyusun alur naratif, **bukan klaim kronologi** yang tidak terverifikasi. Tidak ada foto asli yang ditimpa, migrasi D1, atau perubahan bucket R2.
 
 **Uji produksi:** tahap 04 langsung menampilkan slide pengantar; pindah antar enam slide; buka meja editor; pada HP pilih 9 foto, geser urutan dengan ↑ ↓, isi judul dan alasan, simpan; trainer membaca kembali hasil peserta. Uji layout HP 320–430 piksel dan LCD 16:9 setelah Cloudflare menayangkan commit.
+
+### Pemicu build produksi Modul 04
+
+Commit dokumentasi ini dimaksudkan untuk memicu ulang integrasi GitHub–Cloudflare pada branch `main` setelah konfigurasi Production dipastikan menggunakan `npx wrangler deploy`. Tidak mengubah aplikasi, aset, konfigurasi Worker, migrasi D1, ataupun R2. Bila Cloudflare tidak membuat build baru, periksa instalasi/otorisasi GitHub App Cloudflare dan riwayat build Cloudflare.
