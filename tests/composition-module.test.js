@@ -25,7 +25,7 @@ test("trainer, LCD, dan peserta mengenali tahap komposisi tanpa mengubah teori k
  assert.ok(source.includes('data-comp-slide-step'));
  assert.ok(source.includes('data-comp-mode'));
  assert.ok(source.includes('stage===2 && state.presentation.view==="theory"'));
- assert.ok(source.includes('stage===1?0:COMPOSITION_START'));
+ assert.ok(source.includes('stage===1?0:stage===2?COMPOSITION_START:EDFAT_START'));
  assert.ok(source.includes('state.composition.reason'));
  assert.ok(source.includes('saveAnswer("komposisi"'));
  assert.ok(backend.includes('data.slide>38'));
