@@ -379,3 +379,88 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
  .participant-camera-page .module-top h1{font-size:23px}
  .scene.photo-camera-scene>.view-label{font-size:7px;padding:5px;max-width:94%}
 }
+
+
+/* Perbaikan responsivitas seluruh modul peserta (orientasi s.d. etika). */
+html,body,.app,#root{max-width:100%;min-width:0}
+.page,.lab-layout,.lesson,.side,.card,.hero,.module-top,.story-tray,.story-head,.dropzone,.shot,.field-row,.field,.question,.theory-layout,.theory-visual{min-width:0;max-width:100%}
+.lesson{overflow-wrap:anywhere}
+.page img,.lesson svg,.lesson canvas{max-width:100%}
+.lesson .scene{width:100%;max-width:100%}
+.lesson .scene svg{width:100%;max-width:100%}
+.lesson .hero h1,.lesson .module-top h1,.lesson .card h2,.lesson .card h3{overflow-wrap:anywhere}
+.story-head{flex-wrap:wrap}
+.story-tray .shot-meta,.shot .shot-buttons{min-width:0}
+.shot .shot-buttons button{min-height:35px;touch-action:manipulation}
+.field input,.field textarea,.field select{min-width:0;max-width:100%}
+.question label{overflow-wrap:anywhere;display:flex;gap:8px;align-items:flex-start;min-width:0}
+.question input{flex:none;min-width:18px;min-height:18px;margin:1px 0 0}
+.theory-layout-participant .theory-visual img{max-width:100%;object-fit:contain}
+.theory-layout-participant .theory-explain{min-width:0}
+.username-ticket{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;background:#171b22;color:#fff;padding:17px 15px;border-radius:12px;margin:16px 0}
+.username-ticket strong{letter-spacing:.8px;font-size:clamp(18px,4vw,24px);overflow-wrap:anywhere}
+.username-ticket .btn{flex:none}
+.participant-username{overflow-wrap:anywhere;font-size:12px}
+.participant-edit-form{margin-top:14px;background:#faf9f6}
+.participant-row-actions{display:flex;gap:5px;flex-wrap:wrap;min-width:170px}
+.participant-table{max-width:100%}
+.participant-table tr[hidden]{display:none}
+@media(max-width:950px){
+ .lab-layout{grid-template-columns:minmax(0,1fr)}
+ .side-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;overflow:visible}
+ .side-nav button{min-width:0;width:100%;white-space:normal;text-align:left;padding:9px 6px;font-size:11px;line-height:1.25}
+ .side-nav button .stepnum{flex:none}
+ .user-chip{margin:6px 0 10px}
+ .story-tray{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .page{padding:12px 10px 30px}
+ .masthead{padding:9px 10px;gap:6px}
+ .brandword b{font-size:14px}
+ .top-links{flex-wrap:wrap;justify-content:flex-end}
+ .top-links a{padding:7px 5px}
+ .lesson .hero{padding:19px 15px!important}
+ .lesson .hero h1{font-size:clamp(26px,8vw,37px);line-height:1.08;letter-spacing:-.7px}
+ .lesson .hero p{font-size:13px;line-height:1.5}
+ .module-top h1{font-size:clamp(24px,7vw,31px)}
+ .module-top p{font-size:13px}
+ .card{padding:12px}
+ .grid,.grid.two,.grid.four{grid-template-columns:minmax(0,1fr)}
+ .side-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ .side-nav button{font-size:11px;padding:9px 7px;gap:6px}
+ .user-chip{padding:10px}
+ .story-tray{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .dropzone{padding:8px}
+ .shot .shot-meta{padding:8px}
+ .shot .shot-meta strong{font-size:12px}
+ .shot .shot-meta small{font-size:10px}
+ .shot .shot-buttons{gap:5px}
+ .shot .shot-buttons button{font-size:11px;min-height:36px;padding:6px 8px}
+ .choice-set{gap:6px}
+ .choice{max-width:100%;font-size:12px;white-space:normal;overflow-wrap:anywhere}
+ .story-head h3{font-size:17px}
+ .field-row{grid-template-columns:minmax(0,1fr)}
+ .field input,.field textarea{font-size:16px}
+ .question{padding:12px}
+ .question h3{font-size:15px}
+ .question label{font-size:13px;line-height:1.5}
+ .theory-layout-participant{grid-template-columns:minmax(0,1fr)}
+ .theory-layout-participant .theory-explain h2{font-size:clamp(25px,7vw,32px)}
+ .theory-layout-participant .theory-visual{max-height:none;overflow:hidden}
+ .theory-layout-participant .theory-visual img{max-height:min(42svh,340px);width:100%;object-fit:contain}
+ .theory-layout-participant .theory-two-scenes,.theory-layout-participant .theory-light-grid{grid-template-columns:minmax(0,1fr)}
+ .theory-layout-participant .theory-photo-sample>img{aspect-ratio:auto;max-height:32svh;object-fit:contain}
+ .theory-layout-participant .theory-balance{grid-template-columns:minmax(0,1fr)}
+ .theory-layout-participant .theory-balance-vs{transform:rotate(90deg)}
+ .theory-layout-participant .theory-observe{grid-template-columns:minmax(0,1fr)}
+ .login-card{margin:18px auto;padding:18px 14px}
+ .login-card h1{font-size:clamp(24px,7vw,31px)}
+ .participant-table .data-table{min-width:680px}
+}
+@media(max-width:350px){
+ .page{padding-left:8px;padding-right:8px}
+ .side-nav button{font-size:10px}
+ .side-nav button .stepnum{min-width:21px;padding:5px 2px}
+ .story-tray{grid-template-columns:minmax(0,1fr)}
+ .participant-camera-actions{grid-template-columns:minmax(0,1fr)}
+}

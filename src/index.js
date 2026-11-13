@@ -36,6 +36,10 @@ async function bodyJson(req){
   catch{throw new Error("Format JSON tidak valid")}
 }
 function norm(v,n){return typeof v==="string"?v.trim().replace(/\s+/g," ").slice(0,n):""}
+function newUsername(){return "LM-"+Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>b.toString(16).padStart(2,"0")).join("").toUpperCase()}
+function cleanUsername(v){return typeof v==="string"?v.trim().toUpperCase().replace(/\s+/g,""):""}
+function missingUsernameColumn(error){return /no such column:\s*username|has no column named username/i.test(String(error?.message))}
+
 function bearer(req){const h=req.headers.get("Authorization")||"";return h.startsWith("Bearer ")?h.slice(7).trim():""}
 async function access(req,env){
   return verifyToken(env.SESSION_SECRET,bearer(req));
@@ -44,7 +48,7 @@ async function participant(req,env){
   const token=bearer(req);
   if(!token||token.length>150)return null;
   const hash=await sha256(token);
-  return env.DB.prepare("SELECT id, name, school, class_name AS className FROM participants WHERE token_hash=? AND session_id=?").bind(hash,SESSION_ID).first();
+  return env.DB.prepare("SELECT id, username, name, school, class_name AS className FROM participants WHERE token_hash=? AND session_id=?").bind(hash,SESSION_ID).first();
 }
 async function stageState(env){
   const row=await env.DB.prepare("SELECT active_stage FROM sessions WHERE id=?").bind(SESSION_ID).first();
@@ -85,9 +89,28 @@ async function recordBadLogin(env,id){
       .bind(id,now,now,15*60*1000,now,15*60*1000,now).run();
 }
 async function clearBadLogin(env,id){await env.DB.prepare("DELETE FROM login_attempts WHERE id=?").bind(id).run()}
+const verifiedUsernameDatabases=new WeakSet();
+async function ensureUsernameSchema(env){
+  if(verifiedUsernameDatabases.has(env.DB))return;
+  // Migrasi aditif: aman bila Worker baru aktif sebelum migrasi manual D1.
+  const schema=await env.DB.prepare("PRAGMA table_info(participants)").all();
+  const columns=schema.results||[];
+  if(!columns.some(c=>c.name==="username")){
+    try{await env.DB.prepare("ALTER TABLE participants ADD COLUMN username TEXT").run()}
+    catch(error){if(!/duplicate column name:\s*username/i.test(String(error)))throw error}
+  }
+  await env.DB.prepare("UPDATE participants SET username='LM-' || UPPER(HEX(RANDOMBLOB(6))) WHERE username IS NULL").run();
+  await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username ON participants(session_id,username)").run();
+  verifiedUsernameDatabases.add(env.DB);
+}
 async function handleApi(req,env){
   if(!env.DB)return failure("Database D1 belum terpasang",503);
   const url=new URL(req.url),path=url.pathname.startsWith(PUBLIC_BASE+"/")?url.pathname.slice(PUBLIC_BASE.length):url.pathname,method=req.method;
+  if((method==="POST"&&["/api/participants","/api/participant-login"].includes(path)) ||
+     (method==="GET"&&["/api/me","/api/dashboard"].includes(path))){
+    try{await ensureUsernameSchema(env)}
+    catch(error){console.error("Username migration:",error?.message);return failure("Persiapan username D1 gagal. Periksa migrasi 0002 sebelum melanjutkan.",503)}
+  }
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const camera=await liveCamera(env);
@@ -97,13 +120,43 @@ async function handleApi(req,env){
     const data=await bodyJson(req),name=norm(data.name,90),school=norm(data.school,140),className=norm(data.className,30);
     if(name.length<2||!school||!className)return failure("Nama, asal sekolah, dan kelas wajib diisi");
     const id=crypto.randomUUID(),token=b64url(crypto.getRandomValues(new Uint8Array(32))),hash=await sha256(token);
-    await env.DB.prepare("INSERT INTO participants(id,session_id,name,school,class_name,token_hash,created_at) VALUES(?,?,?,?,?,?,?)")
-      .bind(id,SESSION_ID,name,school,className,hash,new Date().toISOString()).run();
-    return output({user:{id,name,school,className,token}},201);
+    const username=newUsername();
+    try{
+      await env.DB.prepare("INSERT INTO participants(id,session_id,name,school,class_name,token_hash,username,created_at) VALUES(?,?,?,?,?,?,?,?)")
+        .bind(id,SESSION_ID,name,school,className,hash,username,new Date().toISOString()).run();
+    }catch(error){
+      if(missingUsernameColumn(error))return failure("Fitur username belum aktif. Trainer perlu menjalankan migrasi D1 0002.",503);
+      if(/UNIQUE constraint failed: participants.username/i.test(String(error)))return failure("Username bentrok secara acak, silakan ulangi pendaftaran.",409);
+      throw error;
+    }
+    return output({user:{id,username,name,school,className,token}},201);
+  }
+  if(method==="POST"&&path==="/api/participant-login"){
+    const data=await bodyJson(req),username=cleanUsername(data.username);
+    if(!/^LM-[A-F0-9]{12}$/.test(username))return failure("Masukkan username dengan format LM-XXXXXXXXXXXX",400);
+    const ip=req.headers.get("CF-Connecting-IP")||"local";
+    const attemptId="participant:"+await sha256((env.SESSION_SECRET||"") + ip);
+    if(await loginsTooMany(env,attemptId))return failure("Terlalu banyak percobaan login. Coba lagi setelah 15 menit.",429);
+    let row;
+    try{
+      row=await env.DB.prepare("SELECT id,username,name,school,class_name AS className FROM participants WHERE session_id=? AND username=?")
+        .bind(SESSION_ID,username).first();
+    }catch(error){
+      if(missingUsernameColumn(error))return failure("Fitur username belum aktif. Hubungi trainer untuk migrasi D1 0002.",503);
+      throw error;
+    }
+    if(!row){await recordBadLogin(env,attemptId);return failure("Username tidak ditemukan. Periksa kembali huruf dan angkanya.",401)}
+    await clearBadLogin(env,attemptId);
+    const token=b64url(crypto.getRandomValues(new Uint8Array(32))),hash=await sha256(token);
+    await env.DB.prepare("UPDATE participants SET token_hash=? WHERE id=? AND session_id=?").bind(hash,row.id,SESSION_ID).run();
+    return output({user:{...row,token}});
   }
   if(method==="GET"&&path==="/api/me"){
     const p=await participant(req,env);if(!p)return failure("Sesi peserta tidak valid",401);
-    return output({user:p,stage:await stageState(env)});
+    const rows=await env.DB.prepare("SELECT stage,payload FROM answers WHERE participant_id=?").bind(p.id).all();
+    const answers={};
+    for(const row of rows.results||[]){try{answers[row.stage]=JSON.parse(row.payload)}catch{}}
+    return output({user:p,stage:await stageState(env),answers});
   }
   if(method==="POST"&&path==="/api/login"){
     if(!env.TRAINER_PIN||!env.SESSION_SECRET)return failure("Konfigurasi autentikasi belum lengkap",503);
@@ -128,16 +181,35 @@ async function handleApi(req,env){
     const user=await access(req,env);if(!user)return failure("Autentikasi trainer diperlukan",401);
     const [stage,rows,answers]=await Promise.all([
       stageState(env),
-      env.DB.prepare("SELECT id,name,school,class_name AS className FROM participants WHERE session_id=? ORDER BY created_at ASC").bind(SESSION_ID).all(),
+      env.DB.prepare("SELECT id,username,name,school,class_name AS className FROM participants WHERE session_id=? ORDER BY created_at ASC").bind(SESSION_ID).all(),
       env.DB.prepare("SELECT a.participant_id,a.stage,a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.session_id=?").bind(SESSION_ID).all()
     ]);
-    const map=new Map((rows.results||[]).map(row=>[row.id,{...row,done:0,answers:{}}]));
+    const map=new Map((rows.results||[]).map(row=>[row.id,{...row,username:user.role==="trainer"?row.username:null,done:0,answers:{}}]));
     for(const record of answers.results||[]){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
     const camera=await liveCamera(env);
     return output({stage,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
+  }
+  if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
+    const admin=await access(req,env);
+    if(!admin)return failure("Autentikasi trainer diperlukan",401);
+    if(admin.role!=="trainer")return failure("Hanya trainer yang dapat mengelola peserta",403);
+    const id=path.split("/").pop();
+    const existing=await env.DB.prepare("SELECT id FROM participants WHERE id=? AND session_id=?").bind(id,SESSION_ID).first();
+    if(!existing)return failure("Peserta tidak ditemukan",404);
+    if(method==="DELETE"){
+      // Hapus jawaban lebih dulu agar aman walau FK SQLite belum diaktifkan pada koneksi.
+      await env.DB.prepare("DELETE FROM answers WHERE participant_id=?").bind(id).run();
+      await env.DB.prepare("DELETE FROM participants WHERE id=? AND session_id=?").bind(id,SESSION_ID).run();
+      return output({ok:true,deleted:id});
+    }
+    const data=await bodyJson(req),name=norm(data.name,90),school=norm(data.school,140),className=norm(data.className,30);
+    if(name.length<2||!school||!className)return failure("Nama, asal sekolah, dan kelas wajib lengkap");
+    await env.DB.prepare("UPDATE participants SET name=?,school=?,class_name=? WHERE id=? AND session_id=?")
+      .bind(name,school,className,id,SESSION_ID).run();
+    return output({ok:true,user:{id,name,school,className}});
   }
   if(method==="PUT"&&path==="/api/presentation"){
     const user=await access(req,env);

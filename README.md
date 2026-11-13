@@ -95,3 +95,17 @@ Sepuluh file WebP ada di folder public/assets/camera/ dan akan diakses sebagai s
 Semua ini foto generatif untuk latihan, bukan foto dokumentasi kejadian nyata. Angka f-stop, shutter dan ISO adalah label simulasi, bukan data EXIF hasil pemotretan. Simulator memberi representasi visual konseptual, bukan simulasi optika yang presisi. Jangan gunakan gambar ini sebagai foto jurnalistik atau karya lomba.
 
 Uji pada https://kelasbelajar.org/lensa-muda/#/trainer (tahap 01). LCD dan tampilan peserta harus menampilkan gambar yang sama. Tidak ada migrasi SQL tambahan.
+
+## Pembaruan akun peserta dan tata letak ponsel (November 2026)
+
+- Pendaftaran baru mengumpulkan nama, sekolah, dan kelas **sekali**. Aplikasi membuat username acak format `LM-XXXXXXXXXXXX` yang harus disimpan peserta.
+- Untuk kembali dari perangkat lain, pilih **Sudah punya username? Masuk**. Tidak ada password, sehingga username bersifat rahasia dan menjadi kunci untuk jawaban peserta. Masuk di perangkat lain menerbitkan token baru dan membatalkan token lama.
+- Progres peserta dibaca kembali dari D1 melalui `GET /api/me` setelah masuk ulang. Token lama yang masih valid juga dipulihkan saat aplikasi dibuka.
+- Dashboard trainer mencakup pencarian, salin username, koreksi nama/sekolah/kelas, dan penghapusan peserta **beserta seluruh jawabannya** dengan dialog konfirmasi. Pendamping hanya membaca dan tidak melihat username.
+- Tata letak HP 320–430px, tablet dan laptop disesuaikan untuk seluruh modul, terutama bank 12 foto, caption, pilihan EDFAT, dan kuis etika. Setiap peserta mengendalikan simulator sendiri tanpa mempengaruhi LCD.
+
+### Migrasi D1 dan perlindungan data
+
+Kode mendeteksi kolom `participants.username` saat akses pendaftaran/login/dashboard pertama, lalu menjalankan migrasi aditif idempoten: menambah kolom, memberikan username acak kepada peserta lama, dan membuat indeks unik. **Tidak menghapus peserta atau jawaban.** Skrip manual yang ekuivalen tersedia pada `migrations/0002-participant-username.sql`; jangan menjalankannya setelah migrasi otomatis karena `ALTER TABLE` hanya boleh sekali.
+
+Untuk produksi, sebaiknya ambil backup D1 sebelum deployment apabila tersedia. Setelah deployment, trainer membuka dashboard, memastikan username peserta lama tampil, kemudian menguji login dari browser privat. Jangan menghapus data peserta untuk memperbaiki login. Jika migrasi gagal, API mengembalikan pesan kegagalan agar operator dapat memeriksa D1 secara terkendali.
