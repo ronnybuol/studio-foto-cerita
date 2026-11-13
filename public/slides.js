@@ -43,6 +43,30 @@ export const THEORY_SLIDES = [
   note:"Klik 'Mulai Simulator' di dashboard; minta siswa menebak hasil sebelum slider digeser.",kind:"challenge"}
 ];
 
+// Detail foto ditempatkan setelah delapan slide asli agar posisi sesi lama tetap kompatibel.
+export const PHOTO_DETAILS = [
+ {parent:0,suffix:"a",title:"Amati foto: apa yang terlihat?",image:"base",caption:"Pengrajin bekerja · ilustrasi latihan",question:"Apa yang terlihat jelas, dan fakta apa yang masih perlu diverifikasi?"},
+ {parent:1,suffix:"a",title:"Cahaya depan",image:"cahaya-depan",caption:"Arah cahaya: depan",question:"Bagian wajah dan benda apa yang tampak paling jelas?"},
+ {parent:1,suffix:"b",title:"Cahaya samping",image:"cahaya-samping",caption:"Arah cahaya: samping",question:"Di mana bayangan memperjelas tekstur dan bentuk?"},
+ {parent:1,suffix:"c",title:"Cahaya belakang",image:"cahaya-belakang",caption:"Arah cahaya: belakang",question:"Apa yang hilang dan muncul ketika subjek membelakangi cahaya?"},
+ {parent:3,suffix:"a",title:"Bukaan f/1.8",image:"aperture-lebar",caption:"Simulasi f/1.8 · latar blur",question:"Apa yang terjadi pada detail ruang kerja di belakang pengrajin?"},
+ {parent:3,suffix:"b",title:"Bukaan f/11",image:"aperture-sempit",caption:"Simulasi f/11 · area tajam",question:"Bagian latar apa yang kini membantu menjelaskan tempat kerja?"},
+ {parent:4,suffix:"a",title:"Shutter lambat: 1/15",image:"shutter-lambat",caption:"Simulasi 1/15 detik · jejak gerak",question:"Apakah jejak gerak membantu atau mengganggu cerita?"},
+ {parent:4,suffix:"b",title:"Shutter cepat: 1/1000",image:"shutter-cepat",caption:"Simulasi 1/1000 detik · gerak beku",question:"Detail gerakan mana yang kini terlihat jelas?"},
+ {parent:5,suffix:"a",title:"ISO 100",image:"iso-rendah",caption:"Simulasi ISO 100 · noise rendah",question:"Perhatikan bidang gelap dan tekstur gambar."},
+ {parent:5,suffix:"b",title:"ISO 3200",image:"iso-tinggi",caption:"Simulasi ISO 3200 · noise lebih terlihat",question:"Apa perbedaan tekstur dibanding gambar sebelumnya?"},
+ {parent:6,suffix:"a",title:"Kombinasi exposure A",image:"base",caption:"f/2.8 · 1/125 · ISO 200",question:"Bagaimana keseimbangan kecerahan dan gerak di foto pertama?"},
+ {parent:6,suffix:"b",title:"Kombinasi exposure B",image:"shutter-cepat",caption:"f/2.8 · 1/500 · ISO 800",question:"Bandingkan dengan foto sebelumnya; apa yang berubah?"},
+ {parent:7,suffix:"a",title:"Siap bereksperimen",image:"base",caption:"Ilustrasi pengrajin · bahan latihan kamera",question:"Pengaturan apa yang pertama akan kamu uji di simulator?"}
+];
+export const PRESENTATION_ORDER = THEORY_SLIDES.flatMap((_,i)=>[i,...PHOTO_DETAILS.map((d,j)=>d.parent===i?THEORY_SLIDES.length+j:null).filter(n=>n!==null)]);
+export const MAX_PRESENTATION_SLIDE = THEORY_SLIDES.length + PHOTO_DETAILS.length - 1;
+export const photoDetail = (index) => PHOTO_DETAILS[index-THEORY_SLIDES.length] || null;
+export const presentationLabel = (index) => {
+ const d=photoDetail(index);
+ return d?`${String(d.parent+1).padStart(2,"0")}${d.suffix}` : String(index+1).padStart(2,"0");
+};
+
 export const cameraPhotoUrl = (name) => "/lensa-muda/assets/camera/" + name + ".webp";
 
 export function theoryVisual(index){

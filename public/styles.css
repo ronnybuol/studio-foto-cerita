@@ -243,3 +243,55 @@ a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:
  .theory-photo-sample figcaption{font-size:10px}
  .theory-light-grid{gap:5px}
 }
+
+/* Pembaruan visual: pratinjau terkunci pada viewport, foto tidak dipotong. */
+.trainer-theory-preview{align-items:stretch;min-height:0}
+.trainer-theory-title{min-height:0}
+.trainer-theory-mini{min-height:0;max-height:min(58vh,540px);overflow:hidden}
+.trainer-theory-mini>div{max-height:100%;min-height:0}
+.trainer-theory-mini .theory-photo-sample>img,
+.theory-photo-sample>img,
+.theory-story-visual>img,
+.theory-balance-card .theory-balance-photo,
+.theory-challenge-photo>img{object-fit:contain}
+.trainer-theory-mini .theory-photo-sample>img{max-height:clamp(140px,31vh,360px);height:auto;aspect-ratio:auto}
+.trainer-theory-mini .theory-light-grid,
+.trainer-theory-mini .theory-two-scenes{align-items:start}
+.theory-visual img{max-width:100%}
+.theory-step-picker{grid-template-columns:repeat(auto-fit,minmax(48px,1fr))}
+.trainer-photo-preview .trainer-theory-mini{max-height:min(65vh,620px);padding:10px}
+.photo-detail-layout{display:flex;flex-direction:column;align-items:stretch;gap:12px;min-width:0;min-height:0;width:100%}
+.photo-detail-heading h2{margin:6px 0 0;font-size:clamp(20px,2.4vw,32px);line-height:1.15}
+.photo-detail-figure{margin:0;min-height:0;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:100%}
+.photo-detail-figure img{display:block;width:100%;height:auto;max-height:clamp(160px,43vh,470px);object-fit:contain;border-radius:8px;background:#171b22}
+.photo-detail-figure figcaption{font-size:12px;color:#d5dbe3;text-align:center}
+.photo-detail-question{display:flex;gap:10px;align-items:baseline;background:#29313c;padding:10px 14px;border-left:3px solid #ef7939;border-radius:4px 9px 9px 4px}
+.photo-detail-question b{font-size:10px;letter-spacing:.6px;color:#ffab72;white-space:nowrap}
+.photo-detail-question span{font-size:clamp(12px,1.2vw,17px);color:#fff;line-height:1.35}
+.photo-detail-trainer .photo-detail-figure img{max-height:clamp(150px,42vh,450px)}
+.photo-detail-trainer .photo-detail-question{flex-wrap:wrap}
+.lcd-photo-detail{height:min(90svh,900px);min-height:0;overflow:hidden;justify-content:flex-start;gap:10px}
+.lcd-photo-detail .photo-detail-layout{flex:1;overflow:hidden;gap:7px}
+.lcd-photo-detail .photo-detail-heading h2{font-size:clamp(27px,3vw,48px)}
+.lcd-photo-detail .photo-detail-figure{flex:1;overflow:hidden}
+.lcd-photo-detail .photo-detail-figure img{width:100%;height:100%;max-height:100%;min-height:0;object-fit:contain}
+.lcd-photo-detail .lcd-bottom{flex:none}
+.lcd-photo-detail .lcd-bottom strong{font-size:clamp(21px,2vw,30px)}
+.lcd-photo-detail .lcd-qr{width:76px;height:76px;padding:4px}
+.lcd-photo-detail .lcd-qr img{width:68px;height:68px}
+.lcd-photo-detail .lcd-join>span{display:none}
+.lcd-photo-detail .photo-detail-question{padding:8px 11px}
+.lcd-theory-mode:not(.lcd-photo-detail) .theory-visual{max-height:min(60vh,590px);overflow:hidden}
+.lcd-theory-mode:not(.lcd-photo-detail) .theory-photo-sample img{max-height:26vh;aspect-ratio:auto;width:100%;object-fit:contain}
+.lcd-theory-mode:not(.lcd-photo-detail) .theory-story-visual img{max-height:45vh;aspect-ratio:auto;object-fit:contain}
+#root:fullscreen .lcd-photo-detail{height:100dvh;min-height:0;padding:clamp(10px,1.5vh,22px) clamp(18px,2vw,32px)}
+#root:fullscreen .lcd-photo-detail .photo-detail-figure img{max-height:100%;height:100%}
+#root:fullscreen .lcd-photo-detail .lcd-bottom{gap:10px}
+@media(max-width:700px){
+ .photo-detail-question{flex-wrap:wrap}
+ .trainer-theory-mini{max-height:55vh}
+ .lcd-photo-detail{height:85svh;padding:12px;min-height:0}
+ .lcd-photo-detail .photo-detail-heading h2{font-size:25px}
+ .lcd-photo-detail .photo-detail-question span{font-size:12px}
+ .lcd-photo-detail .lcd-bottom .lcd-join{display:none}
+}

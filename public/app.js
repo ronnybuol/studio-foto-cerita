@@ -1,4 +1,4 @@
-import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl} from "./slides.js";
+import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -80,7 +80,7 @@ async function syncState(){
     if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
     state.online=true; state.serverStage=data.stage;state.count=data.count||0;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<THEORY_SLIDES.length)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=MAX_PRESENTATION_SLIDE)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -130,7 +130,17 @@ function photoSceneHTML(id="cameraScene"){
    <div class="view-label">SIMULASI FOTO GENERATIF · BUKAN FOTO PERISTIWA NYATA</div>
  </div>`;
 }
+function photoDetailContent(index,variant="lcd"){
+ const detail=photoDetail(index);
+ if(!detail)return "";
+ return `<div class="photo-detail-layout photo-detail-${variant}">
+  <div class="photo-detail-heading"><span class="theory-kicker">FOTO ${presentationLabel(index)} · ILUSTRASI GENERATIF</span><h2>${escapeHtml(detail.title)}</h2></div>
+  <figure class="photo-detail-figure"><img src="${cameraPhotoUrl(detail.image)}" alt="${escapeHtml(detail.caption)}" loading="eager" decoding="async"><figcaption>${escapeHtml(detail.caption)}</figcaption></figure>
+  <div class="photo-detail-question"><b>AMATI & DISKUSIKAN</b><span>${escapeHtml(detail.question)}</span></div>
+ </div>`;
+}
 function theorySlideContent(index,variant="lcd"){
+ if(photoDetail(index))return photoDetailContent(index,variant);
  const slide=THEORY_SLIDES[index]||THEORY_SLIDES[0];
  return `<div class="theory-layout theory-layout-${variant}">
    <section class="theory-explain">
@@ -144,35 +154,35 @@ function theorySlideContent(index,variant="lcd"){
  </div>`;
 }
 function theoryParticipantPage(){
- const i=state.presentation.slide,slide=THEORY_SLIDES[i]||THEORY_SLIDES[0];
+ const i=state.presentation.slide,slide=THEORY_SLIDES[photoDetail(i)?.parent??i]||THEORY_SLIDES[0];
  return `${titleBlock("kamera")}
   <div class="info" style="margin-bottom:14px"><b>Materi teori sedang berlangsung.</b> Ikuti pembahasan bersama trainer. Setelah slide terakhir, trainer akan membuka laboratorium kamera untuk latihan pribadi.</div>
   <div class="card theory-participant-card">${theorySlideContent(i,"participant")}</div>
-  <p class="small-note">Materi ${i+1} dari ${THEORY_SLIDES.length}. Pertanyaan diskusi dijawab secara lisan bersama kelas; tidak perlu membawa kamera.</p>`;
+  <p class="small-note">Materi ${presentationLabel(i)} · 8 pokok bahasan dan contoh foto. Pertanyaan diskusi dijawab secara lisan bersama kelas; tidak perlu membawa kamera.</p>`;
 }
 function theoryTrainerPanel(data,isMentor){
  const p=state.presentation;
- const i=p.slide,slide=THEORY_SLIDES[i]||THEORY_SLIDES[0];
+ const i=p.slide,detail=photoDetail(i),slide=THEORY_SLIDES[detail?.parent??i]||THEORY_SLIDES[0];
  const stageLive=data.stage===1,enabled=!isMentor;
  return `<section class="card trainer-theory-card">
     <div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 1</span>
       <h2>Materi Dasar Fotografi</h2>
-      <p class="small-note">Delapan slide sebelum latihan exposure. Ketika tahap 01 terbuka, tombol ini mengubah isi LCD.</p></div>
+      <p class="small-note">Delapan pokok bahasan beserta sub-slide foto utuh. Ketika tahap 01 terbuka, tombol ini mengubah isi LCD.</p></div>
       <span class="pill ${stageLive?"green":"gray"}">${stageLive?"● TAHAP 01 AKTIF":"BUKA TAHAP 01 TERLEBIH DAHULU"}</span>
     </div>
     ${p.view==="theory"?`
-      <div class="trainer-theory-preview">
-        <div class="trainer-theory-title"><span>${escapeHtml(slide.eyebrow)}</span><h3>${escapeHtml(slide.title)}</h3>
+      <div class="trainer-theory-preview ${detail?"trainer-photo-preview":""}">
+        <div class="trainer-theory-title"><span>${escapeHtml(slide.eyebrow)} · ${presentationLabel(i)}</span><h3>${escapeHtml(detail?.title||slide.title)}</h3>
           <p>${escapeHtml(slide.lead)}</p><div class="trainer-theory-note"><b>CATATAN UNTUK TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
-        <div class="trainer-theory-mini">${theoryVisual(i,{sceneHTML,shotSrc})}</div>
+        <div class="trainer-theory-mini">${detail?photoDetailContent(i,"trainer"):theoryVisual(i,{sceneHTML,shotSrc})}</div>
       </div>
       <div class="trainer-slide-nav">
-        <button class="btn subtle" data-slide-step="-1" ${i===0||!enabled?"disabled":""}>← Slide sebelumnya</button>
-        <strong>Slide ${i+1} / ${THEORY_SLIDES.length}</strong>
-        <button class="btn primary" data-slide-step="1" ${i===THEORY_SLIDES.length-1||!enabled?"disabled":""}>Slide berikutnya →</button>
+        <button class="btn subtle" data-slide-step="-1" ${PRESENTATION_ORDER.indexOf(i)===0||!enabled?"disabled":""}>← Slide sebelumnya</button>
+        <strong>Slide ${presentationLabel(i)} · ${PRESENTATION_ORDER.indexOf(i)+1}/${PRESENTATION_ORDER.length}</strong>
+        <button class="btn primary" data-slide-step="1" ${PRESENTATION_ORDER.indexOf(i)===PRESENTATION_ORDER.length-1||!enabled?"disabled":""}>Slide berikutnya →</button>
       </div>
       <div class="theory-step-picker" role="group" aria-label="Pilih slide">
-        ${THEORY_SLIDES.map((item,n)=>`<button class="theory-dot" data-slide="${n}" aria-pressed="${n===i}" title="${escapeHtml(item.title)}" ${!enabled?"disabled":""}>${String(n+1).padStart(2,"0")}</button>`).join("")}
+        ${PRESENTATION_ORDER.map(n=>`<button class="theory-dot" data-slide="${n}" aria-pressed="${n===i}" title="${escapeHtml(photoDetail(n)?.title||THEORY_SLIDES[n]?.title||"Foto")}" ${!enabled?"disabled":""}>${presentationLabel(n)}</button>`).join("")}
       </div>
       <div class="actions">
         <button class="btn primary" data-present-mode="simulator" ${!enabled?"disabled":""}>◉ Mulai simulator kamera →</button>
@@ -456,7 +466,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(7,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(MAX_PRESENTATION_SLIDE,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -476,8 +486,9 @@ function bindDashboard(){
    }
  }
  $$("[data-slide-step]").forEach(button=>button.onclick=()=>{
-   const n=state.presentation.slide+Number(button.dataset.slideStep);
-   if(n>=0&&n<THEORY_SLIDES.length)choosePresentation({view:"theory",slide:n});
+   const pos=PRESENTATION_ORDER.indexOf(state.presentation.slide);
+    const n=PRESENTATION_ORDER[pos+Number(button.dataset.slideStep)];
+   if(n!==undefined)choosePresentation({view:"theory",slide:n});
  });
  $$("[data-slide]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:"theory",slide:Number(button.dataset.slide)});
@@ -639,7 +650,7 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
  const content=stage===1 && state.presentation.view==="theory"
-   ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${state.presentation.slide+1} / ${THEORY_SLIDES.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
+   ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
    :stage===1
    ?`<div class="lcd-camera-heading"><div class="kicker">TAHAP 01 · LABORATORIUM KAMERA</div>
       <h1>Ubah pengaturan. <em>Amati fotonya.</em></h1>
@@ -657,7 +668,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>
