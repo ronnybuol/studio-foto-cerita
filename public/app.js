@@ -714,7 +714,46 @@ function bindDashboard(){
   if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
  });
  $$("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
- $$("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
+ $("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
+ let savingComposition=false,queuedComposition=false;
+ async function saveCompositionDemo(){
+  if(savingComposition){queuedComposition=true;return}
+  savingComposition=true;
+  do{
+   queuedComposition=false;
+   const snapshot={...state.demoComposition};
+   try{
+    if(!state.online)throw Error("Koneksi kelas belum tersedia");
+    await request("/api/demo-composition",{method:"PUT",payload:snapshot,auth:true});
+    const status=$("#composition-demo-status");if(status)status.textContent="Tersinkron dengan LCD";
+   }catch(error){const status=$("#composition-demo-status");if(status)status.textContent="Gagal sinkron: "+error.message}
+  }while(queuedComposition);
+  savingComposition=false;
+ }
+ function refreshTrainerDemo(){
+  const scene=$("#trainerCompositionDemo"),caption=$("#trainerCompositionDemo-caption");
+  if(!scene)return;
+  const example=compositionExample(state.demoComposition);
+  scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
+  const image=scene.querySelector("img");
+  if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
+  if(caption)caption.textContent=example.caption;
+  $("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
+  for(const key of ["position","distance","angle"])$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
+ }
+ $("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
+  const key=btn.dataset.demoComp;
+  state.demoComposition[key]=!state.demoComposition[key];
+  if(key==="frame")state.demoComposition.preview="frame";
+  refreshTrainerDemo();saveCompositionDemo();
+ });
+ for(const key of ["position","distance","angle"])$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
+  state.demoComposition[key]=btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)];
+  state.demoComposition.preview=key;refreshTrainerDemo();saveCompositionDemo();
+ });
+ const resetDemo=$("#reset-demo-composition");
+ if(resetDemo)resetDemo.onclick=()=>{state.demoComposition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"};refreshTrainerDemo();saveCompositionDemo()};
+
  $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
@@ -967,6 +1006,14 @@ function paintLcdCamera(){
  $("#lcd-iso-tip").textContent=ISOS[c.i]>=1600?"Noise semakin jelas":ISOS[c.i]<=200?"Noise rendah":"Noise sedang";
  paintCameraDials(c);
 }
+function paintLcdComposition(){
+ const scene=$("#lcdCompositionDemo"),caption=$("#lcdCompositionDemo-caption");if(!scene)return;
+ const example=compositionExample(state.demoComposition);
+ scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
+ const image=scene.querySelector("img");
+ if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp")){image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";image.alt=example.caption}
+ if(caption)caption.textContent=example.caption;
+}
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
  $("#lcd-refresh").onclick=refreshLCD;
@@ -975,6 +1022,7 @@ function renderLCD(){
    $("#root").requestFullscreen?.().catch(()=>toast("Mode layar penuh tidak tersedia di browser ini"));
  };
  paintLcdCamera();
+ paintLcdComposition();
 }
 let lcdPolling=false;
 async function refreshLCD(){
@@ -982,6 +1030,7 @@ async function refreshLCD(){
  lcdPolling=true;
  const prevStage=state.online?state.serverStage:state.demoStage;
  const prevCamera=JSON.stringify(state.demoCamera);
+ const prevComposition=JSON.stringify(state.demoComposition);
  const prevPresentation=JSON.stringify(state.presentation);
  try{
    await syncState();
@@ -990,6 +1039,7 @@ async function refreshLCD(){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
+      if(prevComposition!==JSON.stringify(state.demoComposition))paintLcdComposition();
      const count=$(".lcd-participants");
      if(count)count.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar · 16 November 2026`;
    }
