@@ -3,12 +3,13 @@ import assert from "node:assert/strict";
 import handler from "../src/index.js";
 
 function mockEnv(){
- const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map(),usernameSchema:false};
+ const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map(),usernameSchema:false,lockSchema:false,locked:false};
  const DB={prepare(sql){
-   return {async all(){if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};return {results:[]}},async run(){if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});return {success:true}},bind(...args){
+   return {async all(){if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};if(sql.includes("PRAGMA table_info(sessions)"))return {results:data.lockSchema?[{name:"id"},{name:"is_locked"}]:[{name:"id"}]};return {results:[]}},async run(){if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;if(sql.includes("ALTER TABLE sessions ADD COLUMN is_locked"))data.lockSchema=true;if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});return {success:true}},bind(...args){
      return {
        async first(){
          if(sql.includes("SELECT active_stage"))return {active_stage:data.stage};
+          if(sql.includes("SELECT is_locked FROM sessions"))return {is_locked:data.locked?1:0};
          if(sql.includes("SELECT camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
            return {camera_json:JSON.stringify(data.camera)};
@@ -34,11 +35,13 @@ function mockEnv(){
          }
          if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;
          if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});
-         if(sql.includes("UPDATE participants SET token_hash=")){const p=data.participants.find(x=>x.id===args[1]);if(p)p.token_hash=args[0]}
-         if(sql.includes("UPDATE participants SET name=")){const p=data.participants.find(x=>x.id===args[3]);if(p){p.name=args[0];p.school=args[1];p.class_name=args[2]}}
+         if(sql.includes("UPDATE participants SET username=?")){const p=data.participants.find(x=>x.id===args[1]);if(p)p.username=args[0]}
+          if(sql.includes("UPDATE participants SET token_hash=")){const p=data.participants.find(x=>x.id===args[1]);if(p)p.token_hash=args[0]}
+         if(sql.includes("UPDATE participants SET name=")){const p=data.participants.find(x=>x.id===args[4]);if(p){p.name=args[0];p.school=args[1];p.class_name=args[2];p.username=args[3]}}
          if(sql.includes("DELETE FROM answers WHERE participant_id"))data.answers=data.answers.filter(a=>a.participant_id!==args[0]);
          if(sql.includes("DELETE FROM participants WHERE id="))data.participants=data.participants.filter(p=>p.id!==args[0]);
-         if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
+         if(sql.includes("UPDATE sessions SET is_locked="))data.locked=!!args[0];
+          if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
          if(sql.includes("UPDATE sessions SET camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
            if(sql.includes("'$.view'"))data.camera={...data.camera,view:args[0],slide:args[1]};
@@ -73,13 +76,13 @@ test("sesi dibuka pada orientasi dan pendaftaran menyimpan sekolah serta kelas",
  const env=mockEnv();
  const initial=await call(env,"/lensa-muda/api/state");
  assert.equal(initial.status,200);assert.equal(initial.data.stage,0);
- const reg=await call(env,"/lensa-muda/api/participants","POST",{name:"Sari",school:"SMA Negeri 1",className:"XI B"});
+ const reg=await call(env,"/lensa-muda/api/participants","POST",{name:"Sari",school:"SMA Negeri 1",className:"XI B",username:"sari"});
  assert.equal(reg.status,201);assert.equal(reg.data.user.school,"SMA Negeri 1");assert.equal(reg.data.user.className,"XI B");
  const status=await call(env,"/lensa-muda/api/state");assert.equal(status.data.count,1);
 });
 test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor hanya membaca",async()=>{
  const env=mockEnv();
- const reg=await call(env,"/api/participants","POST",{name:"Rani",school:"SMK Contoh",className:"XII"});
+ const reg=await call(env,"/api/participants","POST",{name:"Rani",school:"SMK Contoh",className:"XII",username:"rani"});
  const p=reg.data.user.token;
  const denied=await call(env,"/api/login","POST",{pin:"salah"});
  assert.equal(denied.status,401);
@@ -173,18 +176,18 @@ test("PIN benar tetap diterima setelah percobaan gagal mencapai ambang pembatasa
  assert.equal(dashboard.status,200);
 });
 
-test("username acak memungkinkan login ulang dan memulihkan progres peserta",async()=>{
+test("username pilihan peserta memungkinkan login ulang dan memulihkan progres",async()=>{
  const env=mockEnv();
- const reg=await call(env,"/api/participants","POST",{name:"Lia",school:"SMA 1",className:"XI"});
+ const reg=await call(env,"/api/participants","POST",{name:"Lia",school:"SMA 1",className:"XI",username:"lia"});
  assert.equal(reg.status,201);
- assert.match(reg.data.user.username,/^LM-[0-9A-F]{12}$/);
+ assert.equal(reg.data.user.username,"lia");
  const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
  await call(env,"/api/state","PUT",{stage:1},trainer.token);
  const saved=await call(env,"/api/answers/kamera","PUT",{a:0,s:3,i:2},reg.data.user.token);
  assert.equal(saved.status,200);
  const bad=await call(env,"/api/participant-login","POST",{username:"LM-AAAAAAAAAAAA"});
  assert.equal(bad.status,401);
- const login=await call(env,"/api/participant-login","POST",{username:reg.data.user.username.toLowerCase()});
+ const login=await call(env,"/api/participant-login","POST",{username:reg.data.user.username});
  assert.equal(login.status,200);
  assert.equal(login.data.user.id,reg.data.user.id);
  const me=await call(env,"/api/me","GET",undefined,login.data.user.token);
@@ -194,13 +197,13 @@ test("username acak memungkinkan login ulang dan memulihkan progres peserta",asy
 });
 test("hanya trainer dapat mengedit atau menghapus peserta dan jawabannya",async()=>{
  const env=mockEnv();
- const reg=(await call(env,"/api/participants","POST",{name:"Nina",school:"SMK 1",className:"X"})).data.user;
+ const reg=(await call(env,"/api/participants","POST",{name:"Nina",school:"SMK 1",className:"X",username:"nina"})).data.user;
  const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
  const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
  const path="/api/participants/"+reg.id;
  assert.equal((await call(env,path,"DELETE")).status,401);
  assert.equal((await call(env,path,"DELETE",undefined,mentor.token)).status,403);
- const edit=await call(env,path,"PATCH",{name:"Nina Baru",school:"SMK 2",className:"XI"},trainer.token);
+ const edit=await call(env,path,"PATCH",{name:"Nina Baru",school:"SMK 2",className:"XI",username:"nina"},trainer.token);
  assert.equal(edit.status,200);
  const dash=await call(env,"/api/dashboard","GET",undefined,trainer.token);
  assert.equal(dash.data.participants[0].name,"Nina Baru");
@@ -229,4 +232,37 @@ test("migrasi username memberi akun peserta lama tanpa menghapus jawaban",async(
  assert.deepEqual(me.data.answers.kamera,{a:3,s:2,i:4});
  assert.equal(env._data.participants.length,1);
  assert.equal(env._data.answers.length,1);
+});
+
+test("kelas terkunci tidak menerima login pendaftaran dan jawaban, trainer bisa membuka",async()=>{
+ const env=mockEnv();
+ const reg=await call(env,"/api/participants","POST",{name:"Budi",school:"SMA 1",className:"X",username:"budi"});
+ assert.equal(reg.status,201);
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
+ assert.equal((await call(env,"/api/class-lock","PUT",{locked:true},mentor.token)).status,403);
+ const lock=await call(env,"/api/class-lock","PUT",{locked:true},trainer.token);
+ assert.equal(lock.status,200);
+ assert.equal((await call(env,"/api/state")).data.locked,true);
+ assert.equal((await call(env,"/api/participants","POST",{name:"Ayu",school:"SMA",className:"XI",username:"ayu"})).status,423);
+ assert.equal((await call(env,"/api/participant-login","POST",{username:"budi"})).status,423);
+ assert.equal((await call(env,"/api/answers/kamera","PUT",{a:1,s:3,i:1},reg.data.user.token)).status,423);
+ assert.equal((await call(env,"/api/dashboard","GET",undefined,trainer.token)).status,200);
+ assert.equal((await call(env,"/api/class-lock","PUT",{locked:false},trainer.token)).status,200);
+ assert.equal((await call(env,"/api/state")).data.locked,false);
+ assert.equal((await call(env,"/api/participant-login","POST",{username:"budi"})).status,200);
+});
+test("trainer dapat menambahkan peserta dan peserta lama dapat memilih username sendiri",async()=>{
+ const env=mockEnv();
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
+ const payload={name:"Nusa",school:"SMK",className:"XI",username:"nusa"};
+ assert.equal((await call(env,"/api/trainer/participants","POST",payload,mentor.token)).status,403);
+ const added=await call(env,"/api/trainer/participants","POST",payload,trainer.token);
+ assert.equal(added.status,201);
+ const change=await call(env,"/api/me/username","PATCH",{username:"nusaku"},added.data.user.token);
+ assert.equal(change.status,200);
+ assert.equal(change.data.username,"nusaku");
+ assert.equal((await call(env,"/api/participant-login","POST",{username:"nusaku"})).status,200);
+ assert.equal((await call(env,"/api/participants","POST",payload)).status,201);
 });
