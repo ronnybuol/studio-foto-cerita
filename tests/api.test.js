@@ -5,7 +5,7 @@ import handler from "../src/index.js";
 function mockEnv(){
  const data={stage:0,camera:{a:1,s:3,i:1},migrated:true,participants:[],answers:[],loginAttempts:new Map(),usernameSchema:false};
  const DB={prepare(sql){
-   return {async all(){if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};return {results:[]}},bind(...args){
+   return {async all(){if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};return {results:[]}},async run(){if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});return {success:true}},bind(...args){
      return {
        async first(){
          if(sql.includes("SELECT active_stage"))return {active_stage:data.stage};
