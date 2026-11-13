@@ -404,11 +404,11 @@ async function signup(e){
   try {const response=await request("/api/participants",{method:"POST",payload:data});state.user=response.user}
   catch(err){button.disabled=false;button.textContent="Masuk Studio Foto Cerita →";toast("Pendaftaran gagal: "+err.message);return}
  }else{
-  state.user={id:crypto.randomUUID(),...data,username:"DEMO-"+crypto.randomUUID().slice(0,8).toUpperCase(),token:null};
+  state.user={id:crypto.randomUUID(),...data,username:null,token:null};
  }
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
- localStorage.setItem("lm26-last-username",state.user.username);
- state.work={};saveWork();state.justRegistered=true;state.active="mulai";render();toast("Pendaftaran berhasil! Simpan username kamu.");
+ if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
+ state.work={};saveWork();state.justRegistered=!!state.user.username;state.active="mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
 function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);render()}
 function renderParticipant(){
