@@ -30,7 +30,8 @@ test("Mode latihan peserta bertahan saat trainer mengubah slide dan referensi te
 });
 test("Draf Modul 04 tidak dianggap sebagai permintaan mengikuti slide",()=>{
  assert.ok(app.includes('key==="story"&&!draft.completedAt'));
- assert.ok(app.includes("if(stageChanged||(learnerMode(state.active)===\"follow\"&&slideChanged))renderParticipant()"));
+ assert.ok(app.includes('(learnerMode(state.active)==="follow"&&slideChanged)'));
+ assert.ok(app.includes("accessRevoked"));
  assert.doesNotMatch(app,/if\(state.user&&data.stage!==previousStage\)\{state.active=/);
  assert.ok(app.includes("state.work.story={...current(),selected,_draft:true}"));
  assert.ok(app.includes("state.work.edfat={...current,_draft:true}"));
