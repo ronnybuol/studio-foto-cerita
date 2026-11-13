@@ -59,6 +59,7 @@ let state = {
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
+  learnerViews:{},
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
   dashboard:null,justRegistered:false
 };
@@ -87,7 +88,7 @@ async function syncState(){
     const previousStage=state.serverStage;
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     state.spotlight=data.spotlight||null;
-    if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
+    // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
     if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=STORY_END)
@@ -101,6 +102,20 @@ async function syncState(){
   }
 }
 function pageMode(){const mode=location.hash.replace(/^#\//,"").split("/")[0];return ["trainer","lcd","peserta"].includes(mode)?mode:"peserta"}
+const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END]};
+function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
+function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
+function saveLearnerViews(){localStorage.setItem(learnerKey(),JSON.stringify(state.learnerViews))}
+function learnerRange(key){return LEARNER_RANGES[key]}
+function liveLearnerSlide(key){const r=learnerRange(key);return r&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?state.presentation.slide:r?.[0]||0}
+function learnerMode(key){const r=learnerRange(key);if(!r)return "practice";const v=state.learnerViews[key]?.mode;if(["practice","reference","follow"].includes(v))return v;return state.presentation.view==="theory"&&state.presentation.slide>=r[0]&&state.presentation.slide<=r[1]?"follow":"practice"}
+function learnerSlide(key){const r=learnerRange(key);if(!r)return 0;const v=state.learnerViews[key],i=v?.mode==="reference"?v.slide:liveLearnerSlide(key);return Number.isInteger(i)&&i>=r[0]&&i<=r[1]?i:r[0]}
+function setLearnerMode(key,mode,slide){const r=learnerRange(key);if(!r)return;state.learnerViews[key]={mode,slide:Number.isInteger(slide)?Math.max(r[0],Math.min(r[1],slide)):learnerSlide(key)};saveLearnerViews();renderParticipant()}
+function learnerModeBar(key){const r=learnerRange(key);if(!r)return "";const mode=learnerMode(key),slide=learnerSlide(key),practice=mode==="practice";
+return `<nav class="learner-study-toolbar" aria-label="Mode belajar"><div class="learner-study-copy"><b>${practice?"Latihan mandiri":mode==="reference"?"Materi untuk dibaca sendiri":"Mengikuti presentasi kelas"}</b><span>${practice?"Latihan tidak berpindah ketika trainer membuka slide.":"Kamu bisa kembali ke latihan tanpa menghilangkan jawaban."}</span></div>
+<div class="learner-study-actions"><button class="btn small ${practice?"primary":"subtle"}" data-learner-mode="practice">Latihan saya</button><button class="btn small ${mode==="reference"?"primary":"subtle"}" data-learner-mode="reference">Baca materi</button><button class="btn small ${mode==="follow"?"primary":"subtle"}" data-learner-mode="follow">Ikuti trainer</button></div>
+${mode==="reference"?`<div class="learner-reference-nav"><button class="btn small subtle" data-reference-step="-1" ${slide===r[0]?"disabled":""}>← Sebelumnya</button><span>${slide-r[0]+1} / ${r[1]-r[0]+1}</span><button class="btn small subtle" data-reference-step="1" ${slide===r[1]?"disabled":""}>Berikutnya →</button></div>`:""}</nav>`}
+function bindLearnerMode(){const key=state.active;if(!learnerRange(key))return;$("[data-learner-mode]").forEach(b=>b.onclick=()=>setLearnerMode(key,b.dataset.learnerMode,b.dataset.learnerMode==="reference"?learnerSlide(key):undefined));$("[data-reference-step]").forEach(b=>b.onclick=()=>setLearnerMode(key,"reference",learnerSlide(key)+Number(b.dataset.referenceStep)))}
 function goModule(key){state.active=key;localStorage.setItem(STORAGE_VIEW,key);render();window.scrollTo({top:0,behavior:"smooth"})}
 function titleBlock(key){const s=STAGES.find(x=>x.key===key);return `<div class="module-top"><div><span class="eyebrow">MODUL ${STAGES.indexOf(s)} / 6</span><h1>${s.title}</h1><p>${s.blurb}</p></div><span class="pill">Latihan interaktif</span></div>`}
 function isUnlocked(key){return !state.locked&&(!state.online || STAGES.findIndex(x=>x.key===key)<=state.serverStage)}
@@ -112,16 +127,16 @@ function lessonLayout(){
  <div class="learner-account-panel"><p>${escapeHtml(state.user?.school||"")} · ${escapeHtml(state.user?.className||"")}</p><p>Username: <strong>${escapeHtml(state.user?.username||"—")}</strong></p>
  <form id="participant-rename-form"><label for="new-username">Ganti username</label><div class="learner-rename-row"><input id="new-username" name="username" pattern="[a-z]{3,20}" maxlength="20" required value="${/^[a-z]{3,20}$/.test(state.user?.username||"")?escapeHtml(state.user.username):""}" placeholder="contoh: jufri"><button class="btn small" type="submit">Simpan</button></div><small>3–20 huruf kecil, satu kata tanpa spasi.</small></form>
  <button class="btn small subtle" id="participant-switch-account">Keluar / ganti akun</button></div></details></div>
- <section class="lesson">${renderModule()}</section></div>`;
+ <section class="lesson">${learnerModeBar(state.active)}${renderModule()}</section></div>`;
 }
-function renderModule(){switch(state.active){
-  case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
-  case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
-  case "edfat":return state.serverStage===3&&state.presentation.view==="theory"&&state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?edfatParticipantSlide():edfatPage();
-  case "story":return state.serverStage===4&&state.presentation.view==="theory"&&state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?storyParticipantSlide():storyPage();
-  case "caption":return captionPage();
-  case "etika":return ethicsPage();
-  default:return startPage();
+function renderModule(){const key=state.active,theory=learnerMode(key)!=="practice",slide=learnerSlide(key);switch(key){
+ case "kamera":return theory?theoryParticipantPage(slide):cameraPage();
+ case "komposisi":return theory?compositionParticipantPage(slide):compositionPage();
+ case "edfat":return theory?edfatParticipantSlide(slide):edfatPage();
+ case "story":return theory?storyParticipantSlide(slide):storyPage();
+ case "caption":return captionPage();
+ case "etika":return ethicsPage();
+ default:return startPage();
 }}
 function landing(){
   return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Daftar peserta baru →</button><button class="btn ghost-dark" id="start-login">Sudah punya username? Masuk</button></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
