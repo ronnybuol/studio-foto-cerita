@@ -105,6 +105,20 @@ async function liveComposition(env){
   throw error;
  }
 }
+// LCD spotlight is a temporary override of what is projected; it never alters the saved presentation.
+async function liveSpotlight(env){
+  const camera=await liveCamera(env);
+  const selected=camera?.spotlight;
+  if(!selected||typeof selected!=="object"||!ANSWER_KEYS.has(selected.module)
+     ||typeof selected.participantId!=="string"||!/^[0-9a-f-]{36}$/i.test(selected.participantId))return null;
+  const result=await env.DB.prepare(
+    "SELECT p.name AS name,a.payload AS payload FROM answers a JOIN participants p ON a.participant_id=p.id WHERE p.id=? AND p.session_id=? AND a.stage=?"
+  ).bind(selected.participantId,SESSION_ID,selected.module).first();
+  if(!result)return null;
+  let answer;try{answer=JSON.parse(result.payload)}catch{return null}
+  if(!answer||typeof answer!=="object"||Array.isArray(answer))return null;
+  return {participantId:selected.participantId,module:selected.module,name:result.name,answer};
+}
 async function loginsTooMany(env,id){
   const row=await env.DB.prepare("SELECT failures, window_start FROM login_attempts WHERE id=?").bind(id).first();
   const now=Date.now();
@@ -194,8 +208,8 @@ async function handleApi(req,env){
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
-    const [camera,composition]=await Promise.all([liveCamera(env),liveComposition(env)]);
-    return output({stage,locked,composition,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    const [camera,composition,spotlight]=await Promise.all([liveCamera(env),liveComposition(env),liveSpotlight(env)]);
+    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -265,8 +279,8 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    const [camera,composition]=await Promise.all([liveCamera(env),liveComposition(env)]);
-    return output({stage,locked,composition,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
+    const [camera,composition,spotlight]=await Promise.all([liveCamera(env),liveComposition(env),liveSpotlight(env)]);
+    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
   }
   if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
     const admin=await access(req,env);
@@ -301,6 +315,26 @@ async function handleApi(req,env){
    }catch(error){if(usernameConflict(error))return failure("Username sudah digunakan, pilih yang lain",409);throw error}
    return output({ok:true,username});
   }
+   if(method==="PUT"&&path==="/api/spotlight"){
+     const user=await access(req,env);
+     if(!user)return failure("Autentikasi trainer diperlukan",401);
+     if(user.role!=="trainer")return failure("Hanya trainer boleh menyorot karya peserta",403);
+     const data=await bodyJson(req);
+     if(data.participantId===null){
+       await env.DB.prepare("UPDATE sessions SET camera_json=json_remove(camera_json,'$.spotlight'),updated_at=? WHERE id=?")
+        .bind(new Date().toISOString(),SESSION_ID).run();
+       return output({ok:true,spotlight:null});
+     }
+     if(typeof data.participantId!=="string"||!/^[0-9a-f-]{36}$/i.test(data.participantId)
+        ||typeof data.module!=="string"||!ANSWER_KEYS.has(data.module))return failure("Peserta atau modul tidak valid",400);
+     const record=await env.DB.prepare(
+       "SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.id=? AND p.session_id=? AND a.stage=?"
+     ).bind(data.participantId,SESSION_ID,data.module).first();
+     if(!record)return failure("Peserta belum menyimpan hasil modul tersebut",404);
+     await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.spotlight',json(?)),updated_at=? WHERE id=?")
+       .bind(JSON.stringify({participantId:data.participantId,module:data.module}),new Date().toISOString(),SESSION_ID).run();
+     return output({ok:true,spotlight:await liveSpotlight(env)});
+   }
   if(method==="PUT"&&path==="/api/presentation"){
     const user=await access(req,env);
     if(!user)return failure("Autentikasi trainer diperlukan",401);
