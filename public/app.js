@@ -133,7 +133,7 @@ function showParticipantAuth(which){
  $("#root").innerHTML=which==="login"?participantLoginPage():signupPage();
  const form=which==="login"?$("#participant-login-form"):$("#signup-form");
  form.onsubmit=which==="login"?participantLogin:signup;
- $("[data-back-auth]").forEach(b=>b.onclick=renderParticipant);
+ $$("[data-back-auth]").forEach(b=>b.onclick=renderParticipant);
  window.scrollTo(0,0);
 }
 async function participantLogin(e){
