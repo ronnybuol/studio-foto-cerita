@@ -310,7 +310,7 @@ function updateCamera(){
 function compositionSlideContent(index,variant="lcd"){
  const slide=compositionSlide(index);
  return `<div class="composition-slide-layout composition-slide-${variant}">
- <div class="composition-slide-copy"><span class="theory-kicker">BAB 2 · ${escapeHtml(slide.eyebrow)} · ${compositionLabel(index)}/07</span>
+ <div class="composition-slide-copy"><span class="theory-kicker">BAB 2 · ${escapeHtml(slide.eyebrow)} · ${compositionLabel(index)} / ${COMPOSITION_SLIDES.length}</span>
  <h2>${escapeHtml(slide.title)}</h2><p class="theory-lead">${escapeHtml(slide.lead)}</p>
  <ul class="theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div></div>
@@ -327,12 +327,12 @@ function compositionTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=COMPOSITION_START&&state.presentation.slide<=COMPOSITION_END?state.presentation.slide:COMPOSITION_START;
  const slide=compositionSlide(i),theory=state.presentation.view==="theory";
  return `<section class="card composition-trainer-card"><div class="trainer-demo-heading">
- <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 2</span><h2>Bahasa Visual: Komposisi Foto</h2><p class="small-note">Tujuh slide dengan foto besar dan catatan pemandu diskusi.</p></div>
+ <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 2</span><h2>Bahasa Visual: Komposisi Foto</h2><p class="small-note">Sebelas tampilan foto dokumentasi, termasuk sub-slide perbandingan, dan catatan pemandu diskusi.</p></div>
  <span class="pill ${active?"green":"gray"}">${active?"● TAHAP 02 AKTIF":"BUKA TAHAP 02"}</span></div>
- ${theory?`<div class="composition-trainer-preview"><div class="composition-trainer-notes"><span class="eyebrow">SLIDE ${compositionLabel(i)}/07</span><h3>${escapeHtml(slide.title)}</h3><div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
+ ${theory?`<div class="composition-trainer-preview"><div class="composition-trainer-notes"><span class="eyebrow">SLIDE ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</span><h3>${escapeHtml(slide.title)}</h3><div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
  ${compositionSlideContent(i,"trainer")}</div>
- <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / 07</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
- <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${String(j+1).padStart(2,"0")}</button>`).join("")}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
+ <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${compositionLabel(COMPOSITION_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
  `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>`}
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
@@ -884,9 +884,9 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
  const content=stage===2 && state.presentation.view==="theory"
-    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / 07</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
+    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
-    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati aktivitas pengrajin, lalu pilih posisi, jarak, framing, dan sudut yang paling jelas menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+1)}
+    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+9)}
       <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
     :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
