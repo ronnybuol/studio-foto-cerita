@@ -871,3 +871,69 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .learner-reference-nav{gap:6px}
  .learner-reference-nav .btn{padding:9px 8px;font-size:11px;white-space:normal;min-height:40px}
 }
+
+
+/* Modul 05 – Caption Lab: foto sumber tetap utuh dan teks terbaca di layar jauh */
+.caption-theory-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(14px,2.6vw,36px);min-height:0;min-width:0;flex:1}
+.caption-theory-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
+.caption-theory-copy h2{font-size:clamp(26px,3.5vw,52px);line-height:1.1;margin:6px 0;color:#fff}
+.caption-theory-lead{font-size:clamp(15px,1.55vw,23px);line-height:1.5;color:#e7edf3;margin:0}
+.caption-theory-points{padding:0;margin:4px 0;list-style:none;display:grid;gap:9px}
+.caption-theory-points li{font-size:clamp(13px,1.16vw,19px);line-height:1.45;color:#dfe6ee;padding-left:20px;position:relative}
+.caption-theory-points li:before{content:"";position:absolute;top:.63em;left:0;width:8px;height:8px;border-radius:50%;background:#f27a38}
+.caption-slide-photo{margin:0;min-width:0;min-height:0;display:flex;flex-direction:column;gap:7px}
+.caption-slide-photo img{display:block;width:100%;height:auto;max-height:min(53vh,540px);aspect-ratio:3/2;object-fit:contain;background:#212833;border-radius:11px}
+.caption-slide-photo figcaption{font-size:12px;color:#b8c4d0}
+.caption-trainer-card .caption-trainer-preview{display:grid;grid-template-columns:minmax(0,.38fr) minmax(0,.62fr);align-items:center;gap:16px;margin-top:16px;min-width:0}
+.caption-trainer-notes{min-width:0}
+.caption-trainer-notes h3{font-size:clamp(22px,2.4vw,34px);line-height:1.13}
+.caption-trainer-preview .caption-slide-photo figcaption{color:#5c6877}
+.caption-trainer-preview .caption-slide-photo img{max-height:410px}
+.caption-learner-theory .caption-theory-layout{align-items:start}
+.caption-learner-theory .caption-theory-copy h2{font-size:clamp(25px,3vw,36px);color:#171c25}
+.caption-learner-theory .caption-theory-lead,.caption-learner-theory .caption-theory-points li{color:#293747!important;opacity:1!important}
+.caption-learner-theory .caption-slide-photo figcaption{color:#5c6877}
+.caption-lcd-mission{display:flex;flex-direction:column;min-width:0;min-height:0;gap:13px;flex:1}
+.caption-lcd-mission h1{font-size:clamp(32px,4.8vw,66px);line-height:1.08;margin:4px 0}
+.caption-lcd-mission h1 em{color:#f07938}
+.caption-lcd-mission>p{font-size:clamp(15px,1.6vw,23px);max-width:950px;margin:0}
+.caption-lcd-mission .caption-slide-photo{width:min(100%,830px)}
+.caption-lcd-mission .caption-slide-photo img{max-height:min(43vh,440px)}
+.lcd-caption-mode .caption-theory-layout{min-height:0}
+.caption-story-link{margin-bottom:16px;min-width:0}
+.caption-story-link h2{font-size:clamp(22px,3vw,32px);line-height:1.2}
+.caption-story-link p{line-height:1.55}
+.caption-story-title{padding:10px 13px;background:#f6f3ee;border-radius:9px;margin-bottom:12px;overflow-wrap:anywhere}
+.caption-photo-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-width:0}
+.caption-photo-tile{margin:0;min-width:0;border:1px solid #dedfdf;border-radius:10px;background:#f7f7f7;overflow:hidden}
+.caption-photo-tile .story-photo{aspect-ratio:3/2;max-height:none;border-radius:0}
+.caption-photo-tile .story-photo img{object-fit:contain}
+.caption-photo-tile figcaption{font-size:11px;color:#344253;padding:7px 9px;line-height:1.35;min-height:32px;overflow-wrap:anywhere}
+.caption-photo-tile figcaption b{color:#ae4e24;padding-right:4px}
+.caption-workspace{min-width:0}
+.caption-workspace .field-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.caption-workspace .field input,.caption-workspace .field textarea{font:inherit;font-size:16px;box-sizing:border-box;max-width:100%;width:100%}
+.caption-workspace .captionbox{min-height:250px;resize:vertical;line-height:1.6}
+.caption-counter{display:flex;justify-content:space-between;align-items:start;gap:8px;flex-wrap:wrap;padding:8px 0}
+.caption-counter strong{color:#a94e21}
+.caption-counter span{color:#445164;font-size:12px}
+.caption-review-list{display:grid;gap:11px;padding:16px;background:#f7f5f1;border-radius:11px;margin-top:17px}
+.caption-review-list h3{margin:0}
+.caption-review-list label{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;color:#293442}
+.caption-review-list input{flex:none;width:17px;height:17px;margin-top:2px}
+.caption-reminder{margin-top:16px}
+.caption-reminder p{line-height:1.5}
+@media(max-width:900px){
+ .caption-theory-layout,.caption-trainer-card .caption-trainer-preview{grid-template-columns:1fr}
+ .caption-theory-copy h2{font-size:clamp(25px,4.5vw,36px)}
+}
+@media(max-width:650px){
+ .caption-story-link,.caption-workspace{min-width:0}
+ .caption-photo-strip{gap:6px}
+ .caption-photo-tile figcaption{font-size:9px;padding:5px 4px}
+ .caption-photo-tile .story-photo{height:auto}
+ .caption-workspace .field-row{grid-template-columns:1fr}
+ .caption-theory-lead,.caption-theory-points li{font-size:14px}
+ .caption-theory-layout{gap:13px}
+ .caption-review-list{padding:12px}
+}
