@@ -464,3 +464,77 @@ html,body,.app,#root{max-width:100%;min-width:0}
  .story-tray{grid-template-columns:minmax(0,1fr)}
  .participant-camera-actions{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Lensa Muda: brand Zonautara, tampilan materi sebagai fokus peserta. */
+.masthead .brand{min-width:0}
+.brand-developed{display:flex;align-items:center;gap:4px;color:#e3e5e9;font-size:9px;letter-spacing:0;line-height:1.2;font-weight:400;margin-top:3px;white-space:nowrap}
+.brand-developed strong{color:#fff;font-size:9px}
+.brand-developed img{object-fit:contain;background:#fff;border-radius:2px;padding:1px;width:18px;height:17px}
+body[data-app-mode="peserta"] .top-links,
+body[data-app-mode="peserta"] .date-pill{display:none!important}
+body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
+.learner-page{max-width:1080px}
+.learner-focus-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 16px}
+.learner-module-nav{flex:1;max-width:480px;min-width:0;display:grid;gap:5px}
+.learner-module-nav label{font-size:10px;font-weight:850;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.learner-module-nav select{width:100%;min-width:0;background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:14px;font-weight:800;color:var(--ink);height:46px}
+.learner-account{position:relative;flex:none;max-width:min(44%,260px);min-width:0;z-index:11}
+.learner-account summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:11px;background:white;min-height:46px;padding:8px 12px;cursor:pointer;font-weight:800;font-size:12px;max-width:100%}
+.learner-account summary::-webkit-details-marker{display:none}
+.learner-account summary span:first-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.learner-account summary span:last-child{color:var(--muted);white-space:nowrap;font-weight:600;font-size:11px}
+.learner-account-panel{background:#fff;border:1px solid var(--line);box-shadow:0 15px 35px #0002;border-radius:12px;padding:14px;position:absolute;right:0;top:calc(100% + 5px);width:min(330px,90vw);z-index:20}
+.learner-account-panel p{font-size:12px;color:#424b56;margin:0 0 8px}
+.learner-account-panel form{display:grid;gap:5px;margin:12px 0}
+.learner-account-panel label{font-size:11px;font-weight:800}
+.learner-rename-row{display:flex;align-items:center;gap:5px;min-width:0}
+.learner-rename-row input{flex:1;min-width:0;border:1px solid #c9ccd0;border-radius:8px;padding:9px 8px;font-size:14px}
+.learner-account-panel small{font-size:11px;color:var(--muted)}
+.learner-page>.lesson{width:100%;min-width:0}
+.class-closed{text-align:center}
+.class-closed h1{font-size:clamp(28px,6vw,40px)}
+.class-lock-panel{display:flex;gap:20px;justify-content:space-between;align-items:center}
+.class-lock-panel h2{font-size:22px;margin:4px 0}
+.class-lock-panel p{max-width:730px}
+.class-lock-panel .btn{flex:none}
+.participant-management-tools{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.participant-management-tools .btn{font-size:12px}
+.participant-print-sheet{display:none}
+@media(max-width:650px){
+ .masthead .brandword{max-width:75vw}
+ .brand-developed{font-size:8px}
+ .brand-developed strong{font-size:8px}
+ .learner-page{padding-top:10px}
+ .learner-focus-bar{gap:7px;margin-bottom:12px}
+ .learner-module-nav label{font-size:9px}
+ .learner-module-nav select{font-size:12px;padding:8px 6px;height:43px}
+ .learner-account{max-width:42%}
+ .learner-account summary{min-height:43px;padding:7px 9px;gap:3px;flex-direction:column;align-items:flex-start;justify-content:center}
+ .learner-account summary span:first-child{max-width:100%;font-size:11px}
+ .learner-account summary span:last-child{font-size:9px}
+ .learner-page .lesson .module-top{margin-bottom:8px}
+ .class-lock-panel{flex-direction:column;align-items:stretch}
+ .participant-management-tools{display:grid;grid-template-columns:1fr 1fr}
+ .participant-management-tools .btn{width:100%;min-width:0;white-space:normal}
+ .site-foot{font-size:10px;line-height:1.5}
+}
+@media(max-width:350px){
+ .learner-focus-bar{flex-wrap:wrap}
+ .learner-module-nav{flex-basis:100%}
+ .learner-account{max-width:100%;width:100%}
+ .learner-account summary{flex-direction:row}
+}
+@media print{
+ @page{size:A4 portrait;margin:15mm}
+ body{background:white!important;color:#111!important}
+ body *{visibility:hidden!important}
+ #participant-print-sheet,#participant-print-sheet *{visibility:visible!important}
+ #participant-print-sheet{display:block!important;position:absolute;top:0;left:0;width:100%;color:#111;font-family:Arial,sans-serif}
+ #participant-print-sheet h1{font-size:22px;margin:0 0 5px}
+ #participant-print-sheet p{font-size:12px;margin:0 0 16px}
+ #participant-print-sheet table{border-collapse:collapse;width:100%;font-size:11px;table-layout:auto}
+ #participant-print-sheet th,#participant-print-sheet td{padding:7px 6px;border:1px solid #999;text-align:left;overflow-wrap:anywhere}
+ #participant-print-sheet tr{break-inside:avoid}
+ #participant-print-sheet .small-note{font-size:9px;margin-top:12px}
+}
