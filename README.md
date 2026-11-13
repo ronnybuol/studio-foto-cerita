@@ -157,3 +157,12 @@ File berformat WebP di `public/assets/composition/sangihe-2017-XXXX.webp`, satu 
 Laboratorium peserta kini menggunakan foto asli dari rangkaian Sangihe sebagai galeri perbandingan (dipilih sesuai kontrol terakhir). Gambar yang tampil adalah contoh foto yang memang dipotret, bukan satu foto yang subjeknya digeser secara sintetis. Garis sepertiga tetap overlay edukatif. Jawaban peserta tetap disimpan memakai key `komposisi` di D1; tidak ada migrasi D1.
 
 Pemeriksaan akhir: pastikan 11 URL foto valid, validasi GitHub Actions, lalu merge PR. **Jangan** deploy dari branch sebelum seluruh foto terunggah.
+
+
+### Koreksi Modul 02 — kontras, tombol peserta, dan demo sinkron LCD
+
+- Pada panel teori peserta berlatar putih, warna teks penjelasan dan poin diatur gelap; warna putih pada LCD tetap dipertahankan menggunakan CSS spesifik.
+- Tombol komposisi peserta kini mengganti foto dengan contoh Sangihe sesuai pilihan **posisi, jarak, sudut, framing**; tombol garis sepertiga hanya mengubah overlay kisi. Perbaikan memakai selector banyak elemen sehingga setiap tombol mendapat status `aria-pressed` benar. Simulasi tidak membuat satu foto berevolusi atau mengubah kejadian aslinya.
+- Pada **Tahap 02**, trainer membuka mode **Latihan komposisi** untuk menampilkan panel demonstrasi di dashboard. Tombol yang sama dapat digunakan trainer, dan foto contoh serta garisnya mengikuti di LCD melalui polling yang telah tersedia. Peserta tetap memakai kontrol mandiri di HP: aksi peserta tidak menulis ke demo kelas.
+- State demo komposisi disimpan dalam `sessions.camera_json.composition` melalui `PUT /api/demo-composition` khusus trainer. Statusnya diekspos lewat `GET /api/state` dan dashboard. Tidak perlu migrasi D1 ataupun perubahan R2, token, atau tahapan.
+- Uji langkah: buka tahap 02 → klik **Buka latihan komposisi peserta** → pada trainer klik **Lebar / Sedang / Dekat**, lalu **Framing** dan **Garis sepertiga** → amati perubahan foto/overlay pada LCD sambil peserta mencoba pengaturan sendiri di HP. Tes otomatis meliputi hak akses, persistensi, isolasi kamera, tombol frontend, dan CSS.
