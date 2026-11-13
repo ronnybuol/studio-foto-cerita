@@ -210,3 +210,23 @@ test("hanya trainer dapat mengedit atau menghapus peserta dan jawabannya",async(
  assert.equal((await call(env,"/api/state")).data.count,0);
  assert.equal((await call(env,"/api/me","GET",undefined,reg.token)).status,401);
 });
+
+
+test("migrasi username memberi akun peserta lama tanpa menghapus jawaban",async()=>{
+ const env=mockEnv();
+ const id="12345678-1234-4234-8234-123456789abc";
+ env._data.participants.push({id,session_id:"lensa-muda-2026",name:"Peserta Lama",school:"SMA Lama",class_name:"X",token_hash:"old-token",created_at:"2026-11-12T10:00:00Z"});
+ env._data.answers.push({participant_id:id,stage:"kamera",payload:JSON.stringify({a:3,s:2,i:4})});
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const dash=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.equal(dash.status,200);
+ assert.equal(dash.data.count,1);
+ assert.match(dash.data.participants[0].username,/^LM-[A-F0-9]{12}$/);
+ assert.equal(dash.data.participants[0].done,1);
+ const login=await call(env,"/api/participant-login","POST",{username:dash.data.participants[0].username});
+ assert.equal(login.status,200);
+ const me=await call(env,"/api/me","GET",undefined,login.data.user.token);
+ assert.deepEqual(me.data.answers.kamera,{a:3,s:2,i:4});
+ assert.equal(env._data.participants.length,1);
+ assert.equal(env._data.answers.length,1);
+});
