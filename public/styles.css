@@ -621,3 +621,36 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
 @media(prefers-reduced-motion:reduce){
  .comp-photo-stage img,.composition-lab-image .scene .back,.composition-lab-image .scene .subject,.composition-lab-image .scene .motion{transition:none}
 }
+
+
+/* Modul 02: kontras teks pada kartu putih, tanpa mengubah teori LCD gelap. */
+.composition-participant-theory .composition-slide-copy .theory-lead,
+.composition-participant-theory .composition-slide-copy .theory-points li{
+ color:#27313d!important;opacity:1!important;
+}
+.composition-participant-theory .composition-slide-copy .theory-lead{font-weight:500}
+.composition-participant-theory .composition-slide-copy .theory-points li{font-weight:500}
+.composition-participant-theory .composition-slide-copy .theory-kicker{color:#ad491a!important}
+.composition-participant-theory .composition-slide-copy .theory-points li:before{background:#d45c22}
+.composition-participant-theory .comp-visual figcaption{color:#455366}
+.composition-trainer-demo{margin-top:14px;padding:16px;background:#f7f7f5;border:1px solid #dfdfda;border-radius:12px;min-width:0}
+.composition-demo-heading h3{font-size:20px;margin:0 0 5px}
+.composition-demo-heading p{margin:0 0 12px}
+.composition-demo-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:15px;align-items:start;min-width:0}
+.composition-live-scene{min-width:0}
+.composition-live-scene .comp-photo-stage{width:100%;aspect-ratio:3/2}
+.composition-live-scene .comp-example-caption{display:block;margin-top:8px;color:#1f2937;font-size:13px;line-height:1.4}
+.composition-demo-controls{display:flex;flex-direction:column;gap:9px;min-width:0}
+.composition-demo-controls .composition-setting .choice-set{display:flex;flex-wrap:wrap;gap:5px}
+.composition-demo-controls .choice{font-size:12px;min-height:39px}
+.lcd-composition-lab .composition-live-scene{width:min(100%,900px);max-height:min(52vh,540px)}
+.lcd-composition-lab .composition-live-scene .comp-photo-stage{max-height:min(45vh,480px)}
+.lcd-composition-lab .composition-live-scene .comp-example-caption{color:#f3f4f6;font-size:clamp(14px,1.6vw,20px)}
+.lcd-composition-lab .comp-visual figcaption{color:#c9d2da}
+@media(max-width:850px){
+ .composition-demo-layout{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+ .composition-demo-controls .composition-setting .choice-set{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .composition-demo-controls .choice{width:100%;white-space:normal}
+}
