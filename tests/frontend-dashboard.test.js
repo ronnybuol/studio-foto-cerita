@@ -50,3 +50,13 @@ test("halaman pemulihan memiliki tombol kembali ke login",()=>{
   assert.ok(source.includes('id="trainer-back-login"'));
   assert.ok(source.includes('sessionStorage.removeItem("lm26-trainer")'));
 });
+
+
+test("panel LCD memiliki indikator kamera visual yang mengikuti pembaruan polling",()=>{
+ assert.ok(source.includes('function cameraDialHTML(key,index)'));
+ assert.ok(source.includes('function paintCameraDials(camera)'));
+ for(const key of ["a","s","i"])assert.ok(source.includes('cameraDialHTML("'+key+'",camera.'+key+')'));
+ assert.match(source,/function paintLcdCamera\(\)[\s\S]*?paintCameraDials\(c\);/);
+ assert.ok(source.includes('id="lcd-track-'));
+ assert.ok(source.includes('id="lcd-thumb-'));
+});
