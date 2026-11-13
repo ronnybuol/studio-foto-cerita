@@ -935,10 +935,10 @@ function bindDashboard(){
  const stopSpotlight=$("#stop-spotlight");
  if(stopSpotlight)stopSpotlight.onclick=()=>changeSpotlight(null,null);
  function bindSpotlight(scope){
-  $("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
+  $$("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
  }
  bindSpotlight();
- $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
