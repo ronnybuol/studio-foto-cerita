@@ -89,9 +89,28 @@ async function recordBadLogin(env,id){
       .bind(id,now,now,15*60*1000,now,15*60*1000,now).run();
 }
 async function clearBadLogin(env,id){await env.DB.prepare("DELETE FROM login_attempts WHERE id=?").bind(id).run()}
+let usernameSchemaReady=false;
+async function ensureUsernameSchema(env){
+  if(usernameSchemaReady)return;
+  // Migrasi aditif: aman bila Worker baru aktif sebelum migrasi manual D1.
+  const schema=await env.DB.prepare("PRAGMA table_info(participants)").all();
+  const columns=schema.results||[];
+  if(!columns.some(c=>c.name==="username")){
+    try{await env.DB.prepare("ALTER TABLE participants ADD COLUMN username TEXT").run()}
+    catch(error){if(!/duplicate column name:\s*username/i.test(String(error)))throw error}
+  }
+  await env.DB.prepare("UPDATE participants SET username='LM-' || UPPER(HEX(RANDOMBLOB(6))) WHERE username IS NULL").run();
+  await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username ON participants(session_id,username)").run();
+  usernameSchemaReady=true;
+}
 async function handleApi(req,env){
   if(!env.DB)return failure("Database D1 belum terpasang",503);
   const url=new URL(req.url),path=url.pathname.startsWith(PUBLIC_BASE+"/")?url.pathname.slice(PUBLIC_BASE.length):url.pathname,method=req.method;
+  if((method==="POST"&&["/api/participants","/api/participant-login"].includes(path)) ||
+     (method==="GET"&&["/api/me","/api/dashboard"].includes(path))){
+    try{await ensureUsernameSchema(env)}
+    catch(error){console.error("Username migration:",error?.message);return failure("Persiapan username D1 gagal. Periksa migrasi 0002 sebelum melanjutkan.",503)}
+  }
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const camera=await liveCamera(env);
