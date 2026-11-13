@@ -99,12 +99,14 @@ test("trainer mengatur tahap; peserta mengirim story sembilan frame unik; mentor
  assert.equal(change.status,200);
  const badStory=await call(env,"/api/answers/story","PUT",{selected:[1,1,2,3,4,5,6,7,8]},p);
  assert.equal(badStory.status,400);
- const saved=await call(env,"/lensa-muda/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p);
+ const saved=await call(env,"/lensa-muda/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9],title:"Jejak musik bambu Sangihe",reason:"Rangkaian dibuka dengan suasana umum, beralih ke tokoh dan detail, lalu ditutup dengan refleksi tentang kegiatan."},p);
  assert.equal(saved.status,200);
  const dashboard=await call(env,"/api/dashboard","GET",undefined,trainer.data.token);
  assert.equal(dashboard.data.count,1);
  assert.equal(dashboard.data.participants[0].done,1);
  assert.deepEqual(dashboard.data.participants[0].answers.story.selected,[1,2,3,4,5,6,7,8,9]);
+  assert.equal(dashboard.data.participants[0].answers.story.title,"Jejak musik bambu Sangihe");
+  assert.match(dashboard.data.participants[0].answers.story.reason,/refleksi/);
 });
 test("peragaan kamera disimpan untuk LCD; mentor dan peserta tidak boleh mengubah",async()=>{
  const env=mockEnv();
