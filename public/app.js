@@ -176,6 +176,7 @@ async function participantLogin(e){
   if(!state.online)throw Error("Login username memerlukan koneksi kelas.");
   const data=await request("/api/participant-login",{method:"POST",payload:{username}});
   state.user=data.user;state.justRegistered=false;
+  loadLearnerViews();
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   localStorage.setItem("lm26-last-username",state.user.username);
   const me=await request("/api/me");
@@ -224,8 +225,8 @@ function theorySlideContent(index,variant="lcd"){
    <div class="theory-visual">${theoryVisual(index,{sceneHTML,shotSrc})}</div>
  </div>`;
 }
-function theoryParticipantPage(){
- const i=state.presentation.slide,slide=THEORY_SLIDES[photoDetail(i)?.parent??i]||THEORY_SLIDES[0];
+function theoryParticipantPage(i=state.presentation.slide){
+ const slide=THEORY_SLIDES[photoDetail(i)?.parent??i]||THEORY_SLIDES[0];
  return `${titleBlock("kamera")}
   <div class="info" style="margin-bottom:14px"><b>Materi teori sedang berlangsung.</b> Ikuti pembahasan bersama trainer. Setelah slide terakhir, trainer akan membuka laboratorium kamera untuk latihan pribadi.</div>
   <div class="card theory-participant-card">${theorySlideContent(i,"participant")}</div>
@@ -338,8 +339,7 @@ function compositionSlideContent(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div></div>
  ${compositionVisual(index)}</div>`;
 }
-function compositionParticipantPage(){
- const i=state.presentation.slide;
+function compositionParticipantPage(i=state.presentation.slide){
  return `${titleBlock("komposisi")}<div class="card composition-participant-theory">
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Setelah teori, trainer membuka latihan mandiri.</p>
  ${compositionSlideContent(i,"participant")}</div>`;
@@ -429,10 +429,10 @@ function edfatSlideHTML(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(data.prompt)}</strong></div></div>
  ${edfatVisual(index)}</div>`;
 }
-function edfatParticipantSlide(){
+function edfatParticipantSlide(i=state.presentation.slide){
  return `${titleBlock("edfat")}<section class="card edfat-learner-theory">
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Trainer akan membuka Misi Detektif untuk latihan mandiri.</p>
- ${edfatSlideHTML(state.presentation.slide,"participant")}</section>`;
+ ${edfatSlideHTML(i,"participant")}</section>`;
 }
 function edfatTrainerPanel(data,isMentor){
  const active=data.stage===3;
@@ -490,10 +490,10 @@ function storyTheoryContent(index,variant="lcd"){
  <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(x.prompt)}</strong></div></div>
  ${storySlideVisual(index)}</div>`;
 }
-function storyParticipantSlide(){
+function storyParticipantSlide(i=state.presentation.slide){
  return `${titleBlock("story")}<section class="card story-learner-theory">
  <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
- ${storyTheoryContent(state.presentation.slide,"participant")}</section>`;
+ ${storyTheoryContent(i,"participant")}</section>`;
 }
 function storyTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
@@ -639,10 +639,11 @@ async function signup(e){
   state.user={id:crypto.randomUUID(),...data,username:null,token:null};
  }
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
+ loadLearnerViews();
  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
  state.work={};saveWork();state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
-function logout(){state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
+function logout(){localStorage.removeItem(learnerKey());state.learnerViews={};state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
 function renderParticipant(){
  if(state.locked){$("#root").innerHTML=`<div class="page"><div class="card login-card class-closed"><span class="eyebrow">KELAS DITUTUP</span><h1>Kegiatan belajar telah selesai</h1><p>Akses peserta sedang dikunci oleh trainer. Terima kasih telah mengikuti Lensa Muda.</p></div></div>`;return}
  if(!state.user){
@@ -658,7 +659,7 @@ function renderParticipant(){
   return;
  }
  if(!isUnlocked(state.active))state.active=STAGES[Math.min(state.serverStage,6)].key;
- $("#root").innerHTML=lessonLayout();bindLessons();
+ $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
  const rename=$("#participant-rename-form");
@@ -1282,8 +1283,11 @@ setInterval(async()=>{
     lastPassivePoll=now;
     const prev=JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation});
     await syncState();
-    if(pageMode()==="peserta"&&prev!==JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation})){
-      renderParticipant();
+    if(pageMode()==="peserta"){
+      const before=JSON.parse(prev),stageChanged=before.stage!==state.serverStage||before.locked!==state.locked;
+      const slideChanged=JSON.stringify(before.presentation)!==JSON.stringify(state.presentation);
+      // Hanya mode Ikuti trainer mengikuti perubahan slide; latihan dan materi pribadi tidak diganggu.
+      if(stageChanged||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
     }
   }
 },1800);
@@ -1296,10 +1300,11 @@ async function restoreParticipantSession(){
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
+  loadLearnerViews();
  }catch(error){
   if(error.status!==401)return;
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
-  state.user=null;state.work={};
+  state.user=null;state.work={};state.learnerViews={};
   localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);
  }
 }
