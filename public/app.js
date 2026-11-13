@@ -1,4 +1,5 @@
 import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
+import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -53,7 +54,7 @@ let state = {
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
-  camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center"},
+  camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
   dashboard:null,justRegistered:false
 };
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
@@ -82,7 +83,7 @@ async function syncState(){
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=MAX_PRESENTATION_SLIDE)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=COMPOSITION_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -108,7 +109,7 @@ function lessonLayout(){
 }
 function renderModule(){switch(state.active){
   case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
-  case "komposisi":return compositionPage();
+  case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
   case "edfat":return edfatPage();
   case "story":return storyPage();
   case "caption":return captionPage();
@@ -156,7 +157,7 @@ async function participantLogin(e){
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   localStorage.setItem("lm26-last-username",state.user.username);
   const me=await request("/api/me");
-  state.work=me.answers||{};saveWork();
+  state.work=me.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};saveWork();
   state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active);
   render();toast("Selamat datang kembali, "+state.user.name);
  }catch(error){toast(error.message);button.disabled=false;button.textContent="Masuk ke kelas →"}
@@ -306,15 +307,61 @@ function updateCamera(){
   $("#shutterHelp").textContent=SHUTTERS[cam.s].t>=1/30?"Gerak tampak kabur":SHUTTERS[cam.s].t<=1/500?"Gerak lebih mudah dibekukan":"Perhatikan gerakan tangan";
   $("#isoHelp").textContent=ISOS[cam.i]>=1600?"Noise semakin terlihat":ISOS[cam.i]<=200?"Noise relatif rendah":"Penguatan cahaya meningkat";
 }
+function compositionSlideContent(index,variant="lcd"){
+ const slide=compositionSlide(index);
+ return `<div class="composition-slide-layout composition-slide-${variant}">
+ <div class="composition-slide-copy"><span class="theory-kicker">BAB 2 · ${escapeHtml(slide.eyebrow)} · ${compositionLabel(index)}/07</span>
+ <h2>${escapeHtml(slide.title)}</h2><p class="theory-lead">${escapeHtml(slide.lead)}</p>
+ <ul class="theory-points">${slide.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+ <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(slide.prompt)}</strong></div></div>
+ ${compositionVisual(index)}</div>`;
+}
+function compositionParticipantPage(){
+ const i=state.presentation.slide;
+ return `${titleBlock("komposisi")}<div class="card composition-participant-theory">
+ <p class="small-note">Amati foto dan diskusikan pertanyaannya. Setelah teori, trainer membuka latihan mandiri.</p>
+ ${compositionSlideContent(i,"participant")}</div>`;
+}
+function compositionTrainerPanel(data,isMentor){
+ const active=data.stage===2,enabled=!isMentor;
+ const i=state.presentation.slide>=COMPOSITION_START&&state.presentation.slide<=COMPOSITION_END?state.presentation.slide:COMPOSITION_START;
+ const slide=compositionSlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card composition-trainer-card"><div class="trainer-demo-heading">
+ <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 2</span><h2>Bahasa Visual: Komposisi Foto</h2><p class="small-note">Tujuh slide dengan foto besar dan catatan pemandu diskusi.</p></div>
+ <span class="pill ${active?"green":"gray"}">${active?"● TAHAP 02 AKTIF":"BUKA TAHAP 02"}</span></div>
+ ${theory?`<div class="composition-trainer-preview"><div class="composition-trainer-notes"><span class="eyebrow">SLIDE ${compositionLabel(i)}/07</span><h3>${escapeHtml(slide.title)}</h3><div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(slide.note)}</p></div></div>
+ ${compositionSlideContent(i,"trainer")}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / 07</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
+ <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${String(j+1).padStart(2,"0")}</button>`).join("")}</div>
+ <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
+ `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>`}
+ <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
+}
 function compositionPage(){
-return `${titleBlock("komposisi")}<div class="card"><p class="small-note">Ubah garis bantu, bingkai dalam bingkai, dan posisi subjek. Tidak semua foto harus mengikuti rule of thirds; tentukan mana yang paling baik menjelaskan peristiwa.</p>${sceneHTML("compositionScene","showgrid")}<div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${state.composition.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${state.composition.frame}">▣ Bingkai alami</button></div><div class="eyebrow">Letak subjek</div><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${state.composition.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div><div class="info">Coba tempatkan tokoh di sisi kiri atau kanan dan biarkan ruang untuk alat kerja. Tanyakan: apakah bingkai memperjelas informasi atau justru memotong bagian penting?</div><div class="actions"><button class="btn primary" id="save-comp">Simpan pilihan komposisi ✓</button></div></div><div class="grid two" style="margin-top:15px"><div class="card"><h3>Jarak dan sudut</h3><p class="small-note">Foto lebar memberi konteks, foto dekat menunjukkan detail. Sudut rendah dapat mengubah kesan subjek; pilih angle untuk menjelaskan, bukan sekadar dramatis.</p></div><div class="card"><h3>Ketika memotret budaya</h3><p class="small-note">Jangan sampai upaya memperoleh komposisi bagus membuat kita mengganggu ritual atau mengatur ulang kejadian yang seharusnya spontan.</p></div></div>`;
+ const c=state.composition;
+ return `${titleBlock("komposisi")}<div class="card composition-lab-card">
+ <div class="composition-lab-intro"><span class="eyebrow">LABORATORIUM KOMPOSISI</span><h2>Ubah bingkai. Jelaskan pilihanmu.</h2><p>Amati ilustrasi pengrajin lalu ubah satu pengaturan. Komposisi yang baik menjelaskan kegiatan, bukan sekadar terlihat indah.</p></div>
+ <div class="composition-lab-layout"><div class="composition-lab-image">${sceneHTML("compositionScene",c.grid?"showgrid":"")}<p class="small-note">Ilustrasi simulasi, bukan foto peristiwa nyata.</p></div>
+ <div class="composition-lab-controls">
+ <div class="composition-setting"><strong>01 · Garis dan bingkai</strong><div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${c.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${c.frame}">▣ Framing</button></div></div>
+ <div class="composition-setting"><strong>02 · Letak subjek</strong><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${c.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div></div>
+ <div class="composition-setting"><strong>03 · Jarak pengambilan</strong><div class="choice-set">${[["wide","Lebar"],["medium","Sedang"],["close","Dekat"]].map(([v,t])=>`<button class="choice" data-distance="${v}" aria-pressed="${c.distance===v}">${t}</button>`).join("")}</div></div>
+ <div class="composition-setting"><strong>04 · Sudut pandang</strong><div class="choice-set">${[["eye","Setinggi mata"],["low","Rendah"],["high","Tinggi"]].map(([v,t])=>`<button class="choice" data-angle="${v}" aria-pressed="${c.angle===v}">${t}</button>`).join("")}</div></div>
+ </div></div>
+ <div class="composition-reflection"><label for="comp-reason">Mengapa komposisi itu dipilih?</label><textarea id="comp-reason" rows="3" placeholder="Informasi apa yang ingin kamu perlihatkan: tokoh, tempat, alat kerja, atau detail?">${escapeHtml(c.reason||"")}</textarea><small>Minimal 15 karakter. Jelaskan informasi yang diperlihatkan.</small></div>
+ <div class="actions"><button class="btn subtle" id="reset-comp">↺ Atur ulang</button><button class="btn primary" id="save-comp">Simpan keputusan komposisi ✓</button></div></div>
+ <div class="grid two composition-context"><div class="card"><h3>Informasi dalam bingkai</h3><p class="small-note">Lebar memperlihatkan tempat. Dekat menyoroti proses. Jangan hilangkan konteks penting.</p></div><div class="card"><h3>Hormati budaya</h3><p class="small-note">Berpindah posisi boleh, tetapi jangan mengganggu ritual atau mengatur ulang kejadian demi foto.</p></div></div>`;
 }
 function updateComposition(){
-const sc=$("#compositionScene");if(!sc)return;
-sc.classList.toggle("showgrid",state.composition.grid);sc.classList.toggle("showframe",state.composition.frame);
-const x={left:-85,center:0,right:85}[state.composition.position];
-sc.querySelector(".subject").style.transform=`translateX(${x}px)`;
-sc.querySelector(".motion").style.transform=`translateX(${x}px)`;
+ const sc=$("#compositionScene");if(!sc)return;
+ sc.classList.toggle("showgrid",state.composition.grid);sc.classList.toggle("showframe",state.composition.frame);
+ const x={left:-85,center:0,right:85}[state.composition.position]??0;
+ const zoom={wide:1,medium:1.12,close:1.32}[state.composition.distance]??1;
+ const y={eye:0,low:-20,high:20}[state.composition.angle]??0;
+ sc.style.setProperty("--comp-zoom",String(zoom));sc.style.setProperty("--comp-angle-y",y+"px");
+ const subject=sc.querySelector(".subject"),motion=sc.querySelector(".motion");
+ if(subject)subject.style.transform=`translateX(${x}px)`;
+ if(motion)motion.style.transform=`translateX(${x}px)`;
 }
 function edfatPage(){
 const facts=[
@@ -366,10 +413,15 @@ function bindLessons(){
   $("#save-camera").onclick=()=>saveAnswer("kamera",{...state.camera,at:new Date().toISOString()});
   updateCamera();
  }
- if(state.active==="komposisi"){
+ if(state.active==="komposisi"&&$("#compositionScene")){
   $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
-  $$("[data-position]").forEach(btn=>btn.onclick=()=>{state.composition.position=btn.dataset.position;$$("[data-position]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
-  $("#save-comp").onclick=()=>saveAnswer("komposisi",{...state.composition});updateComposition();
+  for(const attr of ["position","distance","angle"]){
+   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
+  }
+  const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
+  $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""};goModule("komposisi")};
+  $("#save-comp").onclick=()=>{const reason=(state.composition.reason||"").trim();if(reason.length<15){toast("Tuliskan alasan minimal 15 karakter");return}saveAnswer("komposisi",{...state.composition,reason})};
+  updateComposition();
  }
  if(state.active==="edfat"){
   let answer=state.work.edfat?.answer||null;
@@ -501,7 +553,7 @@ function answerDetails(key,v){
    if(!ok)return `<p class="small-note">Data kamera tidak lengkap.</p>`;
    return `<div class="response-pills"><span>BUKAAN <b>f/${APERTURE[v.a]}</b></span><span>RANA <b>${SHUTTERS[v.s].l}s</b></span><span>ISO <b>${ISOS[v.i]}</b></span><span>EV <b>${exposureText(v)}</b></span></div>`;
  }
- if(key==="komposisi")return `<p class="small-note">Posisi subjek: <b>${escapeHtml(v.position||"–")}</b> · Garis sepertiga: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p>`;
+ if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
  if(key==="edfat")return `<p class="small-note">Pilihan EDFAT: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
    const ids=Array.isArray(v.selected)?v.selected:[];
@@ -532,7 +584,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${theoryTrainerPanel(data,isMentor)}${state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
 <div class="participant-management-tools"><button class="btn primary small" id="trainer-add-participant" ${isMentor?"disabled":""}>+ Tambah peserta</button><button class="btn small" id="print-participants">Cetak / Simpan PDF</button><button class="btn small subtle" id="share-participants-wa">Bagikan via WA</button><button class="btn small subtle" id="share-participants-email">Kirim via email</button></div><p class="small-note">Username terlihat pada daftar trainer. Untuk keamanan, daftar yang dibagikan melalui WA/email tidak menyertakan username; cetakan memuat username untuk administrasi internal.</p>
 <div class="field"><label for="participant-filter">Cari peserta</label><input id="participant-filter" type="search" placeholder="Nama, username, sekolah, atau kelas"></div>
 <div class="table-wrap participant-table"><table class="data-table"><thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th><th>Aksi</th></tr></thead><tbody>${(data.participants||[]).map(p=>`<tr data-participant-row="${escapeHtml((p.name+" "+(p.username||"")+" "+p.school+" "+p.className).toLowerCase())}"><td><b>${escapeHtml(p.name)}</b></td><td><code>${escapeHtml(p.username||"—")}</code></td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td><td><div class="participant-row-actions"><button class="btn small" data-inspect="${escapeHtml(p.id)}">Lihat</button>${p.username?`<button class="btn small subtle" data-copy-username="${escapeHtml(p.id)}">Salin</button>`:""}${!isMentor?`<button class="btn small subtle" data-edit-participant="${escapeHtml(p.id)}">Edit</button><button class="btn small danger" data-delete-participant="${escapeHtml(p.id)}">Hapus</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="center muted">Belum ada peserta terdaftar.</td></tr>`}</tbody></table></div>
@@ -577,11 +629,11 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage===1){state.presentation={view:"theory",slide:0};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage===1||stage===2){state.presentation={view:"theory",slide:stage===1?0:COMPOSITION_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage===1 && state.dashboard?.stage!==1){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:0},auth:true});
+     if(stage!==state.dashboard?.stage && (stage===1||stage===2)){
+       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:COMPOSITION_START},auth:true});
      }
      await syncState();await fetchDashboard();render();
      toast("Tahap kelas berhasil diperbarui");
@@ -589,7 +641,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(MAX_PRESENTATION_SLIDE,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(COMPOSITION_END,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -619,6 +671,12 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
+ $$("[data-comp-slide-step]").forEach(button=>button.onclick=()=>{
+  const n=state.presentation.slide+Number(button.dataset.compSlideStep);
+  if(n>=COMPOSITION_START&&n<=COMPOSITION_END)choosePresentation({view:"theory",slide:n});
+ });
+ $$("[data-comp-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.compSlide)}));
+ $$("[data-comp-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.compMode,slide:state.presentation.slide>=COMPOSITION_START?state.presentation.slide:COMPOSITION_START}));
  $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
@@ -825,7 +883,12 @@ function lcdPage(){
  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
- const content=stage===1 && state.presentation.view==="theory"
+ const content=stage===2 && state.presentation.view==="theory"
+    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / 07</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
+    :stage===2
+    ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati aktivitas pengrajin, lalu pilih posisi, jarak, framing, dan sudut yang paling jelas menyampaikan informasi.</p>${compositionVisual(COMPOSITION_START+1)}
+      <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
+    :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
    :stage===1
    ?`<div class="lcd-camera-heading"><div class="kicker">TAHAP 01 · LABORATORIUM KAMERA</div>
@@ -844,7 +907,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>
@@ -925,7 +988,7 @@ async function restoreParticipantSession(){
  try{
   const response=await request("/api/me");
   state.user={...state.user,...response.user,token:state.user.token};
-  state.work=response.answers||{};
+  state.work=response.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();

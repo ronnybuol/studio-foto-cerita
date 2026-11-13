@@ -133,3 +133,16 @@ Untuk produksi, sebaiknya ambil backup D1 sebelum deployment apabila tersedia. S
 4. Tambah, edit, cetak daftar (Save as PDF), dan hapus akun uji sebagai trainer; pastikan pendamping tidak punya tombol edit/hapus.
 5. Uji tombol kunci: peserta mendapat halaman “Kegiatan belajar telah selesai”, operasi peserta ditolak (423), dan trainer masih dapat membuka kembali.
 6. Verifikasi branding header dan footer, serta bahwa pembaruan stage dan slide trainer masih sinkron ke peserta/LCD.
+
+
+## Modul 02 — Komposisi Visual / Bab 2: Bahasa Visual
+
+Modul ini mengikuti laboratorium kamera dan mendahului EDFAT. Materi diarahkan untuk karya tema *Wajah Budaya Sulawesi Utara*, dengan rangkaian sembilan foto landscape dan caption terverifikasi sekitar 150 kata sebagai tujuan jangka akhir.
+
+**Alur:** trainer membuka tahap `02 · Komposisi Visual`; sistem otomatis mengatur presentasi `view:theory, slide:21`. Tujuh slide 21–27 berisi pemahaman informasi dalam bingkai, garis sepertiga, pusat/samping, framing, jarak/detail, sudut, dan transisi praktik. Trainer dapat berpindah slide dari dashboard; LCD dan layar peserta mengikuti sesi yang sama.
+
+Setelah diskusi, trainer menekan **Buka latihan komposisi peserta**. Nilai presentasi menjadi `view:simulator` pada tahap 02; peserta masing-masing mencoba garis sepertiga, framing, posisi subjek, jarak, sudut pandang, kemudian menulis alasan minimal 15 karakter dan menyimpan jawaban ke D1 melalui kunci `komposisi` yang sudah digunakan sebelumnya. Perubahan keputusan satu peserta tidak memengaruhi tampilan peserta lain maupun LCD. Trainer membaca alasan di tabel progres.
+
+**Catatan fasilitasi:** Dalam slide, pancing pengamatan, bukan estetika semata: informasi apa yang masuk, hilang, atau perlu verifikasi. Foto di presentasi berasal dari aset simulasi generatif lokal yang sudah tersedia, diberi label jelas, bukan contoh liputan peristiwa yang dapat dianggap faktual. Saat praktik lapangan, peserta harus mengambil foto orisinal dan menghormati komunitas yang dipotret.
+
+Secara teknis hanya rentang indeks presentasi yang diperluas ke 27. Tidak ada migrasi D1, perubahan objek R2, penggantian hak akses, atau perubahan tahapan penilaian.
