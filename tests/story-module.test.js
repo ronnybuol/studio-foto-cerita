@@ -35,7 +35,7 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(app.includes('data-story-mode'));
  assert.ok(app.includes('stage===4&&state.presentation.view==="theory"'));
  assert.ok(app.includes('saveAnswer("story",{selected:ids,title,reason'));
- assert.ok(app.includes('state.work.story={...current(),selected}'));
+ assert.ok(app.includes('state.work.story={...current(),selected,_draft:true}'));
  assert.ok(app.includes('data-pick'));
  assert.ok(app.includes('data-remove'));
  assert.ok(app.includes('data-move'));
