@@ -146,3 +146,14 @@ Setelah diskusi, trainer menekan **Buka latihan komposisi peserta**. Nilai prese
 **Catatan fasilitasi:** Dalam slide, pancing pengamatan, bukan estetika semata: informasi apa yang masuk, hilang, atau perlu verifikasi. Foto di presentasi berasal dari aset simulasi generatif lokal yang sudah tersedia, diberi label jelas, bukan contoh liputan peristiwa yang dapat dianggap faktual. Saat praktik lapangan, peserta harus mengambil foto orisinal dan menghormati komunitas yang dipotret.
 
 Secara teknis hanya rentang indeks presentasi yang diperluas ke 27. Tidak ada migrasi D1, perubahan objek R2, penggantian hak akses, atau perubahan tahapan penilaian.
+
+
+### Pembaruan visual Modul 02 (dokumentasi Sangihe, 2017)
+
+Catatan ini **menggantikan** keterangan Modul 02 sebelumnya tentang ilustrasi generatif yang berulang. Terdapat **11 slide foto asli** (01, 02, 03a, 03b, 04a, 04b, 05a, 05b, 06, 07a, 07b) dari dokumentasi Ronny Adolof Buol tentang musik bambu dan Agustinus Sasundu di Sangihe, September 2017.
+
+File berformat WebP di `public/assets/composition/sangihe-2017-XXXX.webp`, satu foto per slide, ditampilkan utuh tanpa cropping di dashboard, LCD, dan perangkat peserta. Pemetaan ada di `docs/module02-sangihe-photo-map.md`. **Seluruh sebelas file foto harus tersedia sebelum PR ini digabungkan ke `main`.** Foto dibagikan sebagai ZIP dalam percakapan pengguna karena akses konektor GitHub hanya mendukung unggahan teks, bukan biner lokal.
+
+Laboratorium peserta kini menggunakan foto asli dari rangkaian Sangihe sebagai galeri perbandingan (dipilih sesuai kontrol terakhir). Gambar yang tampil adalah contoh foto yang memang dipotret, bukan satu foto yang subjeknya digeser secara sintetis. Garis sepertiga tetap overlay edukatif. Jawaban peserta tetap disimpan memakai key `komposisi` di D1; tidak ada migrasi D1.
+
+Pemeriksaan akhir: pastikan 11 URL foto valid, validasi GitHub Actions, lalu merge PR. **Jangan** deploy dari branch sebelum seluruh foto terunggah.
