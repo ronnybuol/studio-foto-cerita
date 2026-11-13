@@ -1,6 +1,7 @@
 import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
+import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -86,7 +87,7 @@ async function syncState(){
     if(state.user&&data.stage!==previousStage){state.active=STAGES[data.stage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=EDFAT_END)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=STORY_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -114,7 +115,7 @@ function renderModule(){switch(state.active){
   case "kamera":return state.presentation.view==="theory"?theoryParticipantPage():cameraPage();
   case "komposisi":return state.serverStage===2&&state.presentation.view==="theory"&&state.presentation.slide>=COMPOSITION_START?compositionParticipantPage():compositionPage();
   case "edfat":return state.serverStage===3&&state.presentation.view==="theory"&&state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?edfatParticipantSlide():edfatPage();
-  case "story":return storyPage();
+  case "story":return state.serverStage===4&&state.presentation.view==="theory"&&state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?storyParticipantSlide():storyPage();
   case "caption":return captionPage();
   case "etika":return ethicsPage();
   default:return startPage();
@@ -462,13 +463,66 @@ const scale=near?1.4:1, shift=i%3===0?45:i%3===1?-30:0;
 return `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustrasi latihan foto cerita"><rect width="600" height="400" fill="${bg}"/><rect x="0" y="265" width="600" height="135" fill="${ground}"/><rect x="25" y="39" width="210" height="185" rx="5" fill="#34555b" stroke="#d2b890" stroke-width="10"/><rect x="42" y="55" width="175" height="150" fill="#d4d6b8"/><path d="M42 185 90 123l35 24 46-55 46 59v54H42" fill="#89a6a0"/><path d="M0 38h600" stroke="#524c3e" stroke-width="17"/><path d="M470 42v90M540 42v100" stroke="#d4b37c" stroke-width="6"/><path d="M452 136q15-31 36 0v30h-36zM520 143q15-29 36 0v29h-36z" fill="${accent}"/><g transform="translate(${shift} 0) translate(${detail?-60:30} ${detail?-55:5}) scale(${scale})"><ellipse cx="315" cy="340" rx="145" ry="22" fill="#3a3a3a" opacity=".3"/><path d="M225 280h220v28H225zM242 306h15v45h-15zM418 306h14v45h-14z" fill="#725039"/><path d="M283 290q-16-96 26-127 43-20 81 20l28 107z" fill="${accent}"/><path d="M304 166q-29-34-7-71 23-31 61-11 21 31 8 61l-17 26v15h-41z" fill="#c28c69"/><path d="M285 119q-15-53 38-59 55-5 54 56-33-27-53-24-15 20-39 27" fill="#282b2c"/><path d="M313 272q39-13 69-8" stroke="#cd9b73" stroke-width="18" stroke-linecap="round"/><path d="M362 273 415 243" stroke="#cfad8e" stroke-width="14" stroke-linecap="round"/><path d="M330 288 413 275 430 303 352 314" fill="#ab7648"/></g>${crowd?`<g fill="#a95838"><circle cx="515" cy="189" r="26"/><path d="M481 286q0-67 35-65 38 0 49 65z"/></g>`:""}<path d="M0 381h600" stroke="#856750" stroke-width="8" opacity=".3"/><text x="18" y="383" fill="#fff" font-family="Arial" font-size="13" font-weight="bold">ILUSTRASI LATIHAN • ${String(i+1).padStart(2,"0")}</text></svg>`;
 }
 function shotSrc(i){return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(shotSvg(i))}`}
-function storyPage(){
-const selected=state.work.story?.selected||[];
-return `${titleBlock("story")}<div class="info"><b>Tujuan simulasi:</b> pilih tepat 9 dari 12 ilustrasi sebuah sanggar kerajinan, urutkan dari pembuka hingga penutup. Semua ilustrasi sintetis ini hanya untuk belajar; <b>bukan foto karya lomba</b>. Bingkai disajikan landscape 3:2.</div><div class="story-head" style="margin-top:18px"><h3>Rangkaian cerita kamu</h3><span class="counter" id="story-count">${selected.length} / 9 terpilih</span></div><div class="dropzone"><div class="story-tray" id="selected-shots">${selected.map((id,i)=>renderShot(SHOTS.find(x=>x.id===id),true,i)).join("")||`<div class="empty" style="grid-column:1/-1">Belum ada foto. Pilih foto dari bank di bawah.</div>`}</div></div><div class="actions"><button class="btn primary" id="save-story" ${selected.length===9?"":"disabled"}>Simpan susunan 9 foto ✓</button><button class="btn subtle" id="reset-story">↺ Ulangi pilihan</button></div><hr class="rule"><div class="story-head"><h3>Bank ilustrasi foto</h3><span class="pill">${SHOTS.length} pilihan</span></div><div class="story-tray">${SHOTS.filter(x=>!selected.includes(x.id)).map(x=>renderShot(x,false)).join("")}</div><div class="info" style="margin-top:17px"><b>Catatan editor:</b> susunan ini contoh, bukan aturan baku. Foto pembuka memperkenalkan situasi, foto berikutnya memperdalam manusia/proses, dan penutup memberi kesan akhir. EDFAT membantu mencari variasi visual, bukan urutan wajib.</div>`;
+function storyTheoryContent(index,variant="lcd"){
+ const x=storySlide(index);
+ return `<div class="story-theory-layout story-theory-${variant}"><div class="story-theory-copy">
+ <span class="theory-kicker">BAB 4 · ${escapeHtml(x.tag)} · ${storyLabel(index)} / ${STORY_SLIDES.length}</span>
+ <h2>${escapeHtml(x.title)}</h2><p class="story-theory-lead">${escapeHtml(x.lead)}</p>
+ <ul class="story-theory-points">${x.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+ <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(x.prompt)}</strong></div></div>
+ ${storySlideVisual(index)}</div>`;
 }
-function renderShot(shot,selected,pos=0){
-if(!shot)return "";
-return `<article class="shot ${selected?"selected":""}"><figure><img alt="Ilustrasi simulasi: ${escapeHtml(shot.title)}" loading="lazy" src="${shotSrc(shot.i)}"></figure><div class="shot-meta">${selected?`<span class="photo-number">FOTO ${pos+1}</span>`:""}<strong>${escapeHtml(shot.title)}</strong><small>${escapeHtml(shot.type)} · ${escapeHtml(shot.desc)}</small><div class="shot-buttons">${selected?`<button data-move="${shot.id}" data-dir="-1" ${pos===0?"disabled":""} aria-label="Geser foto ${pos+1} ke kiri">←</button><button data-move="${shot.id}" data-dir="1" ${pos===8?"disabled":""} aria-label="Geser foto ${pos+1} ke kanan">→</button><button data-remove="${shot.id}" aria-label="Keluarkan foto">×</button>`:`<button data-pick="${shot.id}">+ Pilih</button>`}</div></div></article>`;
+function storyParticipantSlide(){
+ return `${titleBlock("story")}<section class="card story-learner-theory">
+ <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
+ ${storyTheoryContent(state.presentation.slide,"participant")}</section>`;
+}
+function storyTrainerPanel(data,isMentor){
+ const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
+ const x=storySlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card story-trainer-card"><div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 4</span>
+ <h2>Sembilan Bingkai</h2><p class="small-note">Enam slide mengedit cerita, dilanjutkan latihan 9 dari 12 foto.</p></div>
+ <span class="pill ${data.stage===4?"green":"gray"}">${data.stage===4?"● TAHAP 04 AKTIF":"BUKA TAHAP 04"}</span></div>
+ ${theory?`<div class="story-trainer-preview"><div class="story-trainer-notes"><span class="eyebrow">SLIDE ${storyLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+ <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>${storySlideVisual(i)}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-story-step="-1" ${i===STORY_START||isMentor?"disabled":""}>← Sebelumnya</button><strong>Slide ${storyLabel(i)} / 06</strong>
+ <button class="btn primary" data-story-step="1" ${i===STORY_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+ <div class="story-slide-dots">${STORY_SLIDES.map((x,j)=>`<button class="theory-dot" data-story-slide="${STORY_START+j}" aria-pressed="${i===STORY_START+j}" ${isMentor?"disabled":""}>${storyLabel(STORY_START+j)}</button>`).join("")}</div>
+ <div class="actions"><button class="btn primary" data-story-mode="simulator" ${isMentor?"disabled":""}>Buka meja editor peserta →</button></div>`:
+ `<div class="trainer-theory-compact"><div><strong>Meja editor peserta sedang terbuka</strong><p class="small-note">Peserta memilih, mengurutkan sembilan foto, memberi judul dan alasan editorial.</p></div>
+ <button class="btn subtle" data-story-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
+ <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan foto yang tidak dipilih. Kandidat 12 adalah detail alternatif dari foto 5, bukan foto peristiwa lain.</p></div>`}
+ </section>`;
+}
+function renderStoryShot(x,chosen=false,pos=0,total=0){
+ if(!x)return "";
+ return `<article class="story-candidate ${chosen?"story-candidate-selected":""}">
+ <div class="story-candidate-photo">${storyImage(x,"Foto "+x.id+": "+x.title)}${chosen?`<span class="story-position">${String(pos+1).padStart(2,"0")}</span>`:""}</div>
+ <div class="story-candidate-body"><span class="eyebrow">${escapeHtml(x.function)} · ${escapeHtml(x.role)}</span>
+ <h4>${escapeHtml(x.title)}</h4><p>${escapeHtml(x.desc)}</p><div class="story-candidate-actions">
+ ${chosen?`<button data-move="${x.id}" data-dir="-1" ${pos===0?"disabled":""} aria-label="Geser foto ke depan">↑</button>
+ <button data-move="${x.id}" data-dir="1" ${pos===total-1?"disabled":""} aria-label="Geser foto ke belakang">↓</button>
+ <button data-remove="${x.id}">Keluarkan</button>`:`<button data-pick="${x.id}">+ Pilih foto</button>`}</div></div></article>`;
+}
+function storyPage(){
+ const saved=state.work.story||{},selected=Array.isArray(saved.selected)?saved.selected.filter(id=>STORY_BANK.some(x=>x.id===id)):[];
+ const remaining=STORY_BANK.filter(x=>!selected.includes(x.id));
+ return `${titleBlock("story")}<section class="card story-editor-intro">
+ <span class="eyebrow">MEJA EDITOR · SEMBILAN BINGKAI</span><h2>12 kandidat. Pilih 9 yang bercerita.</h2>
+ <p>Jadilah editor foto latihan musik bambu Sangihe. Pilih sembilan foto yang saling melengkapi, susun urutannya, lalu jelaskan arah cerita.</p>
+ <p class="small-note">Foto asli: Ronny Adolof Buol, September 2017. Kandidat 12 merupakan potongan dari foto 5 yang sama. Susunan naratif bukan klaim urutan kronologis yang sudah terverifikasi.</p></section>
+ <section class="card story-editor-workspace"><div class="story-head"><h3>Rangkaian cerita kamu</h3><span class="counter" id="story-count">${selected.length} / 9 dipilih</span></div>
+ <p class="small-note">Gunakan tombol ↑ dan ↓ untuk mengurutkan foto.</p>
+ <div class="story-sequence" id="selected-shots">${selected.map((id,i)=>renderStoryShot(STORY_BANK.find(x=>x.id===id),true,i,selected.length)).join("")||`<div class="story-empty">Belum ada foto. Pilih dari bank foto di bawah.</div>`}</div>
+ <div class="story-editor-fields"><div class="field"><label for="story-title">Judul kerja cerita</label><input id="story-title" maxlength="110" value="${escapeHtml(saved.title||"")}" placeholder="Contoh: Menjaga bunyi bambu di Sangihe"></div>
+ <div class="field"><label for="story-reason">Mengapa foto-foto ini dipilih dan disusun demikian?</label>
+ <textarea id="story-reason" rows="4" placeholder="Jelaskan fungsi pembuka, perkembangan cerita, dan penutup…">${escapeHtml(saved.reason||"")}</textarea>
+ <small>Minimal 30 karakter, tidak ada satu susunan yang mutlak benar.</small></div></div>
+ <div class="actions"><button id="save-story" class="btn primary" ${selected.length===9?"":"disabled"}>Simpan sembilan foto ✓</button>
+ <button id="reset-story" class="btn subtle">↺ Ulangi pilihan</button></div><p class="small-note" id="story-status" role="status" aria-live="polite"></p></section>
+ <section class="card story-editor-bank"><div class="story-head"><h3>Bank foto dokumentasi</h3><span class="pill">${remaining.length} pilihan</span></div>
+ <div class="story-bank-grid">${remaining.map(x=>renderStoryShot(x)).join("")||`<div class="story-empty">Semua foto sudah dipilih.</div>`}</div></section>
+ <div class="info"><b>Catatan editor:</b> foto pembuka mengenalkan, bagian tengah mengembangkan, dan penutup memberi pemahaman. Jangan membuat cerita yang tidak didukung fakta.</div>`;
 }
 function captionPage(){
 const saved=state.work.caption||{};
@@ -518,12 +572,24 @@ function bindLessons(){
    const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lima hasil pengamatan sudah disimpan. Trainer dapat membaca seluruh alasanmu.";
   };
  }
- if(state.active==="story"){
-  $$("[data-pick]").forEach(b=>b.onclick=()=>{const arr=state.work.story?.selected||[];if(arr.length>=9){toast("Sudah sembilan foto. Keluarkan satu lebih dulu.");return}state.work.story={selected:[...arr,Number(b.dataset.pick)]};saveWork();render()});
-  $$("[data-remove]").forEach(b=>b.onclick=()=>{const arr=state.work.story?.selected||[];state.work.story={selected:arr.filter(x=>x!==Number(b.dataset.remove))};saveWork();render()});
-  $$("[data-move]").forEach(b=>b.onclick=()=>{const arr=[...(state.work.story?.selected||[])],idx=arr.indexOf(Number(b.dataset.move)),target=idx+Number(b.dataset.dir);if(target<0||target>=arr.length)return;[arr[idx],arr[target]]=[arr[target],arr[idx]];state.work.story={selected:arr};saveWork();render()});
-  $("#reset-story").onclick=()=>{state.work.story={selected:[]};saveWork();render()};
-  $("#save-story").onclick=()=>{const selected=state.work.story?.selected||[];if(selected.length!==9)return;saveAnswer("story",{selected})};
+ if(state.active==="story"&&$("#save-story")){
+  const current=()=>state.work.story||{};
+  const setSelected=selected=>{state.work.story={...current(),selected};saveWork();render()};
+  $$("[data-pick]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],id=Number(btn.dataset.pick);if(ids.length>=9){toast("Sudah sembilan foto. Keluarkan satu dahulu.");return}if(!ids.includes(id))setSelected([...ids,id])});
+  $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected((current().selected||[]).filter(id=>id!==Number(btn.dataset.remove))));
+  $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
+  for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
+   const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value};saveWork()};
+  }
+  $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
+  $("#save-story").onclick=()=>{
+   const data=current(),ids=data.selected||[],title=(data.title||"").trim(),reason=(data.reason||"").trim();
+   const status=$("#story-status");
+   if(ids.length!==9){if(status)status.textContent="Pilih tepat sembilan foto.";return}
+   if(title.length<5||reason.length<30){if(status)status.textContent="Lengkapi judul minimal 5 karakter dan alasan urutan minimal 30 karakter.";toast("Lengkapi judul dan alasan");return}
+   saveAnswer("story",{selected:ids,title,reason,completedAt:new Date().toISOString()});
+   if(status)status.textContent="Sembilan foto dan alasan editorial tersimpan.";
+  };
  }
  if(state.active==="caption"){
   const form=$("#caption-form");
@@ -647,10 +713,11 @@ function answerDetails(key,v){
  ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
-   const ids=Array.isArray(v.selected)?v.selected:[];
-   return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(SHOTS.find(s=>s.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>`;
- }
- if(key==="caption"){
+ const ids=Array.isArray(v.selected)?v.selected:[];
+ return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>
+ <div class="small-note"><b>Judul kerja:</b> ${escapeHtml(v.title||"Belum ditulis")}<p><b>Alasan urutan:</b> ${escapeHtml(v.reason||"Belum ditulis")}</p></div>`;
+}
+if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
    return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Caption (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p></div>`;
  }
@@ -675,7 +742,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · tampilan peserta dan LCD mengikuti tahap yang dibuka.</p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses siswa. Simulasi kamera juga dapat ditampilkan sendiri dari LCD."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
 <div class="participant-management-tools"><button class="btn primary small" id="trainer-add-participant" ${isMentor?"disabled":""}>+ Tambah peserta</button><button class="btn small" id="print-participants">Cetak / Simpan PDF</button><button class="btn small subtle" id="share-participants-wa">Bagikan via WA</button><button class="btn small subtle" id="share-participants-email">Kirim via email</button></div><p class="small-note">Username terlihat pada daftar trainer. Untuk keamanan, daftar yang dibagikan melalui WA/email tidak menyertakan username; cetakan memuat username untuk administrasi internal.</p>
 <div class="field"><label for="participant-filter">Cari peserta</label><input id="participant-filter" type="search" placeholder="Nama, username, sekolah, atau kelas"></div>
 <div class="table-wrap participant-table"><table class="data-table"><thead><tr><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th><th>Aksi</th></tr></thead><tbody>${(data.participants||[]).map(p=>`<tr data-participant-row="${escapeHtml((p.name+" "+(p.username||"")+" "+p.school+" "+p.className).toLowerCase())}"><td><b>${escapeHtml(p.name)}</b></td><td><code>${escapeHtml(p.username||"—")}</code></td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td><td><div class="participant-row-actions"><button class="btn small" data-inspect="${escapeHtml(p.id)}">Lihat</button>${p.username?`<button class="btn small subtle" data-copy-username="${escapeHtml(p.id)}">Salin</button>`:""}${!isMentor?`<button class="btn small subtle" data-edit-participant="${escapeHtml(p.id)}">Edit</button><button class="btn small danger" data-delete-participant="${escapeHtml(p.id)}">Hapus</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="6" class="center muted">Belum ada peserta terdaftar.</td></tr>`}</tbody></table></div>
@@ -720,11 +787,11 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage===1||stage===2||stage===3){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:EDFAT_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=4){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:STORY_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage!==state.dashboard?.stage && (stage===1||stage===2||stage===3)){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:EDFAT_START},auth:true});
+     if(stage!==state.dashboard?.stage && stage>=1 && stage<=4){
+       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:STORY_START},auth:true});
      }
      await syncState();await fetchDashboard();render();
      toast("Tahap kelas berhasil diperbarui");
@@ -732,7 +799,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(EDFAT_END,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(STORY_END,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -762,6 +829,12 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
+ $$("[data-story-step]").forEach(button=>button.onclick=()=>{
+  const next=state.presentation.slide+Number(button.dataset.storyStep);
+  if(next>=STORY_START&&next<=STORY_END)choosePresentation({view:"theory",slide:next});
+ });
+ $$("[data-story-slide]").forEach(button=>button.onclick=()=>choosePresentation({view:"theory",slide:Number(button.dataset.storySlide)}));
+ $$("[data-story-mode]").forEach(button=>button.onclick=()=>choosePresentation({view:button.dataset.storyMode,slide:state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START}));
  $$("[data-edfat-slide-step]").forEach(button=>button.onclick=()=>{
   const n=state.presentation.slide+Number(button.dataset.edfatSlideStep);
   if(n>=EDFAT_START&&n<=EDFAT_END)choosePresentation({view:"theory",slide:n});
@@ -1019,7 +1092,14 @@ function lcdPage(){
  const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
  const footer=lcdFooter(stage,count,link,qr);
  const camera=state.demoCamera;
- const content=stage===3&&state.presentation.view==="theory"
+ const content=stage===4&&state.presentation.view==="theory"
+   ?`<div class="lcd-theory-intro"><span class="kicker">BAB 4 · SEMBILAN BINGKAI</span><span class="theory-slide-indicator">SLIDE ${storyLabel(state.presentation.slide)} / ${STORY_SLIDES.length}</span></div>${storyTheoryContent(state.presentation.slide,"lcd")}`
+   :stage===4
+   ?`<div class="story-lcd-mission"><span class="kicker">TAHAP 04 · MEJA EDITOR FOTO</span><h1>Pilih sembilan. <em>Susun ceritanya.</em></h1>
+   <p>Dari 12 kandidat foto dokumentasi, pilih sembilan yang saling melengkapi. Jelaskan pembuka, perkembangan, dan penutup.</p>
+   ${storySlideVisual(STORY_END)}
+   <div class="theory-question"><span>DISKUSI KELAS</span><strong>Foto mana yang sengaja tidak dipilih dan mengapa?</strong></div></div>`
+   :stage===3&&state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 3 · DETEKTIF EDFAT</span><span class="theory-slide-indicator">SLIDE ${edfatLabel(state.presentation.slide)} / ${EDFAT_SLIDES.length}</span></div>${edfatSlideHTML(state.presentation.slide,"lcd")}`
    :stage===3
    ?`<div class="edfat-lcd-mission"><span class="kicker">TAHAP 03 · MISI DETEKTIF</span><h1>Amati. Temukan petunjuk. <em>Jelaskan alasan.</em></h1>
@@ -1050,7 +1130,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":stage===4?"lcd-story-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>

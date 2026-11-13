@@ -36,7 +36,7 @@ test("Alur EDFAT mengikuti pembukaan tahap, slide LCD, dan latihan individu",()=
  assert.ok(app.includes('saveAnswer("edfat"'));
  assert.ok(app.includes('state.work.edfat?.answers'));
  assert.ok(app.includes('EDFAT_CASES.find('));
- assert.ok(api.includes('data.slide>38'));
+ assert.ok(api.includes('data.slide>44'));
  assert.ok(css.includes('.edfat-learner-theory .edfat-lead'));
  assert.ok(css.includes('object-fit:contain'));
 });
