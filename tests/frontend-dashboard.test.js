@@ -81,3 +81,23 @@ test("simulator peserta mempertahankan kontrol independen, tombol simpan, dan bi
  assert.ok(source.includes('saveAnswer("kamera",{...state.camera'));
  assert.ok(source.includes('const c=state.demoCamera;'));
 });
+
+
+test("tampilan peserta berfokus pada materi, navigasi ringkas, identitas Zonautara dan manajemen kelas",()=>{
+ const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.ok(source.includes('id="participant-module-select"'));
+ assert.ok(source.includes('class="learner-account"'));
+ assert.ok(source.includes('function participantFormHTML(p=null)'));
+ assert.ok(source.includes('id="trainer-toggle-class-lock"'));
+ assert.ok(source.includes('id="print-participants"'));
+ assert.ok(source.includes('id="share-participants-wa"'));
+ assert.ok(source.includes('id="share-participants-email"'));
+ assert.ok(source.includes('id="participant-print-sheet"'));
+ assert.ok(source.includes('document.body.dataset.appMode=mode'));
+ assert.ok(css.includes('body[data-app-mode="peserta"] .top-links'));
+ assert.ok(css.includes('@media print'));
+ assert.ok(html.includes("Dikembangkan oleh"));
+ assert.ok(html.includes("Ronny Adolof Buol"));
+ assert.ok(html.includes("./assets/zonautara-mark.svg"));
+});
