@@ -937,3 +937,16 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
  .caption-theory-layout{gap:13px}
  .caption-review-list{padding:12px}
 }
+
+
+.caption-spotlight{display:grid;grid-template-rows:auto minmax(0,.37fr) minmax(0,.63fr) auto;gap:12px;min-height:0;min-width:0;flex:1;overflow:hidden}
+.caption-spotlight-top h1{font-size:clamp(24px,3.3vw,52px);margin:4px 0;line-height:1.05}
+.caption-spotlight-top p{margin:0;font-size:13px;color:#cfd8e1}
+.caption-spotlight-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;min-height:0;max-width:950px}
+.caption-spotlight-photos figure{margin:0;min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.caption-spotlight-photos .story-photo{flex:1;aspect-ratio:auto;min-height:0;max-height:none;border-radius:8px}
+.caption-spotlight-photos .story-photo img{object-fit:contain;height:100%}
+.caption-spotlight-photos figcaption{font-size:11px;color:#dbe3ec;padding-top:5px}
+.caption-spotlight-text{white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;font-size:clamp(16px,1.65vw,24px);line-height:1.45;color:#fff;background:#232a33;padding:14px;border-radius:10px;min-height:0}
+.caption-spotlight-question{color:#ffba88;font-size:clamp(13px,1.3vw,18px);font-weight:700}
+@media(max-width:850px){.caption-spotlight{display:flex;flex-direction:column;overflow:visible}.caption-spotlight-photos{height:170px;flex:none}.caption-spotlight-text{max-height:none;overflow:visible}.caption-spotlight-photos figcaption{font-size:9px}}
