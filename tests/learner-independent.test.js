@@ -48,3 +48,10 @@ test("Materi mandiri menggunakan slide pilihan peserta, bukan slide trainer",()=
  assert.ok(app.includes('data-learner-mode="practice"'));
  assert.ok(app.includes('data-learner-mode="reference"'));
 });
+
+test("Peserta otomatis menjadi mandiri begitu trainer membuka simulator",()=>{
+ assert.ok(app.includes('state.learnerViews[state.active]?.mode==="follow"'));
+ assert.ok(app.includes('state.presentation.view==="simulator"'));
+ assert.ok(app.includes('state.learnerViews[state.active]={mode:"practice",slide:liveLearnerSlide(state.active)}'));
+ assert.ok(app.includes('saveLearnerViews();'));
+});
