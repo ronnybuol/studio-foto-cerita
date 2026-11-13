@@ -14,7 +14,17 @@ function mockEnv(){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
            return {camera_json:JSON.stringify(data.camera)};
          }
-         if(sql.includes("COUNT(*) AS total"))return {total:data.participants.length};
+         if(sql.includes("SELECT p.name AS name,a.payload AS payload FROM answers")){
+            const p=data.participants.find(p=>p.id===args[0]&&p.session_id===args[1]);
+            const a=data.answers.find(a=>a.participant_id===args[0]&&a.stage===args[2]);
+            return p&&a?{name:p.name,payload:a.payload}:null;
+          }
+          if(sql.includes("SELECT a.payload FROM answers a JOIN participants")){
+            const p=data.participants.find(p=>p.id===args[0]&&p.session_id===args[1]);
+            const a=data.answers.find(a=>a.participant_id===args[0]&&a.stage===args[2]);
+            return p&&a?{payload:a.payload}:null;
+          }
+          if(sql.includes("COUNT(*) AS total"))return {total:data.participants.length};
          if(sql.includes("WHERE token_hash=?"))return data.participants.find(p=>p.token_hash===args[0])||null;
          if(sql.includes("WHERE session_id=? AND username=?")){const p=data.participants.find(p=>p.session_id===args[0]&&p.username===args[1]);return p?{id:p.id,username:p.username,name:p.name,school:p.school,className:p.class_name}:null}
          if(sql.includes("SELECT id FROM participants WHERE id=?"))return data.participants.find(p=>p.id===args[0])||null;
@@ -44,7 +54,9 @@ function mockEnv(){
           if(sql.includes("UPDATE sessions SET active_stage"))data.stage=args[0];
          if(sql.includes("UPDATE sessions SET camera_json")){
            if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
-           if(sql.includes("'$.view'"))data.camera={...data.camera,view:args[0],slide:args[1]};
+           if(sql.includes("json_remove(camera_json,'$.spotlight')")){const {spotlight,...rest}=data.camera;data.camera=rest;}
+            else if(sql.includes("'$.spotlight'"))data.camera={...data.camera,spotlight:JSON.parse(args[0])};
+            else if(sql.includes("'$.view'"))data.camera={...data.camera,view:args[0],slide:args[1]};
            else if(sql.includes("'$.composition'"))data.camera={...data.camera,composition:JSON.parse(args[0])};
            else if(sql.includes("'$.a'"))data.camera={...data.camera,a:args[0],s:args[1],i:args[2]};
            else data.camera=JSON.parse(args[0]);
@@ -296,4 +308,44 @@ test("demonstrasi komposisi tersimpan dan terlihat pada state LCD; hanya trainer
  const editCamera=await call(env,"/api/demo-camera","PUT",{a:3,s:4,i:5},trainer.token);
  assert.equal(editCamera.status,200);
  assert.deepEqual((await call(env,"/api/state")).data.composition,composition);
+});
+
+test("trainer dapat menyorot sembilan foto dan kembali ke slide terakhir",async()=>{
+ const env=mockEnv();
+ const reg=(await call(env,"/api/participants","POST",{name:"Mila",school:"SMA Sangihe",className:"X",username:"mila"})).data.user;
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const mentor=(await call(env,"/api/login","POST",{pin:"mentor-67890"})).data;
+ await call(env,"/api/state","PUT",{stage:4},trainer.token);
+ await call(env,"/api/presentation","PUT",{view:"theory",slide:42},trainer.token);
+ const selected=[2,4,1,5,6,7,8,9,10];
+ const answer={selected,title:"Irama bambu dari Sangihe",reason:"Foto awal memperkenalkan pemain, di tengah kita melihat alat dan proses, lalu penutup memberi refleksi."};
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:reg.id,module:"story"},trainer.token)).status,404);
+ assert.equal((await call(env,"/api/answers/story","PUT",answer,reg.token)).status,200);
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:reg.id,module:"story"})).status,401);
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:reg.id,module:"story"},mentor.token)).status,403);
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:reg.id,module:"unknown"},trainer.token)).status,400);
+ const started=await call(env,"/api/spotlight","PUT",{participantId:reg.id,module:"story"},trainer.token);
+ assert.equal(started.status,200);assert.equal(started.data.spotlight.name,"Mila");
+ assert.deepEqual(started.data.spotlight.answer.selected,selected);
+ const lcd=await call(env,"/api/state");
+ assert.deepEqual(lcd.data.presentation,{view:"theory",slide:42});
+ assert.equal(lcd.data.spotlight.module,"story");
+ assert.deepEqual(lcd.data.spotlight.answer,answer);
+ const dash=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.equal(dash.data.spotlight.name,"Mila");
+ const stopped=await call(env,"/api/spotlight","PUT",{participantId:null,module:null},trainer.token);
+ assert.equal(stopped.status,200);assert.equal(stopped.data.spotlight,null);
+ const restored=await call(env,"/api/state");
+ assert.equal(restored.data.spotlight,null);
+ assert.deepEqual(restored.data.presentation,{view:"theory",slide:42});
+});
+test("sorotan peserta terhapus tak tampil lagi",async()=>{
+ const env=mockEnv();
+ const p=(await call(env,"/api/participants","POST",{name:"Raka",school:"SMA",className:"XI",username:"raka"})).data.user;
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ await call(env,"/api/state","PUT",{stage:4},trainer.token);
+ await call(env,"/api/answers/story","PUT",{selected:[1,2,3,4,5,6,7,8,9]},p.token);
+ await call(env,"/api/spotlight","PUT",{participantId:p.id,module:"story"},trainer.token);
+ await call(env,"/api/participants/"+p.id,"DELETE",undefined,trainer.token);
+ assert.equal((await call(env,"/api/state")).data.spotlight,null);
 });

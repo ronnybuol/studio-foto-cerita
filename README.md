@@ -194,3 +194,14 @@ Penting: kandidat 12 adalah **potongan alternatif dari foto kandidat 5**, bukan 
 ### Pemicu build produksi Modul 04
 
 Commit dokumentasi ini dimaksudkan untuk memicu ulang integrasi GitHub–Cloudflare pada branch `main` setelah konfigurasi Production dipastikan menggunakan `npx wrangler deploy`. Tidak mengubah aplikasi, aset, konfigurasi Worker, migrasi D1, ataupun R2. Bila Cloudflare tidak membuat build baru, periksa instalasi/otorisasi GitHub App Cloudflare dan riwayat build Cloudflare.
+
+
+## Sorotan Karya Peserta di LCD (trainer)
+
+Setelah peserta menyimpan tugas, trainer dapat memilih **Tampilkan di LCD** pada baris peserta (khusus karya Sembilan Bingkai) atau **Lihat** lalu **Tampilkan hasil di LCD** pada modul yang telah diselesaikan. LCD menampilkan hasil terpilih: pada Modul 04, sembilan foto sesuai urutan peserta dalam grid 3 × 3, bersama nama, judul kerja, dan alasan editorial. Fasilitator dapat menanyakan alasan urutan tersebut dan menggantinya langsung dengan hasil peserta lain.
+
+**Kembali ke Presentasi** mengakhiri sorotan dan mengembalikan LCD ke tahap, slide, atau simulator yang aktif sebelumnya. Pilihan sorotan merupakan *overlay* di `sessions.camera_json.spotlight`; tidak mengganti `$.view`, `$.slide`, atau `active_stage`. Tidak ada migrasi D1 atau perubahan R2. Hanya akun trainer (bukan pendamping atau peserta) bisa mengaktifkan dan menghentikan sorotan. Hanya jawaban modul yang benar-benar sudah disimpan dapat ditampilkan.
+
+Karena sorotan memang ditujukan untuk diskusi kelas, jawaban yang dipilih trainer ditampilkan pada endpoint state publik yang sama dengan LCD. Jangan sorot jawaban yang memuat informasi pribadi atau keterangan sensitif. Foto Modul 04 tetap memakai aset Sangihe asli dan tampil `object-fit: contain`; kandidat detail alternatif yang memang berasal dari foto sama tetap diberi perlakuan khusus.
+
+**Uji:** buka tahap 04 dan salah satu slide, buka hasil peserta, tekan Tampilkan di LCD; LCD berganti setelah polling (sekitar beberapa detik). Pilih peserta lain, pastikan hasil berganti. Tekan Kembali ke Presentasi dan pastikan slide lama muncul tanpa diulang dari awal. Verifikasi pada jendela LCD fullscreen dan dashboard di perangkat trainer terpisah.
