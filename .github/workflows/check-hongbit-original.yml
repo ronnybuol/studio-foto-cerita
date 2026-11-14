@@ -1,0 +1,33 @@
+name: Check full-resolution archive image
+on:
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/check-hongbit-original.yml]
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Compare archive photo and supplied original
+        shell: bash
+        run: |
+          set -e
+          curl -fsSL --retry 2 'https://vik.kompas.com/perempuan-dayak/imgs/kupingpanjang/hongbit.jpg' -o /tmp/kompas-hongbit.jpg
+          python -m pip install -q Pillow
+          python - <<'PY'
+          from PIL import Image,ImageOps,ImageStat,ImageChops
+          a=Image.open('public/assets/brand/hong-bit.jpg').convert('RGB')
+          b=Image.open('/tmp/kompas-hongbit.jpg').convert('RGB')
+          print('THUMB',a.size,'KOMPAS',b.size)
+          small=ImageOps.fit(a,(160,106))
+          big=ImageOps.fit(b,(160,106))
+          diff=ImageChops.difference(small,big)
+          print('RGB MAE',ImageStat.Stat(diff).mean)
+          # compare grayscale perceptual downsample, tolerant of exposure/crop
+          aa=small.convert('L').resize((9,8));bb=big.convert('L').resize((9,8))
+          def dhash(im):
+           p=list(im.getdata());return sum(1<<i for i in range(64) if p[(i//8)*9+(i%8)]>p[(i//8)*9+(i%8)+1])
+          print('PERCEPTUAL_DISTANCE', (dhash(aa)^dhash(bb)).bit_count())
+          PY
