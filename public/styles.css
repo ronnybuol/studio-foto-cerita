@@ -1673,3 +1673,18 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .story-review-item b,.story-review-item span{display:block;overflow-wrap:anywhere}
 .story-review-item p{font-size:13px;line-height:1.5;color:#44536a;margin:8px 0}
 .story-review-item .actions{display:flex;flex-wrap:wrap;gap:7px}
+
+/* Modul 05: live review of nine-photo narrative, without changing the locked Modul 04. */
+.caption-review-panel{margin:16px 0}
+.caption-review-panel .story-head{align-items:flex-start;gap:14px}
+.caption-review-panel h3{font-size:clamp(18px,1.8vw,25px);margin:5px 0}
+.caption-review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:12px;margin-top:12px}
+.caption-review-item{border:1px solid #d4dbe1;border-radius:12px;background:#fbfcfe;padding:14px;min-width:0}
+.caption-review-item>b,.caption-review-item>span{display:block;overflow-wrap:anywhere}
+.caption-review-item .caption-review-excerpt{font-size:14px;line-height:1.55;color:#344358;overflow-wrap:anywhere}
+.caption-review-meta{font-size:12px;font-weight:700;color:#7b4e25;margin:8px 0}
+.caption-review-item .actions{display:flex;flex-wrap:wrap;gap:8px}
+.caption-story-link .caption-photo-strip{margin-top:15px}
+.caption-story-link .caption-photo-tile{min-width:0}
+.caption-story-link .caption-photo-tile figcaption{overflow-wrap:anywhere}
+@media(max-width:600px){.caption-review-panel .story-head{flex-direction:column}.caption-review-panel .story-head button{align-self:start}}
