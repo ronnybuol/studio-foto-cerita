@@ -36,5 +36,5 @@ test("Trainer, LCD, peserta, draf, dan sorotan Caption Lab tetap terhubung",()=>
  assert.ok(api.includes('data.slide>56'));
  assert.ok(css.includes('.caption-photo-strip'));
  assert.ok(css.includes('.caption-theory-layout'));
- assert.ok(html.includes('app.js?v=20261115-comp-photo-disclosure-v10'));
+ assert.ok(html.includes('app.js?v=20261115-composition-fullphoto-live-v11'));
 });
