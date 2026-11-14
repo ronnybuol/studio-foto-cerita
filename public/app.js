@@ -1408,7 +1408,7 @@ function lcdPage(){
  const step=STAGES[stage]||STAGES[0];
  const count=state.online?state.count:(state.user?1:0);
  const link=location.origin+"/lensa-muda/peserta";
- const qr=`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=2&data=${encodeURIComponent(link)}`;
+ const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  if(state.welcome){
