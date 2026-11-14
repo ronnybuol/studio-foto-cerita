@@ -4,6 +4,7 @@ import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
+import {createAnswerSync} from "./answer-sync.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -66,13 +67,55 @@ let state = {
   dashboard:null,justRegistered:false,welcome:false,orientation:false,roster:false,rosterPage:0,rosterNames:[]
 };
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
-function saveWork(){localStorage.setItem(STORAGE_WORK,JSON.stringify(state.work))}
+let participantReady=false,workStorageSafe=true,lastAnswerRetry=0;
+const answerSync=createAnswerSync({
+ storage:localStorage,getUser:()=>state.user,
+ send:(key,payload,owner)=>request(`/api/answers/${encodeURIComponent(key)}`,{method:"PUT",payload,participantToken:owner.token}),
+ onStorageError:()=>{workStorageSafe=false}
+});
+state.work=answerSync.activate(state.work);
+function saveWork(){
+ workStorageSafe=answerSync.saveWork(state.work);
+ paintAnswerStatus();
+ if(!workStorageSafe)toast("Penyimpanan perangkat gagal. Jangan tutup halaman; salin jawabanmu sebelum mencoba lagi.");
+ return workStorageSafe;
+}
+function answerStatusText(){
+ if(!workStorageSafe)return "Penyimpanan perangkat gagal. Jangan tutup halaman; salin jawabanmu untuk cadangan.";
+ const pending=answerSync.pendingKeys();
+ if(pending.length)return `${pending.length} hasil belum dikonfirmasi server. Salinan tersimpan di perangkat dan akan dicoba kirim ulang saat koneksi kelas tersedia. Jangan hapus data browser.`;
+ if(state.work[state.active]?._draft)return "Draf tersimpan di perangkat. Tekan Simpan untuk mengirim hasil ke trainer.";
+ return "";
+}
+function paintAnswerStatus(message=answerStatusText()){
+ const box=$("#answer-sync-status");if(box){box.textContent=message;box.hidden=!message}
+}
+function answerSaveMessage(result){
+ if(result.synced)return state.work[state.active]?._draft
+   ?"Hasil yang dikirim sudah diterima server. Perubahan terbaru masih berupa draf di perangkat; tekan Simpan untuk mengirimnya."
+   :"Hasil sudah diterima server kelas. Trainer dapat membacanya.";
+ if(!workStorageSafe)return "Belum aman tersimpan di perangkat. Jangan tutup halaman; salin jawabanmu.";
+ if(result.error?.status===401)return "Hasil tersimpan di perangkat. Sesi berakhir; masuk kembali dengan akun yang sama untuk mengirimnya.";
+ return "Hasil tersimpan di perangkat, belum diterima server. Pengiriman akan dicoba lagi saat kelas tersambung dan tahap terbuka.";
+}
+async function retryPendingAnswers(force=false){
+ if(!participantReady||!state.user?.token||!state.online||state.locked||!answerSync.pendingKeys().length)return {synced:false};
+ if(!force&&Date.now()-lastAnswerRetry<15000)return {synced:false};
+ lastAnswerRetry=Date.now();
+ const owner=state.user.id;
+ const result=await answerSync.flush({online:state.online,locked:state.locked,stage:state.serverStage});
+ if(state.user?.id===owner){
+  const message=answerSaveMessage(result);paintAnswerStatus(message);
+  if(result.synced)toast(message);
+ }
+ return result;
+}
 function toast(message){const box=$("#toast");box.textContent=message;box.classList.add("visible");clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.classList.remove("visible"),2800)}
 const PUBLIC_BASE = "/lensa-muda";
-async function request(path,{method="GET",payload,auth=false}={}){
+async function request(path,{method="GET",payload,auth=false,participantToken}={}){
   const headers={};
   if(payload!==undefined) headers["Content-Type"]="application/json";
-  const token=auth?state.trainerToken:state.user?.token;
+  const token=auth?state.trainerToken:(participantToken??state.user?.token);
   if(token) headers.Authorization=`Bearer ${token}`;
   const response=await fetch(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"});
   const body=await response.json().catch(()=>({}));
@@ -97,6 +140,7 @@ async function syncState(){
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
+    if(pageMode()==="peserta")void retryPendingAnswers();
   }catch{
     state.online=false;
     $("#connectivity").className="connection demo";
@@ -131,6 +175,7 @@ function lessonLayout(){
  <div class="learner-account-panel"><p>${escapeHtml(state.user?.school||"")} · ${escapeHtml(state.user?.className||"")}</p><p>Username: <strong>${escapeHtml(state.user?.username||"—")}</strong></p>
  <form id="participant-rename-form"><label for="new-username">Ganti username</label><div class="learner-rename-row"><input id="new-username" name="username" pattern="[a-z]{3,20}" maxlength="20" required value="${/^[a-z]{3,20}$/.test(state.user?.username||"")?escapeHtml(state.user.username):""}" placeholder="contoh: jufri"><button class="btn small" type="submit">Simpan</button></div><small>3–20 huruf kecil, satu kata tanpa spasi.</small></form>
  <button class="btn small subtle" id="participant-switch-account">Keluar / ganti akun</button></div></details></div>
+ <div id="answer-sync-status" class="info" role="status" aria-live="polite" ${answerStatusText()?"":"hidden"}>${escapeHtml(answerStatusText())}</div>
  <section class="lesson">${learnerModeBar(state.active)}${renderModule()}</section></div>`;
 }
 function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode==="reference"||(mode==="follow"&&state.presentation.view==="theory"),slide=learnerSlide(key);switch(key){
@@ -241,12 +286,13 @@ async function participantLogin(e){
  try{
   if(!state.online)throw Error("Login username memerlukan koneksi kelas.");
   const data=await request("/api/participant-login",{method:"POST",payload:{username}});
-  state.user=data.user;state.justRegistered=false;
+  participantReady=false;state.user=data.user;state.justRegistered=false;
+  state.work=answerSync.activate();
   loadLearnerViews();
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   localStorage.setItem("lm26-last-username",state.user.username);
-  const me=await request("/api/me");
-  state.work=me.answers||{};state.composition={...state.composition,...(state.work.komposisi||{})};saveWork();
+  await restoreParticipantSession();
+  if(!state.user)throw Error("Sesi belum valid. Masuk kembali dengan username yang sama; jawaban lokal tetap disimpan.");
   state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active);
   render();toast("Selamat datang kembali, "+state.user.name);
  }catch(error){toast(error.message);button.disabled=false;button.textContent="Masuk ke kelas →"}
@@ -751,10 +797,13 @@ function ethicsPage(){
  <section class="card ethics-closing"><h3>Sesudah kelas</h3><p>Bawa rancangan ini untuk diskusi dengan pendamping. Cari informasi latar, sepakati akses yang menghormati subjek, siapkan variasi EDFAT, pilih sembilan bingkai yang saling melengkapi, lalu tulis narasi foto yang dapat diverifikasi.</p></section>`;
 }
 async function saveAnswer(key,payload){
- state.work[key]=payload;saveWork();
- if(!state.online||!state.user?.token){toast("Tersimpan di perangkat (demo)");return}
- try{await request(`/api/answers/${encodeURIComponent(key)}`,{method:"PUT",payload});toast("Jawaban tersimpan di kelas ✓")}
- catch(e){toast(`Tersimpan lokal; sinkronisasi gagal: ${e.message}`)}
+ const owner=state.user?.id;
+ state.work[key]=payload;
+ workStorageSafe=answerSync.queue(key,payload,state.work);
+ paintAnswerStatus();
+ const result=await answerSync.flush({online:state.online,locked:state.locked,stage:state.serverStage});
+ if(state.user?.id===owner){const message=answerSaveMessage(result);paintAnswerStatus(message);toast(message)}
+ return result;
 }
 function bindLessons(){
  $$("[data-nav]").forEach(btn=>btn.addEventListener("click",()=>{const key=btn.dataset.nav;if(isUnlocked(key))goModule(key)}));
@@ -782,11 +831,12 @@ function bindLessons(){
    const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
   });
   $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current,_draft:true};saveWork()});
-  $("#save-edfat").onclick=()=>{
+  $("#save-edfat").onclick=async()=>{
    const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
    if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
-   saveAnswer("edfat",{...current,completedAt:new Date().toISOString()});
-   const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lima hasil pengamatan sudah disimpan. Trainer dapat membaca seluruh alasanmu.";
+   const feedback=$("#edfat-feedback");
+   const result=await saveAnswer("edfat",{...current,completedAt:new Date().toISOString()});
+   if(feedback?.isConnected)feedback.textContent=answerSaveMessage(result);
   };
  }
  if(state.active==="story"&&$("#save-story")){
@@ -799,13 +849,13 @@ function bindLessons(){
    const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value,_draft:true};saveWork()};
   }
   $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
-  $("#save-story").onclick=()=>{
+  $("#save-story").onclick=async()=>{
    const data=current(),ids=data.selected||[],title=(data.title||"").trim(),reason=(data.reason||"").trim();
    const status=$("#story-status");
    if(ids.length!==9){if(status)status.textContent="Pilih tepat sembilan foto.";return}
    if(title.length<5||reason.length<30){if(status)status.textContent="Lengkapi judul minimal 5 karakter dan alasan urutan minimal 30 karakter.";toast("Lengkapi judul dan alasan");return}
-   saveAnswer("story",{selected:ids,title,reason,completedAt:new Date().toISOString()});
-   if(status)status.textContent="Sembilan foto dan alasan editorial tersimpan.";
+   const result=await saveAnswer("story",{selected:ids,title,reason,completedAt:new Date().toISOString()});
+   if(status?.isConnected)status.textContent=answerSaveMessage(result);
   };
  }
  if(state.active==="caption"){
@@ -833,8 +883,8 @@ function bindLessons(){
     if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
       if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
     const result={...data,storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
-    await saveAnswer("caption",result);
-    if(status)status.textContent=state.online?"Permintaan simpan dikirim. Periksa pesan status di atas.":"Hasil disimpan di perangkat mode demo.";
+    const saved=await saveAnswer("caption",result);
+    if(status?.isConnected)status.textContent=answerSaveMessage(saved);
    };
   }
  }
@@ -852,7 +902,7 @@ function bindLessons(){
     const saveDraft=()=>{state.work.etika={...(state.work.etika||{}),...ethicsDraft(),_draft:true};saveWork()};
     form.oninput=saveDraft;
     form.onchange=saveDraft;
-    form.onsubmit=e=>{
+    form.onsubmit=async e=>{
       e.preventDefault();
       const data=ethicsDraft(),status=$("#ethics-status");
       const fail=msg=>{if(status)status.textContent=msg;toast(msg)};
@@ -862,12 +912,13 @@ function bindLessons(){
       if(Object.values(data.checks).some(v=>!v))return fail("Centang ketiga komitmen etika sebelum menyimpan.");
       const score=data.answers.filter((v,i)=>v===ETHICS[i].correct).length;
       const result={...data,score,completedAt:new Date().toISOString()};
-      saveAnswer("etika",result);
+      const saved=await saveAnswer("etika",result);
+      if(!form.isConnected)return;
       const area=$("#ethics-result");
       if(area)area.innerHTML=`<div class="info"><b>${score}/${ETHICS.length} keputusan sesuai pembahasan.</b>
       <p>Gunakan pembahasan ini untuk meninjau kembali alasanmu, bukan hanya menghafal jawaban.</p>
       ${ETHICS.map((q,i)=>`<p><b>${i+1}. ${data.answers[i]===q.correct?"✓":"Periksa kembali"}</b> ${escapeHtml(q.why)}</p>`).join("")}</div>`;
-      if(status)status.textContent="Hasil telah disiapkan untuk disimpan. Periksa pesan status penyimpanan kelas.";
+      if(status?.isConnected)status.textContent=answerSaveMessage(saved);
     };
   }
  }
@@ -886,9 +937,9 @@ async function signup(e){
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
  loadLearnerViews();
  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
- state.work={};saveWork();state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
+ state.work=answerSync.activate();saveWork();participantReady=true;state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
-function logout(){localStorage.removeItem(learnerKey());state.learnerViews={};state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
+function logout(){saveWork();participantReady=false;localStorage.removeItem(learnerKey());state.learnerViews={};state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
 function renderParticipant(){
  if(state.locked){$("#root").innerHTML=`<div class="page"><div class="card login-card class-closed"><span class="eyebrow">KELAS DITUTUP</span><h1>Kegiatan belajar telah selesai</h1><p>Akses peserta sedang dikunci oleh trainer. Terima kasih telah mengikuti Lensa Muda.</p></div></div>`;return}
  if(!state.user){
@@ -1650,28 +1701,38 @@ setInterval(async()=>{
   }
 },1800);
 async function restoreParticipantSession(){
- if(!state.online||!state.user?.token)return;
+ if(!state.online||!state.user?.token){participantReady=true;return}
+ const owner={id:state.user.id,token:state.user.token};
+ const workBeforeRequest=JSON.parse(JSON.stringify(state.work));
  try{
   const response=await request("/api/me");
+  if(state.user?.id!==owner.id||state.user?.token!==owner.token)return;
   state.user={...state.user,...response.user,token:state.user.token};
   const serverAnswers=response.answers||{};
-  // Draf di perangkat tidak boleh ditimpa oleh jawaban tersimpan yang lebih lama di server.
-  for(const key of ["story","edfat","komposisi","caption","etika"]){
-   const local=state.work[key];
-   if(local&&(local._draft===true||(key==="story"&&!local.completedAt&&(local.selected?.length||local.title||local.reason))))serverAnswers[key]=local;
+  // Draf dan hasil yang belum diakui server selalu dipulihkan dari akun ini.
+  const restored=answerSync.merge(serverAnswers,state.work);
+  // A slow profile response must not overwrite an edit made while it travelled.
+  for(const key of Object.keys(state.work)){
+   if(JSON.stringify(state.work[key])!==JSON.stringify(workBeforeRequest[key]))restored[key]=state.work[key];
   }
-  state.work=serverAnswers;state.composition={...state.composition,...(state.work.komposisi||{})};
+  state.work=restored;
+  state.camera={...state.camera,...(state.work.kamera||{})};state.composition={...state.composition,...(state.work.komposisi||{})};
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
   loadLearnerViews();
  }catch(error){
+  if(state.user?.id!==owner.id||state.user?.token!==owner.token)return;
   if(error.status!==401)return;
+  saveWork();
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   state.user=null;state.work={};state.learnerViews={};
   localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);
+ }finally{
+  if(!state.user||(state.user.id===owner.id&&state.user.token===owner.token))participantReady=true;
  }
 }
 await syncState();
 await restoreParticipantSession();
 render();
+void retryPendingAnswers(true);
