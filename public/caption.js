@@ -22,4 +22,31 @@ export function captionVisual(i){
  const x=captionSlide(i);
  return `<figure class="caption-slide-photo"><img src="/lensa-muda/assets/composition/sangihe-2017-${x.image}.webp" alt="Dokumentasi musik bambu Sangihe, foto materi Caption Lab" decoding="async"><figcaption>Sangihe · September 2017 · Foto: Ronny Adolof Buol</figcaption></figure>`;
 }
+// Contoh dibuat dari dokumentasi trainer (9 September 2017) dan sumber
+// tertulis Mongabay Indonesia (8 Februari 2015). Bukan kutipan langsung.
+export const CAPTION_EXAMPLE={
+ title:"Musik bambu, tradisi yang terus dimainkan",
+ text:"Sejumlah pemain musik bambu memainkan instrumen tiup di Kabupaten Kepulauan Sangihe, Sulawesi Utara, pada 9 September 2017. Musik bambu adalah bagian dari tradisi masyarakat Sangihe yang digunakan untuk mengiringi berbagai kegiatan budaya dan keagamaan. Menurut laporan Mongabay Indonesia terbitan 8 Februari 2015, Agustinus Sasundu mengembangkan beragam instrumen dari bambu, antara lain klarinet, trombon, dan bas. Proses pembuatannya dimulai dengan memilih bambu tua, menebang, mengeringkan, lalu membentuknya menjadi instrumen. Pengembangan musik bambu ikut menjaga pengetahuan dan pemanfaatan bambu dalam kehidupan masyarakat. Identitas para pemain, tempat pemotretan yang lebih spesifik, serta nama kegiatan pada hari pengambilan foto masih perlu dikonfirmasi. Foto: Ronny Adolof Buol.",
+ sourceTitle:"Agustinus Sasundu, Mengkonservasi Bambu Dengan Musik",
+ sourceUrl:"https://mongabay.co.id/2015/02/08/agustinus-sasundu-menkonservasi-bambu-dengan-musik/",
+ photoDate:"9 September 2017",
+ facts:[
+ ["WHO","Para pemain musik bambu; nama mereka belum dikonfirmasi"],
+ ["WHAT","Memainkan alat musik tiup berbahan bambu"],
+ ["WHEN","9 September 2017 (tanggal foto)"],
+ ["WHERE","Kabupaten Kepulauan Sangihe, Sulawesi Utara"],
+ ["WHY","Tradisi dan pelestarian musik bambu; konteks dari Mongabay (2015)"],
+ ["HOW","Bambu tua dipilih, ditebang, dikeringkan, kemudian dibentuk menjadi instrumen (laporan 2015)"]
+ ]
+};
+export function captionExampleHTML(){
+ const escaped=s=>String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ return `<section class="caption-example-content" aria-label="Contoh caption dan unsur 5W plus 1H">
+ <div class="caption-example-head"><span class="theory-kicker">CONTOH CAPTION · DOKUMENTASI 2017</span><h3>${escaped(CAPTION_EXAMPLE.title)}</h3>
+ <p class="caption-example-text">${escaped(CAPTION_EXAMPLE.text)}</p>
+ <p class="caption-example-source">Konteks: <a href="${CAPTION_EXAMPLE.sourceUrl}" target="_blank" rel="noopener noreferrer">${escaped(CAPTION_EXAMPLE.sourceTitle)}</a> · Mongabay Indonesia, 8 Februari 2015.</p></div>
+ <div class="caption-example-facts">${CAPTION_EXAMPLE.facts.map(([k,v])=>`<div><b>${escaped(k)}</b><span>${escaped(v)}</span></div>`).join("")}</div>
+ <p class="caption-example-warning">Tanggal pemotretan: 9 September 2017. Artikel tahun 2015 menjadi sumber konteks, bukan bukti bahwa orang atau peristiwa dalam foto identik dengan laporan 2015.</p>
+ </section>`;
+}
 export function captionWordCount(text){return String(text||"").trim()?String(text).trim().split(/\s+/u).length:0}
