@@ -6,6 +6,7 @@ import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,stor
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
 import {createAnswerSync} from "./answer-sync.js";
+import {huntingPanelHTML,bindHuntingUI} from "./hunting-ui.js";
 import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
 import {createTrainerControl} from "./trainer-sync.js";
 const $ = (s, root=document) => root.querySelector(s);
@@ -783,6 +784,7 @@ function edfatPage(){
  return `${titleBlock("edfat")}<div class="card edfat-mission-intro"><span class="eyebrow">MISI DETEKTIF · 5 KASUS FOTO</span>
  <h2>Satu foto, banyak petunjuk.</h2><p>Amati setiap foto musik bambu Sangihe. Pilih pendekatan EDFAT yang paling menonjol, lalu jelaskan petunjuk visual yang mendukung jawabanmu.</p>
  <p class="small-note">EDFAT bukan label mutlak. Penilaian terutama pada alasan pengamatan, bukan sekadar pilihan istilah.</p></div>
+ ${huntingPanelHTML()}
  <div class="edfat-case-list">${cases}</div>
  <div class="card edfat-submit"><p><strong>${Object.keys(answers).length} dari ${EDFAT_CASES.length} kasus dipilih.</strong> Alasan harus memuat minimal 12 karakter setiap kasus.</p>
  <div class="actions"><button id="save-edfat" class="btn primary">Simpan hasil penyelidikan ✓</button></div><p id="edfat-feedback" class="small-note" role="status" aria-live="polite"></p></div>`;
@@ -1017,6 +1019,7 @@ function bindLessons(){
   updateCamera();
  }
  if(state.active==="komposisi"&&$("#save-comp"))bindCompositionChallenge();
+ if(state.active==="edfat"&&$("#hunting-upload-panel"))bindHuntingUI({getUser:()=>state.user,getOnline:()=>state.online&&!state.locked,onNotice:toast});
  if(state.active==="edfat"&&$("#save-edfat")){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
   $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
