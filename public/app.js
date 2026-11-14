@@ -142,14 +142,24 @@ function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode
  case "etika":return theory?ethicsParticipantSlide(slide):ethicsPage();
  default:return startPage();
 }}
-function welcomePage(){
-return `<div class="welcome-page"><section class="welcome-hero"><div class="welcome-portrait" role="img" aria-label="Hong Bit, perempuan Dayak berkuping panjang, foto Ronny Adolof Buol, Kalimantan 2016"></div><div class="welcome-shade"></div><div class="welcome-copy">
-<span class="welcome-eyebrow">KELAS BELAJAR ZONAUTARA × KAMISAMA · LENSA MUDA 2026</span>
-<h1>Selamat Datang di<br>Platform Kelas Belajar <em>Fotografi</em></h1><div class="welcome-rule"></div>
-<p class="welcome-intro"><strong>Kelas Belajar Zonautara.com</strong> bekerja sama dengan <strong>Kamisama Fotografia</strong> menghadirkan pelatihan bagi peserta <strong>Lensa Muda</strong>.</p>
-<p class="welcome-description">Pelajari fotografi, foto cerita, komposisi, penulisan caption, dan etika memotret melalui pengalaman belajar yang interaktif.</p>
-<div class="welcome-actions"><a class="btn primary" href="/lensa-muda/peserta">Masuk sebagai Peserta →</a><a class="btn welcome-trainer-button" href="/lensa-muda/trainer">Masuk sebagai Trainer →</a></div>
-<p class="welcome-credit">Hong Bit, perempuan Dayak berkuping panjang. Foto: Ronny Adolof Buol, ekspedisi Kalimantan, 2016. <a href="https://vik.kompas.com/perempuan-dayak/" target="_blank" rel="noopener noreferrer">Baca kisah di Kompas.com</a></p></div></section></div>`;
+function welcomePage(lcd=false,count=0){
+ const participantUrl="kelasbelajar.org/lensa-muda/peserta";
+ const action=lcd
+ ? `<div class="welcome-class-trainer"><span class="welcome-label">TRAINER</span><strong>Ronny Adolof Buol</strong><small>Fotografer · Pemred Zonautara.com · Pendiri Kelasbelajar.org</small></div>
+    <div class="welcome-class-join"><div class="welcome-join-copy"><span class="welcome-label">SCAN UNTUK MENDAFTAR</span><strong>${participantUrl}</strong><small>Gunakan kamera HP untuk membuka formulir peserta</small><small class="lcd-welcome-count">${count} peserta terdaftar</small></div><div class="welcome-join-qr"><img src="/lensa-muda/assets/brand/peserta-qr.svg" width="260" height="260" alt="QR pendaftaran peserta Lensa Muda"></div></div>`
+ : `<div class="welcome-class-actions"><a class="btn primary" href="/lensa-muda/peserta">Masuk sebagai Peserta →</a><a class="btn welcome-trainer-button" href="/lensa-muda/trainer">Masuk sebagai Trainer →</a></div>`;
+ return `<div class="welcome-page ${lcd?"welcome-projector":""}"><section class="welcome-hero welcome-shared-hero">
+  <div class="welcome-portrait" role="img" aria-label="Hong Bit, perempuan Dayak berkuping panjang, foto karya Ronny Adolof Buol di Kalimantan pada 2016"></div>
+  <div class="welcome-shade" aria-hidden="true"></div>
+  <div class="welcome-projector-brand" aria-label="Penyelenggara"><img src="/lensa-muda/assets/brand/kamisama.png" alt="Kamisama Fotografia"><img src="/lensa-muda/assets/brand/zonautara.png" alt="Zonautara.com"></div>
+  <div class="welcome-copy">
+   <span class="welcome-eyebrow">LENSA MUDA 2026 · MEREKAM JEJAK DAN WARISAN BUDAYA SULAWESI UTARA</span>
+   <h1>Selamat Datang di<br>Kelas Belajar <em>Fotografi</em></h1>
+   <p class="welcome-intro">Kelas Belajar Zonautara.com bersama Kamisama Fotografia menghadirkan pelatihan fotografi untuk peserta Program Lensa Muda.</p>
+   ${action}
+  </div>
+  <p class="welcome-credit">Hong Bit, perempuan Dayak berkuping panjang · Foto: Ronny Adolof Buol, Kalimantan, 2016</p>
+ </section></div>`;
 }
 function landing(){
   return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Daftar peserta baru →</button><button class="btn ghost-dark" id="start-login">Sudah punya username? Masuk</button></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
@@ -1412,17 +1422,7 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight&&!state.welcome)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  if(state.welcome){
-  return `<div class="page lcd-page"><section class="lcd-mode lcd-welcome-mode">
-   <div class="lcd-welcome-photo"></div><div class="lcd-welcome-darken"></div>
-   <div class="lcd-welcome-top"><img src="/lensa-muda/assets/brand/kamisama.png" alt="Kamisama Fotografia"><img src="/lensa-muda/assets/brand/zonautara.png" alt="Zonautara.com"></div>
-   <div class="lcd-welcome-body"><span class="kicker">LENSA MUDA 2026 · MEREKAM JEJAK DAN WARISAN BUDAYA SULAWESI UTARA</span>
-    <h1>Selamat Datang di<br><em>Kelas Belajar Fotografi</em></h1>
-    <p>Kelas Belajar Zonautara.com bersama Kamisama Fotografia menghadirkan pelatihan fotografi untuk peserta Program Lensa Muda.</p>
-    <div class="lcd-welcome-trainer"><span>TRAINER</span><strong>Ronny Adolof Buol</strong><small>Fotografer · Pemred Zonautara.com · Pendiri Kelasbelajar.org</small></div>
-   </div>
-   <div class="lcd-welcome-join"><div><span>SCAN UNTUK MENDAFTAR</span><strong>kelasbelajar.org/lensa-muda/peserta</strong><small>Gunakan kamera HP untuk membuka formulir peserta</small><small class="lcd-welcome-count">${count} peserta terdaftar</small></div><div class="lcd-welcome-qr"><img src="${qr}" alt="QR pendaftaran peserta Lensa Muda"></div></div>
-   <div class="lcd-welcome-credit">Hong Bit, perempuan Dayak berkuping panjang · Foto: Ronny Adolof Buol, Kalimantan, 2016</div>
-  </section><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+  return `<div class="page lcd-page">${welcomePage(true,count)}<div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  }
  const camera=state.demoCamera;
  const content=stage===6&&state.presentation.view==="theory"
@@ -1541,7 +1541,7 @@ async function refreshLCD(){
 }
 async function render(){
  document.title=`Kelas Belajar Fotografi — Zonautara × Kamisama | Lensa Muda 2026`;
- const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else if(mode==="welcome")$("#root").innerHTML=welcomePage();else renderParticipant();
+ const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else if(mode==="welcome")$("#root").innerHTML=welcomePage(false);else renderParticipant();
 }
 window.addEventListener("hashchange",render);
 window.addEventListener("visibilitychange",()=>{
