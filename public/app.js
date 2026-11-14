@@ -868,6 +868,21 @@ function captionParticipantSlide(index){
    <p class="small-note">Tinjau foto dan diskusikan pertanyaan bersama kelas. Kamu juga boleh membuka teori sendiri lalu kembali menulis.</p>
    ${captionTheoryContent(index,"participant")}</section>`;
 }
+function captionSubmissionList(data,isMentor){
+ const people=(data.participants||[]).filter(p=>p.answers?.caption?.storyMode==="hunting"
+  &&Array.isArray(p.answers.caption.storySelected)&&p.answers.caption.storySelected.length===9);
+ return `<section class="card caption-review-panel" id="caption-review-panel">
+ <div class="story-head"><div><span class="eyebrow">HASIL CAPTION LAB · MODUL 05</span>
+ <h3>Narasi foto cerita peserta</h3><p class="small-note">Sembilan foto dan narasi yang sudah disimpan; tekan Lihat tulisan atau tampilkan karya pilihan pada LCD.</p></div>
+ <button type="button" id="refresh-caption-answers" class="btn small subtle">↻ Segarkan hasil</button></div>
+ <div class="caption-review-grid">${people.map(p=>`<article class="caption-review-item">
+ <b>${escapeHtml(p.name)}</b><span class="small-note">${escapeHtml(p.answers.caption.storyTitle||"Foto cerita peserta")}</span>
+ <p class="caption-review-excerpt">${escapeHtml((p.answers.caption.captionText||"").slice(0,180))}${(p.answers.caption.captionText||"").length>180?"…":""}</p>
+ <div class="caption-review-meta">${captionWordCount(p.answers.caption.captionText||"")} kata · 9 foto</div>
+ <div class="actions"><button type="button" data-caption-review="${escapeHtml(p.id)}" class="btn small subtle">Lihat tulisan &amp; foto</button>
+ <button type="button" data-caption-spotlight="${escapeHtml(p.id)}" class="btn small primary" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div></article>`).join("")||'<p class="small-note">Belum ada peserta yang mengirim Caption Lab. Daftar diperbarui saat karya tersimpan.</p>'}</div>
+ <p id="caption-review-updated" class="small-note" aria-live="polite"></p></section>`;
+}
 function captionTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=CAPTION_START&&state.presentation.slide<=CAPTION_END?state.presentation.slide:CAPTION_START;
  const x=captionSlide(i),theory=state.presentation.view==="theory";
@@ -887,7 +902,7 @@ function captionTrainerPanel(data,isMentor){
  :`<div class="trainer-theory-compact"><div><strong>Caption Lab mandiri sedang terbuka</strong>
  <p class="small-note">Peserta meninjau sembilan foto, mencatat 5W+1H, dan menyusun narasi. Perubahan slide trainer tidak mengganggu mereka.</p></div>
  <button class="btn subtle" data-caption-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>`}
- </section>`;
+ </section>${theory?"":captionSubmissionList(data,isMentor)}`;
 }
 function huntingShot(id,chosen=false,pos=0,total=0){
  return `<article class="story-candidate ${chosen?"story-candidate-selected":""}">
@@ -1454,7 +1469,43 @@ async function refreshStoryResponses(force=false){
   storyResponsesFingerprint=fingerprint;
  }finally{storyResponsesBusy=false}
 }
+let captionResponsesBusy=false;
+let captionResponsesFingerprint="";
+async function refreshCaptionResponses(force=false){
+ const panel=$("#caption-review-panel");
+ if(!panel||pageMode()!=="trainer"||captionResponsesBusy||!state.trainerToken)return;
+ captionResponsesBusy=true;
+ try{
+  const incoming=await request("/api/dashboard",{auth:true});
+  const people=incoming.participants||[];
+  const fingerprint=JSON.stringify(people.map(p=>[p.id,p.answers?.caption]));
+  if(!force&&fingerprint===captionResponsesFingerprint)return;
+  state.dashboard.participants=people;
+  state.dashboard.count=incoming.count;
+  const fresh=document.createElement("div");
+  fresh.innerHTML=captionSubmissionList({...state.dashboard,participants:people},state.trainerRole==="mentor");
+  const grid=panel.querySelector(".caption-review-grid");
+  if(grid)grid.innerHTML=fresh.querySelector(".caption-review-grid").innerHTML;
+  const label=$("#caption-review-updated");
+  if(label)label.textContent="Diperbarui · "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+  captionResponsesFingerprint=fingerprint;
+ }finally{captionResponsesBusy=false}
+}
 function bindDashboard(){
+ const captionPanel=$("#caption-review-panel");
+ if(captionPanel)captionPanel.onclick=event=>{
+  if(event.target.closest("#refresh-caption-answers")){
+   void refreshCaptionResponses(true).catch(error=>toast("Gagal memperbarui tulisan: "+error.message));return;
+  }
+  const review=event.target.closest("[data-caption-review]");
+  if(review){
+   const button=$("[data-inspect]").find(b=>b.dataset.inspect===review.dataset.captionReview);
+   if(button){button.click();$("#inspect")?.scrollIntoView({block:"nearest",behavior:"smooth"})}
+   return;
+  }
+  const spot=event.target.closest("[data-caption-spotlight]");
+  if(spot&&state.trainerRole==="trainer")void changeSpotlight(spot.dataset.captionSpotlight,"caption");
+ };
  const storyPanel=$("#story-review-panel");
  if(storyPanel)storyPanel.onclick=event=>{
   if(event.target.closest("#refresh-story-answers")){
@@ -2181,6 +2232,8 @@ const pollClass=singleFlight(async(force=false)=>{
        await refreshCompositionResponses();
     }else if(pageMode()==="trainer"&&state.dashboard?.stage===4&&state.presentation.view==="simulator"&&$("#story-review-panel")){
        await refreshStoryResponses();
+    }else if(pageMode()==="trainer"&&state.dashboard?.stage===5&&state.presentation.view==="simulator"&&$("#caption-review-panel")){
+       await refreshCaptionResponses();
     }
   }
 });
