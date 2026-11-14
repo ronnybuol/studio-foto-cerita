@@ -1275,3 +1275,35 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
  .lcd-photo-detail .camera-diagram-iris{width:70px;height:70px}
  .lcd-photo-detail .camera-diagram p{font-size:10px}
 }
+
+/* Modul 01 — never crop the simulator's source photos on LCD or participant phones.
+   Previously the image used object-fit:cover and the LCD frame had 3:2 width
+   but max-height:48vh, turning it into a wide strip and cutting off the photo. */
+.scene.photo-camera-scene>.photo-main,
+.scene.photo-camera-scene>.photo-motion{
+  object-fit:contain;
+  object-position:center;
+}
+.lcd-camera-photo .scene.photo-camera-scene{
+  /* 72vh × (2/3) = 48vh: keep both dimensions in the intended 3:2 ratio. */
+  width:min(100%,72vh);
+  max-width:100%;
+  height:auto;
+  max-height:none;
+  aspect-ratio:3/2;
+  margin-inline:auto;
+}
+.participant-camera-image .scene.photo-camera-scene{
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height:none;
+  aspect-ratio:3/2;
+}
+@media(max-width:700px){
+  .lcd-camera-photo .scene.photo-camera-scene{
+    width:100%;
+    max-height:none;
+    aspect-ratio:3/2;
+  }
+}
