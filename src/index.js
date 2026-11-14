@@ -70,8 +70,8 @@ async function stageState(env){
 }
 const DEFAULT_CAMERA = Object.freeze({a:1,s:3,i:1});
 const DEFAULT_PRESENTATION = Object.freeze({view:"theory",slide:0});
-const STAGE_FIRST_SLIDES = [0,0,21,32,39,45,51];
-const STAGE_LAST_SLIDES = [0,20,31,38,44,50,56];
+const STAGE_FIRST_SLIDES = [0,0,21,32,39,45,52];
+const STAGE_LAST_SLIDES = [0,20,31,38,44,51,57];
 function validControlRevision(data){return data.controlRevision===undefined||(Number.isSafeInteger(data.controlRevision)&&data.controlRevision>0)}
 const DEFAULT_COMPOSITION = Object.freeze({grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"});
 function validComposition(c){
@@ -88,7 +88,7 @@ function compositionFromCamera(raw){
 }
 
 function presentationFromCamera(value){
-  return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=56?value.slide:0};
+  return {view:value?.view==="simulator"?"simulator":"theory",slide:Number.isInteger(value?.slide)&&value.slide>=0&&value.slide<=57?value.slide:0};
 }
 function validCamera(value){
   return value&&typeof value==="object"&&!Array.isArray(value)
@@ -552,7 +552,7 @@ async function handleApi(req,env){
     if(!user)return failure("Autentikasi trainer diperlukan",401);
     if(user.role!=="trainer")return failure("Hanya trainer boleh mengendalikan materi",403);
     const data=await bodyJson(req);
-    if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>56)
+    if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>57)
       return failure("Mode presentasi atau nomor slide tidak valid",400);
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(data.stage!==undefined&&(!Number.isInteger(data.stage)||data.stage<0||data.stage>6))return failure("Tahap tidak valid",400);
@@ -684,8 +684,8 @@ async function handleApi(req,env){
     if(key==="caption"){
       // New submissions must build on the nine-photo hunting story saved in Module 04.
       if(data.storyMode!=="hunting")return failure("Selesaikan Meja Editor Modul 04 terlebih dahulu",409);
-      if(typeof data.captionText!=="string"||data.captionText.trim().split(/\s+/u).length<50
-       ||data.captionText.length>11000)return failure("Tulis narasi minimal 50 kata dan maksimum 11.000 karakter",400);
+      if(typeof data.captionText!=="string"||!data.captionText.trim()||data.captionText.length>11000)
+        return failure("Tuliskan setidaknya satu kata. Tidak ada batas minimum jumlah kata untuk latihan.",400);
       if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes"))
         return failure("Periksa tiga butir editorial sebelum menyimpan",400);
       if(["who","what","when","where","why","how","verification"].some(k=>data[k]!==undefined&&

@@ -3,7 +3,7 @@ import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,co
 import {COMPOSITION_CHALLENGES,compositionChallengeImage} from "./composition-lab.js";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
-import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
+import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount,captionExampleHTML} from "./caption.js";
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
 import {createAnswerSync} from "./answer-sync.js";
 import {timerParticipantHTML,timerLCDHTML,timerTrainerHTML,paintSharedHuntingTimer,EMPTY_HUNTING_TIMER} from "./hunting-timer-ui.js";
@@ -856,6 +856,7 @@ function storyTrainerPanel(data,isMentor){
 }
 function captionTheoryContent(index,variant="lcd"){
  const slide=captionSlide(index);
+ if(slide.key==="caption-example")return `<div class="caption-example-theory caption-example-${variant}">${captionVisual(index)}${captionExampleHTML()}</div>`;
  return `<div class="caption-theory-layout caption-theory-${variant}"><div class="caption-theory-copy">
   <span class="theory-kicker">BAB 5 · ${escapeHtml(slide.tag)} · ${captionLabel(index)} / ${CAPTION_SLIDES.length}</span>
   <h2>${escapeHtml(slide.title)}</h2><p class="caption-theory-lead">${escapeHtml(slide.lead)}</p>
@@ -888,14 +889,14 @@ function captionTrainerPanel(data,isMentor){
  const x=captionSlide(i),theory=state.presentation.view==="theory";
  return `<section class="card caption-trainer-card"><div class="trainer-demo-heading">
  <div><span class="eyebrow">PRESENTASI · BAB 5</span><h2>Caption Lab</h2>
- <p class="small-note">Enam slide untuk memahami 5W+1H, verifikasi, dan menulis narasi foto dari sembilan bingkai.</p></div>
+ <p class="small-note">Tujuh slide, termasuk contoh caption 5W+1H berbasis foto Sangihe, lalu latihan penulisan narasi peserta.</p></div>
  <span class="pill green">● MODUL 05 SIAP</span></div>
  ${theory?`<div class="caption-trainer-preview"><div class="caption-trainer-notes">
-   <span class="eyebrow">SLIDE ${captionLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+   <span class="eyebrow">SLIDE ${captionLabel(i)} / ${CAPTION_SLIDES.length}</span><h3>${escapeHtml(x.title)}</h3>
    <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>
-   ${captionVisual(i)}</div><div class="trainer-slide-nav">
+   ${x.key==="caption-example"?captionExampleHTML():captionVisual(i)}</div><div class="trainer-slide-nav">
    <button class="btn subtle" data-caption-step="-1" ${i===CAPTION_START||isMentor?"disabled":""}>← Sebelumnya</button>
-   <strong>Slide ${captionLabel(i)} / 06</strong>
+   <strong>Slide ${captionLabel(i)} / ${CAPTION_SLIDES.length}</strong>
    <button class="btn primary" data-caption-step="1" ${i===CAPTION_END||isMentor?"disabled":""}>Berikutnya →</button></div>
    <div class="story-slide-dots">${CAPTION_SLIDES.map((x,j)=>`<button class="theory-dot" data-caption-slide="${CAPTION_START+j}" aria-pressed="${i===CAPTION_START+j}" ${isMentor?"disabled":""}>${captionLabel(CAPTION_START+j)}</button>`).join("")}</div>
    <div class="actions"><button class="btn primary" data-caption-mode="simulator" ${isMentor?"disabled":""}>Buka Caption Lab peserta →</button></div>`
@@ -1005,11 +1006,11 @@ function captionPage(){
  <textarea id="caption-verification" name="verification" rows="3" maxlength="1800" placeholder="Contoh: nama dan peran orang dalam foto, nama lokasi yang lebih rinci, rincian penghargaan…">${escapeHtml(saved.verification||"")}</textarea>
  <small>Tuliskan pertanyaan untuk narasumber atau data yang perlu diperiksa.</small></div>
  <hr class="rule">
- <div class="field"><label for="captionText">Narasi untuk sembilan foto (target sekitar 150 kata)</label>
+ <div class="field"><label for="captionText">Narasi untuk sembilan foto (jumlah kata bebas)</label>
  <textarea class="captionbox" id="captionText" name="captionText" rows="9" maxlength="11000" placeholder="Mulailah dari fakta paling penting. Hubungkan orang, aktivitas, lokasi, dan proses yang terbukti dalam rangkaian foto…">${escapeHtml(draft)}</textarea>
- <div class="caption-counter"><strong id="wordcount">${count} kata</strong><span id="caption-word-feedback">${count===0?"Mulai tulis narasimu":count<120?"Masih di bawah kisaran latihan":count<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan"}</span></div>
+ <div class="caption-counter"><strong id="wordcount">${count} kata</strong><span id="caption-word-feedback">${count===0?"Mulai tulis narasimu":"Boleh disimpan · "+count+" kata"}</span></div>
  <div class="progress-meter"><span id="wordbar" style="width:${Math.min(100,count/150*100)}%"></span></div>
- <small>Kisaran latihan 120–180 kata sebagai panduan, bukan aturan kaku. Prioritaskan akurasi. Aplikasi tidak menuliskan narasi otomatis.</small></div>
+ <small>Berapa pun jumlah kata boleh dikirim. Penghitung kata membantu diskusi kelas dan perbandingan dengan ketentuan panitia. Prioritaskan akurasi.</small></div>
  <div class="caption-review-list"><h3>Periksa sebelum menyimpan</h3>
  <label><input type="checkbox" name="reviewVisual" value="yes" ${saved.reviewVisual==="yes"?"checked":""}> Semua pernyataan tentang foto sesuai yang terlihat.</label>
  <label><input type="checkbox" name="reviewFacts" value="yes" ${saved.reviewFacts==="yes"?"checked":""}> Nama, tanggal, tempat, serta klaim lain telah diperiksa atau ditandai perlu verifikasi.</label>
@@ -1157,7 +1158,7 @@ function bindLessons(){
     const counter=$("#wordcount"),bar=$("#wordbar"),feedback=$("#caption-word-feedback");
     if(counter)counter.textContent=n+" kata";
     if(bar)bar.style.width=Math.min(100,n/150*100)+"%";
-    if(feedback)feedback.textContent=n===0?"Mulai tulis narasimu":n<120?"Masih di bawah kisaran latihan":n<=180?"Dalam kisaran latihan":"Lebih panjang dari kisaran latihan; periksa bagian yang dapat dipadatkan";
+    if(feedback)feedback.textContent=n===0?"Mulai tulis narasimu":"Boleh disimpan · "+n+" kata";
    }
    form.oninput=updateDraft;
    form.onchange=updateDraft;
@@ -1166,7 +1167,7 @@ function bindLessons(){
     const story=state.work.story||{},nine=storyHuntingSelection(story);
     const status=$("#caption-save-status");
     if(nine.length!==9||!story.completedAt||story._draft){if(status)status.textContent="Selesaikan dan simpan sembilan foto Modul 04 sebelum mengirim narasi.";toast("Simpan Meja Editor terlebih dahulu");return}
-    if(n<50){if(status)status.textContent="Narasi terlalu pendek untuk latihan; tulis minimal 50 kata.";toast("Lengkapi narasi terlebih dahulu");return}
+    if(n===0){if(status)status.textContent="Tuliskan setidaknya satu kata sebelum menyimpan.";toast("Isi narasi terlebih dahulu");return}
     if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
       if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
     const result={...data,storyMode:"hunting",storySelected:nine,storyTitle:story.title||"",completedAt:new Date().toISOString()};
@@ -1382,17 +1383,21 @@ function lcdSpotlightContent(spot){
    <p class="spotlight-prompt">Diskusi: Mengapa foto pertama dan terakhir dipilih? Adakah informasi yang berulang?</p></aside></div>`;
  }
  if(spot.module==="caption"){
-  const ids=Array.isArray(a.storySelected)?a.storySelected.slice(0,9):[];
-  const samples=[ids[0],ids[4],ids[8]].filter(id=>Number.isInteger(id));
+  const ids=Array.isArray(a.storySelected)?a.storySelected.slice(0,9).filter(id=>Number.isInteger(id)&&id>=1&&id<=12):[];
   return `<div class="caption-spotlight"><div class="caption-spotlight-top">
-   <span class="kicker">SOROTAN KARYA · CAPTION LAB</span><h1>${name}</h1>
-   <h2>${escapeHtml(a.storyTitle||"Foto cerita peserta")}</h2><p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
-   ${samples.length?`<div class="caption-spotlight-photos">${samples.map((id,i)=>{
-      if(a.storyMode==="hunting")return `<figure><img src="/lensa-muda/api/spotlight/story-photo/${id}" alt="Foto hunting ${id} pilihan peserta"><figcaption>Foto hunting ${id}</figcaption></figure>`;
-      const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption>${escapeHtml(item.title)}</figcaption></figure>`:"";
-    }).join("")}</div>`:""}
-   <div class="caption-spotlight-text">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
-   <div class="caption-spotlight-question">Diskusi: Klaim apa yang kuat dan informasi apa yang masih perlu diverifikasi?</div>
+   <div class="caption-spotlight-ident"><span class="kicker">SOROTAN KARYA · CAPTION LAB</span>
+   <h1>${name}</h1><h2>${escapeHtml(a.storyTitle||"Foto cerita peserta")}</h2></div>
+   <div class="caption-spotlight-count"><b>${captionWordCount(a.captionText||"")} KATA</b><span>Latihan · jumlah kata bebas</span></div></div>
+   <div class="caption-spotlight-main">
+    <div class="caption-spotlight-photos" aria-label="Sembilan foto cerita berurutan">${ids.map((id,i)=>{
+      if(a.storyMode==="hunting")return `<figure><img src="/lensa-muda/api/spotlight/story-photo/${id}" alt="Foto ${i+1} dari sembilan karya peserta" loading="eager" decoding="async"><figcaption><b>${String(i+1).padStart(2,"0")}</b> · Foto ${id}</figcaption></figure>`;
+      const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption><b>${i+1}</b> · ${escapeHtml(item.title)}</figcaption></figure>`:"";
+    }).join("")}</div>
+    <div class="caption-spotlight-narrative"><span class="kicker">NARASI / CAPTION UTUH</span>
+     <div class="caption-spotlight-text" tabindex="0">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
+     <div class="caption-spotlight-question">Diskusi: Klaim mana yang kuat dan apa yang masih perlu diverifikasi?</div>
+    </div>
+   </div>
   </div>`;
  }
  if(spot.module==="etika"){

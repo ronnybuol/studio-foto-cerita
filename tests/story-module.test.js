@@ -42,7 +42,7 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(app.includes('data-move'));
  assert.ok(css.includes('.story-editor-workspace'));
  assert.ok(css.includes('.story-learner-theory .story-theory-lead'));
- assert.ok(api.includes('data.slide>56'));
+ assert.ok(api.includes('data.slide>57'));
  assert.ok(api.includes('data.selected.length!==9'));
  assert.ok(api.includes('data.mode==="hunting"'));
  assert.ok(app.includes('portfolioTrainerHTML('));
@@ -71,7 +71,7 @@ test("Dashboard Modul 04 tampil pada tahap 04 atau lebih tinggi dan penanda rili
  const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
  assert.ok(app.includes("data.stage>=4?storyTrainerPanel(data,isMentor)"));
  assert.ok(app.includes('APP_RELEASE = "m06-finale-20261114"'));
- assert.ok(html.includes('app.js?v=20261115-caption-lab-final-v1'));
+ assert.ok(html.includes('app.js?v=20261115-caption-nine-photo-v2'));
 });
 
 test("Slide 06 menugaskan foto sendiri, memakai spread NatGeo pertama, tanpa mengubah kelima slide Sangihe",()=>{

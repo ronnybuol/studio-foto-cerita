@@ -6,7 +6,14 @@ export const CAPTION_SLIDES=[
  {tag:"03 / KLAIM DAN BUKTI",title:"Jangan mengarang yang tak terlihat",lead:"Foto seseorang sedang meniup instrumen musik bambu tidak dapat menjelaskan jenis lagu, suasana hati, atau tujuan acara.",points:["Hindari menebak maksud atau emosi orang.","Jangan mengarang dialog, tanggal, atau nama.","Keterangan dari narasumber harus bisa ditelusuri."],prompt:"Apakah kita dapat menulis bahwa group musik ini sedang berlatih untuk sebuah festival?",note:"Jawab: tidak tanpa verifikasi. Jangan jadikan contoh karangan sebagai fakta dokumenter.",image:"8895"},
  {tag:"04 / NARASI RANGKAIAN",title:"Satu tulisan untuk sembilan foto",lead:"Susunan foto punya alur, sementara caption menyatukan konteks, tokoh, proses, dan makna yang telah diketahui.",points:["Pilih fakta terpenting sebagai pembuka.","Terangkan hubungan antarbagian tanpa mengulang semua foto.","Tulis ringkas, jelas, dan bisa dipahami pembaca baru."],prompt:"",note:"Minta peserta merujuk urutan sembilan foto Modul 04, bukan menulis cerita lain.",image:"9010"},
  {tag:"05 / PERIKSA ULANG",title:"Klaim perlu verifikasi",lead:"Nama, jabatan, angka penghargaan, lokasi spesifik, dan penyebab harus dicek sesuai sumbernya.",points:["Tandai informasi yang masih perlu verifikasi.","Periksa nama tokoh dan keterangan tempat/waktu.","Jangan mengubah ketidakpastian menjadi pernyataan pasti."],prompt:"Apa yang harus dilakukan ketika sumber menyebut gelar atau penghargaan tanpa rincian detil?",note:"Kenalkan kerja cek fakta dan atribusi, bukan sekadar mengoreksi tata bahasa.",image:"8980"},
- {tag:"06 / PRAKTIK CAPTION",title:"Sekarang tulis narasimu",lead:"Gunakan rangkaian sembilan foto yang sudah dipilih sebelumnya. Isi lembar fakta lalu susun satu caption sekitar 150 kata.",points:["Lihat sembilan foto pilihanmu sebelum menulis.","Isi 5W+1H; yang belum pasti boleh ditandai.","Baca ulang: adakah klaim yang belum didukung bukti?"],prompt:"Sebutkan satu fakta yang sudah diketahui dan satu hal yang perlu ditanyakan lagi.",note:"Buka Caption Lab dan beri waktu peserta bekerja mandiri. Jangan pindahkan otomatis dari tugas mereka.",image:"8824"}
+ {tag:"06 / CONTOH CAPTION",key:"caption-example",title:"Dari foto menjadi caption yang terverifikasi",
+ lead:"Contoh caption dari dokumentasi musik bambu di Sangihe, 9 September 2017, dilengkapi konteks terpisah dari laporan Mongabay Indonesia (2015).",
+ points:["Who, What, When, Where: siapa yang terlihat, apa yang dilakukan, kapan dan di mana dipotret.",
+ "Why dan How: konteks pelestarian musik dan cara membuat instrumen, dengan atribusi sumber.",
+ "Jangan menebak nama pemain atau kegiatan khusus yang belum terverifikasi."],
+ prompt:"Mana informasi dari foto, mana yang berasal dari liputan Mongabay, dan mana yang masih perlu diperiksa?",
+ note:"Bacakan caption lengkap dan tunjukkan pemisahan observasi foto 2017 dari laporan latar 2015. Nama pemain maupun jenis acara pada 9 September 2017 belum terkonfirmasi.",image:"9010"},
+ {tag:"07 / PRAKTIK CAPTION",title:"Sekarang tulis narasimu",lead:"Gunakan rangkaian sembilan foto yang sudah dipilih sebelumnya. Isi lembar fakta lalu tulis satu caption; panjang tulisan bebas sebagai bahan latihan dan diskusi.",points:["Lihat sembilan foto pilihanmu sebelum menulis.","Isi 5W+1H; yang belum pasti boleh ditandai.","Baca ulang: adakah klaim yang belum didukung bukti?"],prompt:"Sebutkan satu fakta yang sudah diketahui dan satu hal yang perlu ditanyakan lagi.",note:"Buka Caption Lab dan beri waktu peserta bekerja mandiri. Jangan pindahkan otomatis dari tugas mereka.",image:"8824"}
 ];
 export const CAPTION_END=CAPTION_START+CAPTION_SLIDES.length-1;
 export const captionSlide=i=>CAPTION_SLIDES[i-CAPTION_START]||CAPTION_SLIDES[0];
@@ -14,5 +21,32 @@ export const captionLabel=i=>String(i-CAPTION_START+1).padStart(2,"0");
 export function captionVisual(i){
  const x=captionSlide(i);
  return `<figure class="caption-slide-photo"><img src="/lensa-muda/assets/composition/sangihe-2017-${x.image}.webp" alt="Dokumentasi musik bambu Sangihe, foto materi Caption Lab" decoding="async"><figcaption>Sangihe · September 2017 · Foto: Ronny Adolof Buol</figcaption></figure>`;
+}
+// Contoh dibuat dari dokumentasi trainer (9 September 2017) dan sumber
+// tertulis Mongabay Indonesia (8 Februari 2015). Bukan kutipan langsung.
+export const CAPTION_EXAMPLE={
+ title:"Musik bambu, tradisi yang terus dimainkan",
+ text:"Sejumlah pemain musik bambu memainkan instrumen tiup di Kabupaten Kepulauan Sangihe, Sulawesi Utara, pada 9 September 2017. Musik bambu adalah bagian dari tradisi masyarakat Sangihe yang digunakan untuk mengiringi berbagai kegiatan budaya dan keagamaan. Menurut laporan Mongabay Indonesia terbitan 8 Februari 2015, Agustinus Sasundu mengembangkan beragam instrumen dari bambu, antara lain klarinet, trombon, dan bas. Proses pembuatannya dimulai dengan memilih bambu tua, menebang, mengeringkan, lalu membentuknya menjadi instrumen. Pengembangan musik bambu ikut menjaga pengetahuan dan pemanfaatan bambu dalam kehidupan masyarakat. Identitas para pemain, tempat pemotretan yang lebih spesifik, serta nama kegiatan pada hari pengambilan foto masih perlu dikonfirmasi. Foto: Ronny Adolof Buol.",
+ sourceTitle:"Agustinus Sasundu, Mengkonservasi Bambu Dengan Musik",
+ sourceUrl:"https://mongabay.co.id/2015/02/08/agustinus-sasundu-menkonservasi-bambu-dengan-musik/",
+ photoDate:"9 September 2017",
+ facts:[
+ ["WHO","Para pemain musik bambu; nama mereka belum dikonfirmasi"],
+ ["WHAT","Memainkan alat musik tiup berbahan bambu"],
+ ["WHEN","9 September 2017 (tanggal foto)"],
+ ["WHERE","Kabupaten Kepulauan Sangihe, Sulawesi Utara"],
+ ["WHY","Tradisi dan pelestarian musik bambu; konteks dari Mongabay (2015)"],
+ ["HOW","Bambu tua dipilih, ditebang, dikeringkan, kemudian dibentuk menjadi instrumen (laporan 2015)"]
+ ]
+};
+export function captionExampleHTML(){
+ const escaped=s=>String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ return `<section class="caption-example-content" aria-label="Contoh caption dan unsur 5W plus 1H">
+ <div class="caption-example-head"><span class="theory-kicker">CONTOH CAPTION · DOKUMENTASI 2017</span><h3>${escaped(CAPTION_EXAMPLE.title)}</h3>
+ <p class="caption-example-text">${escaped(CAPTION_EXAMPLE.text)}</p>
+ <p class="caption-example-source">Konteks: <a href="${CAPTION_EXAMPLE.sourceUrl}" target="_blank" rel="noopener noreferrer">${escaped(CAPTION_EXAMPLE.sourceTitle)}</a> · Mongabay Indonesia, 8 Februari 2015.</p></div>
+ <div class="caption-example-facts">${CAPTION_EXAMPLE.facts.map(([k,v])=>`<div><b>${escaped(k)}</b><span>${escaped(v)}</span></div>`).join("")}</div>
+ <p class="caption-example-warning">Tanggal pemotretan: 9 September 2017. Artikel tahun 2015 menjadi sumber konteks, bukan bukti bahwa orang atau peristiwa dalam foto identik dengan laporan 2015.</p>
+ </section>`;
 }
 export function captionWordCount(text){return String(text||"").trim()?String(text).trim().split(/\s+/u).length:0}

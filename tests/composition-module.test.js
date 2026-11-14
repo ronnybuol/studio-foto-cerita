@@ -29,7 +29,7 @@ test("trainer, LCD, dan peserta mengenali tahap komposisi tanpa mengubah teori k
  assert.ok(source.includes('stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START'));
  assert.ok(source.includes('compositionChallengeTab'));
  assert.ok(source.includes('saveAnswer("komposisi"'));
- assert.ok(backend.includes('data.slide>56'));
+ assert.ok(backend.includes('data.slide>57'));
 });
 
 test("setiap slide memakai foto asli Sangihe yang dipilih, bukan foto Modul 01",()=>{

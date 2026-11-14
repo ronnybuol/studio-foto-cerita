@@ -6,10 +6,10 @@ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
 const api=readFileSync(new URL("../src/index.js",import.meta.url),"utf8");
 const styles=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
 
-test("Six Caption Lab slides remain in place, and the locked Modul 04 is unchanged",()=>{
+test("Seven Caption Lab slides including original sourced example are available, and the locked Modul 04 is unchanged",()=>{
  assert.equal(CAPTION_START,45);
- assert.equal(CAPTION_END,50);
- assert.equal(CAPTION_SLIDES.length,6);
+ assert.equal(CAPTION_END,51);
+ assert.equal(CAPTION_SLIDES.length,7);
  assert.ok(app.includes('function storyPage(){'));
  assert.ok(app.includes('function captionPage(){'));
  assert.ok(app.includes('storyHuntingSelection(story)'));
@@ -27,7 +27,7 @@ test("Caption only submits nine saved hunting photos, not the old Sangihe bank",
 });
 
 test("Caption Lab validates narrative and editorial review before saving",()=>{
- assert.ok(api.includes('data.captionText.trim().split(/\\s+/u).length<50'));
+ assert.ok(api.includes('!data.captionText.trim()'));
  assert.ok(api.includes('["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")'));
  assert.ok(app.includes('const result={...data,storyMode:"hunting"'));
 });
@@ -41,4 +41,20 @@ test("Trainer watches submissions and can review or spotlight complete stories",
  assert.ok(app.includes('data-story-trainer-preview='));
  assert.ok(app.includes('SOROTAN KARYA · CAPTION LAB'));
  assert.ok(styles.includes('.caption-review-grid'));
+ assert.ok(styles.includes('grid-template-rows:repeat(3,minmax(0,1fr))'));
+ assert.ok(app.includes('ids.map((id,i)=>'));
+ assert.ok(app.includes('caption-spotlight-count'));
+ assert.ok(app.includes('caption-spotlight-narrative'));
+});
+
+
+test("Sourced sample caption separates photo date from report context",async()=>{
+ const {CAPTION_EXAMPLE,captionExampleHTML}=await import("../public/caption.js");
+ assert.match(CAPTION_EXAMPLE.text,/9 September 2017/);
+ assert.match(CAPTION_EXAMPLE.text,/Mongabay Indonesia/);
+ assert.equal(CAPTION_EXAMPLE.facts.length,6);
+ assert.ok(captionExampleHTML().includes('CONTOH CAPTION'));
+ assert.ok(CAPTION_SLIDES.some(s=>s.key==='caption-example'));
+ assert.ok(app.includes('captionExampleHTML()'));
+ assert.ok(!api.includes('data.captionText.trim().split(/\\s+/u).length<50'));
 });

@@ -1,5 +1,5 @@
 // Modul 06 – Etika & Tantangan. Materi penutup: integritas visual dan rencana liputan.
-export const ETHICS_START=51;
+export const ETHICS_START=52;
 export const ETHICS_SLIDES=[
  {tag:"01 / KEPERCAYAAN",title:"Satu foto adalah tanggung jawab",lead:"Foto yang bagus belum tentu foto yang tepat. Pilihan fotografer berdampak pada orang yang dipotret dan kepercayaan pembaca.",points:["Jujur tentang apa yang terjadi.","Hormati orang dan konteks budaya.","Pikirkan akibat publikasi sebelum memotret."],prompt:"Pernahkah foto yang menarik justru memberi kesan keliru?",note:"Mulai dengan cerita peserta tentang pilihan ketika memotret orang, bukan hafalan aturan.",image:"9053"},
  {tag:"02 / MOMEN ASLI",title:"Jangan merekayasa peristiwa",lead:"Meminta pengulangan tindakan tidak dapat kemudian disajikan seolah momen spontan yang terdokumentasi.",points:["Bedakan potret yang diarahkan dari dokumentasi momen alami.","Jangan memindah atau menambah objek untuk menciptakan fakta visual palsu.","Berpindah posisi dan menunggu momen adalah pilihan kreatif."],prompt:"Jika momen terbaik terlewat, apakah boleh meminta pengulangan dan menyebutnya candid?",note:"Ajak kelas membahas perbedaan foto potret terarah dan foto jurnalistik candid.",image:"9042"},
