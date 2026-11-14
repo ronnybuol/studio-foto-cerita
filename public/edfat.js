@@ -24,5 +24,10 @@ export const EDFAT_CASES=[
 export const edfatPhoto=id=>"/lensa-muda/assets/composition/sangihe-2017-"+id+".webp";
 export function edfatVisual(slideIndex){
  const slide=edfatSlide(slideIndex);
+ if(slide.key==="practice")return `<div class="edfat-hunting-brief" aria-label="Tiga langkah praktik hunting foto">
+ <div class="edfat-hunting-step"><span class="edfat-hunting-number">01</span><strong>HUNTING FOTO</strong><b>25 MENIT</b><p>Cari lima pendekatan EDFAT di sekitarmu.</p></div>
+ <div class="edfat-hunting-step"><span class="edfat-hunting-number">02</span><strong>SELEKSI + UNGGAH</strong><b>15 MENIT</b><p>Pilih maksimal 12 foto. Pastikan semuanya tersimpan di server.</p></div>
+ <div class="edfat-hunting-step"><span class="edfat-hunting-number">03</span><strong>FOTO PILIHAN</strong><b>1 KARYA</b><p>Tentukan unsur EDFAT paling kuat dan jelaskan alasannya.</p></div>
+ </div>`;
  return `<figure class="edfat-figure"><div class="edfat-photo"><img src="${edfatPhoto(slide.image)}" alt="Dokumentasi musik bambu Sangihe: ${slide.title}" decoding="async"></div><figcaption>Sangihe, September 2017 · Foto: Ronny Adolof Buol</figcaption></figure>`;
 }
