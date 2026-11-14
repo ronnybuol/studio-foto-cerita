@@ -1,0 +1,47 @@
+name: Verify R2 photo hunting foundation in production
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/verify-hunting-photo-foundation.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read-only Cloudflare deployment verification
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,urllib.error,time,sys,json
+          base="https://kelasbelajar.org/lensa-muda/"
+          for attempt in range(1,7):
+            try:
+              def fetch(path):
+                req=urllib.request.Request(base+path,headers={"User-Agent":"Mozilla/5.0","Cache-Control":"no-cache"})
+                try:
+                  with urllib.request.urlopen(req,timeout=22) as res:return res.status,res.read()
+                except urllib.error.HTTPError as error:return error.code,error.read()
+              h,html=fetch("?hunting-verification="+str(attempt))
+              a,app=fetch("app.js?hunting-verification="+str(attempt))
+              b,ui=fetch("hunting-ui.js?hunting-verification="+str(attempt))
+              c,client=fetch("photo-hunting.js?hunting-verification="+str(attempt))
+              s,css=fetch("styles.css?hunting-verification="+str(attempt))
+              api,payload=fetch("api/hunting/photos?hunting-verification="+str(attempt))
+              flags={
+                "html":b"20261115-hunting-r2-foundation-v12" in html,
+                "frontend":b"bindHuntingUI" in app and b"huntingPanelHTML" in app,
+                "ui":b"Menunggu unggah" in ui and b"Tersimpan di server" in ui,
+                "client":b"indexedDB.open" in client and b"image/webp" in client,
+                "css":b".hunting-photo-gallery" in css,
+                "auth":api==401 and b"Sesi peserta tidak valid" in payload,
+                "http":all(x==200 for x in (h,a,b,c,s))
+              }
+              print("ATTEMPT",attempt,flags,flush=True)
+              if all(flags.values()):
+                print("PASS: hunting UI, offline queue, and authenticated API route are deployed",flush=True)
+                sys.exit(0)
+            except Exception as e:print("ERROR",attempt,repr(e),flush=True)
+            time.sleep(10)
+          sys.exit("FAIL: photo foundation not fully served by production")
+          PY
