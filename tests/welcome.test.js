@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readFileSync,statSync} from "node:fs";
 
 const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
@@ -27,4 +27,14 @@ test("trainer dapat menampilkan LCD pembuka tanpa menghapus progres",()=>{
  assert.match(worker,/path==="\/api\/welcome"/);
  assert.match(worker,/json_set\(camera_json,'\$\.welcome'/);
  assert.match(app,/\/lensa-muda\/peserta/);
+});
+
+test("foto Hong Bit asli dan kedua logo tersedia lokal, bukan thumbnail",()=>{
+ const image=statSync(new URL("../public/assets/brand/hong-bit.webp",import.meta.url));
+ assert.ok(image.size>30000,"Foto hero harus resolusi layak proyektor");
+ for(const name of ["kamisama.png","zonautara.png","peserta-qr.svg"]){
+  assert.ok(statSync(new URL("../public/assets/brand/"+name,import.meta.url)).size>1000,name);
+ }
+ const qr=readFileSync(new URL("../public/assets/brand/peserta-qr.svg",import.meta.url),"utf8");
+ assert.match(qr,/<svg/);
 });
