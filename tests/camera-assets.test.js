@@ -45,3 +45,13 @@ test("simulator kamera tetap memakai foto Modul 01, lab komposisi memakai foto S
   assert.match(js,/state\.active==="kamera" && \$\("#aperture"\)/);
   assert.match(js,/SIMULASI FOTO GENERATIF/);
 });
+
+test("foto simulator LCD dan peserta tampil utuh tanpa cropping atau distorsi",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
+ const after=css.slice(css.lastIndexOf("/* Modul 01 — never crop"));
+ assert.match(after,/\.scene\.photo-camera-scene>\.photo-main,[\s\S]*?\.scene\.photo-camera-scene>\.photo-motion\s*\{\s*object-fit:contain;/);
+ assert.match(after,/\.lcd-camera-photo \.scene\.photo-camera-scene\s*\{[\s\S]*?width:min\(100%,72vh\);[\s\S]*?max-height:none;[\s\S]*?aspect-ratio:3\/2;/);
+ assert.match(after,/\.participant-camera-image \.scene\.photo-camera-scene\s*\{[\s\S]*?width:100%;[\s\S]*?height:auto;[\s\S]*?aspect-ratio:3\/2;/);
+ assert.match(html,/styles\.css\?v=20261114-camera-photo-contain-v7/);
+});
