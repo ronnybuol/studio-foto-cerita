@@ -9,6 +9,7 @@ import {createAnswerSync} from "./answer-sync.js";
 import {timerParticipantHTML,timerLCDHTML,timerTrainerHTML,paintSharedHuntingTimer,EMPTY_HUNTING_TIMER} from "./hunting-timer-ui.js";
 import {huntingPanelHTML,bindHuntingUI} from "./hunting-ui.js";
 import {huntingSlotsFor,fetchHuntingSlots,hydrateHuntingImages,clearHuntingSlotCache} from "./story-hunting-ui.js";
+import {storyHuntingSelection,addStoryHuntingPhoto} from "./story-selection.js";
 import {portfolioViewerHTML,portfolioTrainerHTML} from "./portfolio.js";
 import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
 import {createTrainerControl} from "./trainer-sync.js";
@@ -894,7 +895,7 @@ function renderStoryShot(x,chosen=false,pos=0,total=0){
 }
 function storyPage(){
  const saved=state.work.story||{},available=huntingSlotsFor(state.user);
- const selected=Array.isArray(saved.selected)&&saved.mode==="hunting"?saved.selected.filter(n=>Number.isInteger(n)&&n>=1&&n<=12):[];
+ const selected=storyHuntingSelection(saved);
  const bank=Array.isArray(available)?available:[];
  const remaining=bank.filter(id=>!selected.includes(id));
  return `${titleBlock("story")}<section class="card story-editor-intro">
@@ -1083,17 +1084,26 @@ function bindLessons(){
     void fetchHuntingSlots(user).then(()=>{if(state.user?.id===user?.id&&state.active==="story")render()}).catch(error=>toast(error.message));
   }
   void hydrateHuntingImages(user);
-  const setSelected=selected=>{state.work.story={...current(),mode:"hunting",selected,_draft:true};saveWork();render()};
-  $$("[data-pick]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],id=Number(btn.dataset.pick);if(ids.length>=9){toast("Sudah sembilan foto. Keluarkan satu dahulu.");return}if((huntingSlotsFor(user)||[]).includes(id)&&!ids.includes(id))setSelected([...ids,id])});
-  $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected((current().selected||[]).filter(id=>id!==Number(btn.dataset.remove))));
-  $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=[...(current().selected||[])],i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
+  const selectedNow=()=>storyHuntingSelection(current());
+  const setSelected=selected=>{
+   state.work.story={...current(),mode:"hunting",selected,_draft:true};
+   saveWork();renderParticipant();
+  };
+  $("[data-pick]").forEach(btn=>btn.onclick=()=>{
+   const id=Number(btn.dataset.pick);
+   const result=addStoryHuntingPhoto(current(),id,huntingSlotsFor(user));
+   if(result.error){toast(result.error);const feedback=$("#story-status");if(feedback)feedback.textContent=result.error;return}
+   setSelected(result.selected);
+  });
+  $$("[data-remove]").forEach(btn=>btn.onclick=()=>setSelected(selectedNow().filter(id=>id!==Number(btn.dataset.remove))));
+  $$("[data-move]").forEach(btn=>btn.onclick=()=>{const ids=selectedNow(),i=ids.indexOf(Number(btn.dataset.move)),j=i+Number(btn.dataset.dir);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];setSelected(ids)});
   for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
    const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value,_draft:true};saveWork()};
   }
   const refresh=$("#story-refresh-photos");if(refresh)refresh.onclick=()=>{clearHuntingSlotCache();void fetchHuntingSlots(user).then(()=>render()).catch(error=>toast(error.message))};
   $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
   $("#save-story").onclick=async()=>{
-   const data=current(),ids=data.selected||[],title=(data.title||"").trim(),reason=(data.reason||"").trim();
+   const data=current(),ids=selectedNow(),title=(data.title||"").trim(),reason=(data.reason||"").trim();
    const status=$("#story-status");
    if(ids.length!==9||ids.some(id=>!(huntingSlotsFor(user)||[]).includes(id))){if(status)status.textContent="Pilih tepat sembilan foto.";return}
    if(title.length<5||reason.length<30){if(status)status.textContent="Lengkapi judul minimal 5 karakter dan alasan urutan minimal 30 karakter.";toast("Lengkapi judul dan alasan");return}
