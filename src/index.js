@@ -343,7 +343,7 @@ async function handleApi(req,env){
     if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>56)
       return failure("Mode presentasi atau nomor slide tidak valid",400);
     try{
-      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?),updated_at=? WHERE id=?")
+      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false')),updated_at=? WHERE id=?")
         .bind(data.view,data.slide,new Date().toISOString(),SESSION_ID).run();
     }catch(error){
       if(/no such column:\\s*camera_json/i.test(String(error?.message)))
