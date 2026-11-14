@@ -1,0 +1,38 @@
+name: Install splash assets
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/install-splash-assets.yml
+permissions:
+  contents: write
+jobs:
+  install-assets:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch uploaded images and self-host QR
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p public/assets/brand
+          download_asset(){
+            local file="$1" hq="$2" fallback="$3"
+            curl --retry 2 --connect-timeout 10 -fsSL "$hq" -o "$file" || curl --retry 2 --connect-timeout 10 -fsSL "$fallback" -o "$file"
+            file "$file"
+          }
+          download_asset public/assets/brand/hong-bit.jpg 'https://media.canva.com/v2/image-resize/format:JPG/height:1024/quality:95/uri:ifs%3A%2F%2FM%2F0137bdab-8591-49de-921d-899dd57c4364/watermark:F/width:1540?csig=AAAAAAAAAAAAAAAAAAAAAPaqnUmXe1JRrc0u7A9MQ6NYtmKxBIj9dUxf6wdfuSCW&exp=1794641074&osig=AAAAAAAAAAAAAAAAAAAAAFe4YbovCX0y5bFMh2pLCVaM2188bfUr8qwb7-gAAfnF&signer=media-rpc&token=AAIAAU0AJDAxMzdiZGFiLTg1OTEtNDlkZS05MjFkLTg5OWRkNTdjNDM2NAAAAAABodjxl1A7TZqsjzeMmSVnOYYT6_TxeDHQjHduRGlahQtPxMJV-w&x-canva-quality=thumbnail' 'https://media.canva.com/v2/image-resize/format:JPG/height:133/quality:75/uri:ifs%3A%2F%2FM%2F0137bdab-8591-49de-921d-899dd57c4364/watermark:F/width:200?csig=AAAAAAAAAAAAAAAAAAAAAPaqnUmXe1JRrc0u7A9MQ6NYtmKxBIj9dUxf6wdfuSCW&exp=1794641074&osig=AAAAAAAAAAAAAAAAAAAAAFe4YbovCX0y5bFMh2pLCVaM2188bfUr8qwb7-gAAfnF&signer=media-rpc&token=AAIAAU0AJDAxMzdiZGFiLTg1OTEtNDlkZS05MjFkLTg5OWRkNTdjNDM2NAAAAAABodjxl1A7TZqsjzeMmSVnOYYT6_TxeDHQjHduRGlahQtPxMJV-w&x-canva-quality=thumbnail'
+          download_asset public/assets/brand/kamisama.png 'https://media.canva.com/v2/image-resize/format:PNG/height:636/quality:100/uri:ifs%3A%2F%2FM%2F6189d689-b9e7-4403-b1fd-866d05825b97/watermark:F/width:544?csig=AAAAAAAAAAAAAAAAAAAAAA5pzC-cTq4gSoDpXjubdjY0ga7YdJx_0LFLpCj7nmE2&exp=1794641165&osig=AAAAAAAAAAAAAAAAAAAAAFmkS0c_AdyvZT4jURk9fJ_g9Sw6uKeFgoSV-HclAD-Z&signer=media-rpc&token=AAIAAU0AJDYxODlkNjg5LWI5ZTctNDQwMy1iMWZkLTg2NmQwNTgyNWI5NwAAAAABodjy-sgvEZWwsHCAIBBa83Ahar5E8QDuze9FflCSc7M0rJe4og&x-canva-quality=thumbnail' 'https://media.canva.com/v2/image-resize/format:PNG/height:159/quality:100/uri:ifs%3A%2F%2FM%2F6189d689-b9e7-4403-b1fd-866d05825b97/watermark:F/width:136?csig=AAAAAAAAAAAAAAAAAAAAAA5pzC-cTq4gSoDpXjubdjY0ga7YdJx_0LFLpCj7nmE2&exp=1794641165&osig=AAAAAAAAAAAAAAAAAAAAAFmkS0c_AdyvZT4jURk9fJ_g9Sw6uKeFgoSV-HclAD-Z&signer=media-rpc&token=AAIAAU0AJDYxODlkNjg5LWI5ZTctNDQwMy1iMWZkLTg2NmQwNTgyNWI5NwAAAAABodjy-sgvEZWwsHCAIBBa83Ahar5E8QDuze9FflCSc7M0rJe4og&x-canva-quality=thumbnail'
+          download_asset public/assets/brand/zonautara.png 'https://media.canva.com/v2/image-resize/format:PNG/height:190/quality:100/uri:ifs%3A%2F%2FM%2F2a0dac77-5b2c-4452-8c8d-6ba3d75ca657/watermark:F/width:674?csig=AAAAAAAAAAAAAAAAAAAAAD808FCpVUSFA0gCqyuTZjd85aQF4c7yi_SF0qAXwlte&exp=1794642440&osig=AAAAAAAAAAAAAAAAAAAAAOfOQ-Y3hCvYW7dczhzzW_WOkdZp3Iw8CbbiZ29Ih_Ep&signer=media-rpc&token=AAIAAU0AJDJhMGRhYzc3LTViMmMtNDQ1Mi04YzhkLTZiYTNkNzVjYTY1NwAAAAABodkGb0C95lH-bo7ED6s1oWIQxq6qfajobpnr5lCem1Rjo_9-zA&x-canva-quality=thumbnail' 'https://media.canva.com/v2/image-resize/format:PNG/height:56/quality:100/uri:ifs%3A%2F%2FM%2F2a0dac77-5b2c-4452-8c8d-6ba3d75ca657/watermark:F/width:199?csig=AAAAAAAAAAAAAAAAAAAAAD808FCpVUSFA0gCqyuTZjd85aQF4c7yi_SF0qAXwlte&exp=1794642440&osig=AAAAAAAAAAAAAAAAAAAAAOfOQ-Y3hCvYW7dczhzzW_WOkdZp3Iw8CbbiZ29Ih_Ep&signer=media-rpc&token=AAIAAU0AJDJhMGRhYzc3LTViMmMtNDQ1Mi04YzhkLTZiYTNkNzVjYTY1NwAAAAABodkGb0C95lH-bo7ED6s1oWIQxq6qfajobpnr5lCem1Rjo_9-zA&x-canva-quality=thumbnail'
+          npm exec --yes --package=qrcode -- qrcode -t svg -o public/assets/brand/peserta-qr.svg "https://kelasbelajar.org/lensa-muda/peserta"
+          file public/assets/brand/*.png public/assets/brand/*.jpg public/assets/brand/*.svg
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets/brand/hong-bit.jpg public/assets/brand/kamisama.png public/assets/brand/zonautara.png public/assets/brand/peserta-qr.svg
+          git diff --cached --quiet || (git commit -m 'assets: install Hong Bit original and Kamisama/Zonautara logos and QR' && git push)
