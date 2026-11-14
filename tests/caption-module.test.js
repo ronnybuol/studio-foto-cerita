@@ -28,7 +28,7 @@ test("Trainer, LCD, peserta, draf, dan sorotan Caption Lab tetap terhubung",()=>
   "function captionPage(", "function captionPhotoStrip(", 'case "caption":return theory?captionParticipantSlide(slide):captionPage()',
   'data-caption-mode', 'data-caption-slide', 'data-caption-step',
   'caption-form','caption-verification','captionText','reviewVisual','reviewFacts','reviewSequence',
-  'storySelected:Array.isArray(state.work.story?.selected)', 'saveAnswer("caption",result)',
+  'storySelected:nine', 'saveAnswer("caption",result)',
   'state.work.caption={...obj,_draft:true}', 'caption:[CAPTION_START,CAPTION_END]'
  ])assert.ok(app.includes(text),"Fitur caption hilang: "+text);
  assert.ok(app.includes('stage===5?captionTrainerPanel(data,isMentor)'));
