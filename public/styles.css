@@ -1617,3 +1617,12 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .edfat-hunting-spotlight-copy h2{font-size:clamp(24px,2.6vw,46px);color:#ffd081}
 .edfat-hunting-spotlight-copy p{font-size:clamp(17px,1.65vw,29px);line-height:1.45;overflow-wrap:anywhere}
 @media(max-width:820px){.edfat-hunting-spotlight{grid-template-columns:1fr}.edfat-hunting-spotlight-photo{height:42vh}.edfat-hunting-spotlight-copy h1{font-size:26px}.edfat-hunting-spotlight-copy h2{font-size:23px}.edfat-hunting-spotlight-copy p{font-size:16px}}
+
+.edfat-trainer-submissions{margin-top:20px;padding-top:14px;border-top:1px solid #8da3b744}
+.edfat-trainer-submissions h3{font-size:clamp(19px,2vw,28px)}
+.edfat-submission-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;margin-top:12px}
+.edfat-submission{padding:15px;border:1px solid #8da3b755;border-radius:12px;background:#172331;color:#f8faff}
+.edfat-submission b,.edfat-submission span{display:block}
+.edfat-submission span{font-size:13px;color:#ffd081;margin-top:5px}
+.edfat-submission p{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.edfat-submission .actions{display:flex;flex-wrap:wrap;gap:7px}
