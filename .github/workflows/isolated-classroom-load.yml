@@ -5,6 +5,12 @@ on:
     paths:
       - scripts/load-test-local.mjs
       - .github/workflows/isolated-classroom-load.yml
+      - src/**
+      - schema.sql
+      - migrations/**
+      - public/app.js
+      - public/answer-sync.js
+      - public/connection.js
 permissions:
   contents: read
 jobs:

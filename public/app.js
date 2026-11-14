@@ -5,6 +5,7 @@ import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,stor
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
 import {createAnswerSync} from "./answer-sync.js";
+import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -12,6 +13,7 @@ const APP_RELEASE = "m06-finale-20261114";
 const STORAGE_USER = "lm26-user";
 const STORAGE_WORK = "lm26-work";
 const STORAGE_VIEW = "lm26-view";
+const STORAGE_CLASS = "lm26-class-state-v1";
 const STAGES = [
   {key:"mulai",name:"Orientasi",icon:"⌂",title:"Selamat datang di Studio Foto Cerita",blurb:"Tidak membawa kamera? Tidak masalah. Kita akan belajar melihat dan menyusun cerita."},
   {key:"kamera",name:"Laboratorium Kamera",icon:"◉",title:"Bermain dengan cahaya",blurb:"Geser bukaan, shutter, dan ISO. Lihat bagaimana pilihan teknis mengubah gambar."},
@@ -54,6 +56,7 @@ const SHOTS = [
 ].map(([title,type,desc,i])=>({id:i+1,title,type,desc,i}));
 let state = {
   online:false,serverStage:0,count:0,demoStage:6,role:"participant",locked:false,
+  demoMode:localDemo(location),hasClassState:false,
   demoCamera:{a:1,s:3,i:1},
   demoComposition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"},
   presentation:{view:"theory",slide:0},
@@ -66,8 +69,17 @@ let state = {
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
   dashboard:null,justRegistered:false,welcome:false,orientation:false,roster:false,rosterPage:0,rosterNames:[]
 };
+const cachedClass=readJSON(STORAGE_CLASS,null);
+if(validClassSnapshot(cachedClass)){
+ state.serverStage=cachedClass.stage;state.locked=cachedClass.locked;state.count=cachedClass.count||0;state.hasClassState=true;
+ if(cachedClass.camera)state.demoCamera=cachedClass.camera;
+ if(cachedClass.composition)state.demoComposition=cachedClass.composition;
+ if(cachedClass.presentation)state.presentation=cachedClass.presentation;
+ state.welcome=!!cachedClass.welcome;state.orientation=!!cachedClass.orientation;
+}
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
 let participantReady=false,workStorageSafe=true,lastAnswerRetry=0;
+let profileNeedsRestore=!!state.user?.token;
 const answerSync=createAnswerSync({
  storage:localStorage,getUser:()=>state.user,
  send:(key,payload,owner)=>request(`/api/answers/${encodeURIComponent(key)}`,{method:"PUT",payload,participantToken:owner.token}),
@@ -89,6 +101,8 @@ function answerStatusText(){
 }
 function paintAnswerStatus(message=answerStatusText()){
  const box=$("#answer-sync-status");if(box){box.textContent=message;box.hidden=!message}
+ const selector={story:"#story-status",edfat:"#edfat-feedback",caption:"#caption-save-status",etika:"#ethics-status"}[state.active];
+ const detail=selector?$(selector):null;if(detail&&message)detail.textContent=message;
 }
 function answerSaveMessage(result){
  if(result.synced)return state.work[state.active]?._draft
@@ -96,6 +110,7 @@ function answerSaveMessage(result){
    :"Hasil sudah diterima server kelas. Trainer dapat membacanya.";
  if(!workStorageSafe)return "Belum aman tersimpan di perangkat. Jangan tutup halaman; salin jawabanmu.";
  if(result.error?.status===401)return "Hasil tersimpan di perangkat. Sesi berakhir; masuk kembali dengan akun yang sama untuk mengirimnya.";
+ if(result.error?.status===409)return "Salinan lokal tetap disimpan. Server memiliki versi lebih baru; muat ulang, periksa hasilmu, lalu tekan Simpan kembali.";
  return "Hasil tersimpan di perangkat, belum diterima server. Pengiriman akan dicoba lagi saat kelas tersambung dan tahap terbuka.";
 }
 async function retryPendingAnswers(force=false){
@@ -112,26 +127,22 @@ async function retryPendingAnswers(force=false){
 }
 function toast(message){const box=$("#toast");box.textContent=message;box.classList.add("visible");clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.classList.remove("visible"),2800)}
 const PUBLIC_BASE = "/lensa-muda";
+const runStateSync=singleFlight(performStateSync);
 async function request(path,{method="GET",payload,auth=false,participantToken}={}){
   const headers={};
   if(payload!==undefined) headers["Content-Type"]="application/json";
   const token=auth?state.trainerToken:(participantToken??state.user?.token);
   if(token) headers.Authorization=`Bearer ${token}`;
-  const response=await fetch(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"});
-  const body=await response.json().catch(()=>({}));
-  if(!response.ok){
-    const error=new Error(body.error||`HTTP ${response.status}`);
-    error.status=response.status;
-    throw error;
-  }
-  return body;
+  return requestJSON(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"},
+    {timeoutMs:path==="/api/state"?6000:12000});
 }
-async function syncState(){
+function syncState(){return runStateSync()}
+async function performStateSync(){
   try {
     const data=await request("/api/state");
-    if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
+    if(!validClassSnapshot(data)) throw Error("Status kelas belum valid");
     const previousStage=state.serverStage;
-    state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
+    state.online=true;state.hasClassState=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     state.spotlight=data.spotlight||null;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
@@ -140,11 +151,23 @@ async function syncState(){
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
-    if(pageMode()==="peserta")void retryPendingAnswers();
+    try{localStorage.setItem(STORAGE_CLASS,JSON.stringify({stage:state.serverStage,locked:state.locked,count:state.count,
+      camera:state.demoCamera,composition:state.demoComposition,presentation:state.presentation,welcome:state.welcome,orientation:state.orientation}))}catch{}
+    if(pageMode()==="peserta"){
+      if(participantReady&&profileNeedsRestore&&state.user?.token){
+        participantReady=false;
+        void restoreParticipantSession().then(()=>retryPendingAnswers(true));
+      }else void retryPendingAnswers();
+    }
+    return true;
   }catch{
     state.online=false;
     $("#connectivity").className="connection demo";
-    $("#connectivity").textContent="◌ Mode demo lokal — latihan tersimpan pada perangkat ini, belum tersinkron ke kelas";
+    $("#connectivity").textContent=state.demoMode
+      ?"◌ Mode demo lokal — latihan tersimpan pada perangkat ini, belum tersinkron ke kelas"
+      :state.hasClassState?"Koneksi kelas terputus — menampilkan tahap terakhir. Hasil baru tetap disimpan di perangkat."
+      :"Belum terhubung ke kelas. Data akun dan jawaban di perangkat tetap disimpan; koneksi akan dicoba kembali.";
+    return false;
   }
 }
 function pageMode(){const hash=location.hash.replace(/^#\//,"").split("/")[0];if(["trainer","lcd","peserta"].includes(hash))return hash;const path=location.pathname.replace(/\/+$/,"").split("/").pop();return ["trainer","lcd","peserta"].includes(path)?path:"welcome"}
@@ -166,7 +189,7 @@ ${mode==="reference"?`<div class="learner-reference-nav"><button class="btn smal
 function bindLearnerMode(){const key=state.active;if(!learnerRange(key))return;$$("[data-learner-mode]").forEach(b=>b.onclick=()=>setLearnerMode(key,b.dataset.learnerMode,b.dataset.learnerMode==="reference"?learnerSlide(key):undefined));$$("[data-reference-step]").forEach(b=>b.onclick=()=>setLearnerMode(key,"reference",learnerSlide(key)+Number(b.dataset.referenceStep)))}
 function goModule(key){state.active=key;localStorage.setItem(STORAGE_VIEW,key);render();window.scrollTo({top:0,behavior:"smooth"})}
 function titleBlock(key){const s=STAGES.find(x=>x.key===key);return `<div class="module-top"><div><span class="eyebrow">MODUL ${STAGES.indexOf(s)} / 6</span><h1>${s.title}</h1><p>${s.blurb}</p></div><span class="pill">Latihan interaktif</span></div>`}
-function isUnlocked(key){return !state.locked&&(!state.online || STAGES.findIndex(x=>x.key===key)<=state.serverStage)}
+function isUnlocked(key){const index=STAGES.findIndex(x=>x.key===key);return index>=0&&!state.locked&&(state.demoMode||(state.hasClassState&&index<=state.serverStage))}
 function lessonLayout(){
  const nav=STAGES.map((stage,i)=>`<option value="${stage.key}" ${state.active===stage.key?"selected":""} ${isUnlocked(stage.key)?"":"disabled"}>${String(i).padStart(2,"0")} · ${escapeHtml(stage.name)}</option>`).join("");
  return `<div class="page learner-page"><div class="learner-focus-bar">
@@ -286,7 +309,7 @@ async function participantLogin(e){
  try{
   if(!state.online)throw Error("Login username memerlukan koneksi kelas.");
   const data=await request("/api/participant-login",{method:"POST",payload:{username}});
-  participantReady=false;state.user=data.user;state.justRegistered=false;
+  participantReady=false;profileNeedsRestore=true;state.user=data.user;state.justRegistered=false;
   state.work=answerSync.activate();
   loadLearnerViews();
   localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
@@ -929,6 +952,7 @@ async function signup(e){
  data.name=data.name.trim();data.school=data.school.trim();data.className=data.className.trim();data.username=data.username.trim();
  if(!data.name||!data.school||!data.className||!/^[a-z]{3,20}$/.test(data.username)){toast("Lengkapi data dan username satu kata huruf kecil (3–20 huruf)");return}
  const button=form.querySelector("button");button.disabled=true;button.textContent="Menyimpan…";
+ if(!state.online&&!state.demoMode){button.disabled=false;button.textContent="Daftar dan Masuk →";toast("Pendaftaran memerlukan koneksi kelas. Tunggu sampai tersambung; jangan mendaftar ulang jika sudah punya akun.");return}
  if(state.online){
   try {const response=await request("/api/participants",{method:"POST",payload:data});state.user=response.user}
   catch(err){button.disabled=false;button.textContent="Masuk Studio Foto Cerita →";toast("Pendaftaran gagal: "+err.message);return}
@@ -938,10 +962,14 @@ async function signup(e){
  localStorage.setItem(STORAGE_USER,JSON.stringify(state.user));
  loadLearnerViews();
  if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
- state.work=answerSync.activate();saveWork();participantReady=true;state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
+ state.work=answerSync.activate();saveWork();participantReady=true;profileNeedsRestore=false;state.justRegistered=!!state.user.username;state.active=STAGES[state.serverStage]?.key||"mulai";render();toast(state.user.username?"Pendaftaran berhasil! Simpan username kamu.":"Mode demo lokal — username tidak diterbitkan tanpa koneksi kelas.");
 }
 function logout(){saveWork();participantReady=false;localStorage.removeItem(learnerKey());state.learnerViews={};state.user=null;state.work={};state.justRegistered=false;localStorage.removeItem(STORAGE_USER);localStorage.removeItem(STORAGE_WORK);localStorage.removeItem("lm26-last-username");render()}
 function renderParticipant(){
+ if(!state.demoMode&&!state.hasClassState){
+  $("#root").innerHTML=`<div class="page connection-wait"><div class="card"><h1>Menunggu koneksi kelas</h1><p>Akun dan jawaban yang ada di perangkat tetap disimpan. Tahap pembelajaran akan tampil setelah status kelas berhasil dimuat.</p><button class="btn primary" id="retry-connection">Coba hubungkan kembali</button></div></div>`;
+  $("#retry-connection").onclick=()=>pollClass(true);return;
+ }
  if(state.locked){$("#root").innerHTML=`<div class="page"><div class="card login-card class-closed"><span class="eyebrow">KELAS DITUTUP</span><h1>Kegiatan belajar telah selesai</h1><p>Akses peserta sedang dikunci oleh trainer. Terima kasih telah mengikuti Lensa Muda.</p></div></div>`;return}
  if(!state.user){
   showParticipantAuth("signup");
@@ -967,6 +995,7 @@ function renderParticipant(){
    state.learnerViews[state.active]={mode:"practice",slide:liveLearnerSlide(state.active)};
    saveLearnerViews();
  }
+ try{localStorage.setItem(STORAGE_VIEW,state.active)}catch{}
  $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
@@ -985,10 +1014,11 @@ function renderParticipant(){
  if(button)button.onclick=()=>{if(confirm("Keluar dari akun ini? Simpan username terlebih dahulu."))logout()};
 }
 function trainerLogin(){
- return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><div id="trainer-login-feedback" role="alert" aria-live="polite" class="login-feedback" hidden></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
+ return `<div class="page"><div class="card login-card"><span class="eyebrow">Akses trainer / pendamping</span><h1>Ruang kendali kelas</h1><p class="muted">Masukkan PIN trainer atau pendamping yang telah disiapkan di Cloudflare. Jangan bagikan PIN trainer kepada peserta.</p><form id="trainer-login"><div class="field"><label for="trainer-pin">PIN akses</label><input id="trainer-pin" type="password" required minlength="4" autocomplete="off" inputmode="numeric" placeholder="PIN"></div><div id="trainer-login-feedback" role="alert" aria-live="polite" class="login-feedback" hidden></div><button type="submit" class="btn primary block">Masuk dashboard →</button></form><p class="small-note">Dalam mode demo lokal, dashboard hanya menunjukkan status perangkat ini. Untuk kendali serentak dibutuhkan Workers dan D1.</p>${state.demoMode&&!state.online?`<button class="btn subtle" id="trainer-preview">Buka pratinjau dashboard lokal</button>`:""}</div></div>`;
 }
 async function fetchDashboard(){
- if(!state.online||!state.trainerToken){state.dashboard={stage:state.demoStage,camera:state.demoCamera,presentation:state.presentation,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
+ if(state.demoMode&&!state.online){state.dashboard={stage:state.demoStage,camera:state.demoCamera,presentation:state.presentation,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
+ if(!state.online){if(state.dashboard)return;throw Error("Koneksi kelas terputus. Sesi trainer tetap disimpan; coba hubungkan kembali.")}
  state.dashboard=await request("/api/dashboard",{auth:true});
  state.serverStage=state.dashboard.stage;state.count=state.dashboard.count;
  if(state.dashboard.camera)state.demoCamera=state.dashboard.camera;
@@ -1202,7 +1232,7 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=6){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){if(!state.demoMode){toast("Tahap belum diubah. Hubungkan kembali ke kelas terlebih dahulu.");return}state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=6){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
      if(stage!==state.dashboard?.stage && stage>=1 && stage<=6){
@@ -1216,6 +1246,7 @@ function bindDashboard(){
    if(state.trainerRole==="mentor")return;
    const target={view:next.view,slide:Math.max(0,Math.min(ETHICS_END,next.slide))};
    if(!state.online){
+     if(!state.demoMode){toast("Slide belum diubah. Hubungkan kembali ke kelas terlebih dahulu.");return}
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
      render();toast("Pratinjau lokal — LCD lain tidak ikut berubah.");
@@ -1456,7 +1487,7 @@ async function renderTrainer(){
         button.textContent="Coba masuk kembali";
       }
     };
-    if(!state.online){
+    if(state.demoMode&&!state.online){
       const preview=$("#trainer-preview");
       if(preview)preview.onclick=()=>{
         state.trainerToken="demo";
@@ -1533,9 +1564,9 @@ function paintCameraDials(camera){
  }
 }
 function lcdPage(){
- const stage=state.online?state.serverStage:state.demoStage;
+ const stage=state.demoMode&&!state.online?state.demoStage:state.serverStage;
  const step=STAGES[stage]||STAGES[0];
- const count=state.online?state.count:(state.user?1:0);
+ const count=state.demoMode&&!state.online?(state.user?1:0):state.count;
  const link=location.origin+"/lensa-muda/peserta";
  const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
@@ -1644,7 +1675,7 @@ let lcdPolling=false;
 async function refreshLCD(){
  if(lcdPolling||pageMode()!=="lcd")return;
  lcdPolling=true;
- const prevStage=state.online?state.serverStage:state.demoStage;
+ const prevStage=state.demoMode&&!state.online?state.demoStage:state.serverStage;
   const prevWelcome=state.welcome;
   const prevOrientation=state.orientation;
   const prevRoster=state.roster,prevRosterPage=state.rosterPage,prevRosterNames=JSON.stringify(state.rosterNames);
@@ -1655,7 +1686,7 @@ async function refreshLCD(){
  const prevSpotlight=JSON.stringify(state.spotlight);
  try{
    await syncState();
-   const nextStage=state.online?state.serverStage:state.demoStage;
+   const nextStage=state.demoMode&&!state.online?state.demoStage:state.serverStage;
    if(prevStage!==nextStage||prevWelcome!==state.welcome||prevOrientation!==state.orientation||prevRoster!==state.roster||prevRosterPage!==state.rosterPage||prevRosterNames!==JSON.stringify(state.rosterNames)||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
      renderLCD();
    }else{
@@ -1663,9 +1694,9 @@ async function refreshLCD(){
       if(prevComposition!==JSON.stringify(state.demoComposition))paintLcdComposition();
      const registeredCount=$(".orientation-registered-count");
      if(registeredCount&&prevCount!==state.count){registeredCount.textContent=String(state.count);registeredCount.classList.remove("count-pulse");void registeredCount.offsetWidth;registeredCount.classList.add("count-pulse")}
-     const welcomeCount=$(".lcd-welcome-count");if(welcomeCount)welcomeCount.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar`;
+     const welcomeCount=$(".lcd-welcome-count");if(welcomeCount)welcomeCount.textContent=`${state.demoMode&&!state.online?(state.user?1:0):state.count} peserta terdaftar`;
       const count=$(".lcd-participants");
-     if(count)count.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar · 16 November 2026`;
+     if(count)count.textContent=`${state.demoMode&&!state.online?(state.user?1:0):state.count} peserta terdaftar · 16 November 2026`;
    }
  }finally{lcdPolling=false}
 }
@@ -1674,21 +1705,15 @@ async function render(){
  const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else if(mode==="welcome")$("#root").innerHTML=welcomePage(false);else renderParticipant();
 }
 window.addEventListener("hashchange",render);
-window.addEventListener("visibilitychange",()=>{
-  if(!document.hidden){
-    if(pageMode()==="lcd")refreshLCD();
-    else syncState();
-  }
-});
 // LCD diperbarui tanpa mengganti konten halaman, sehingga mode fullscreen tetap aktif.
 let lastPassivePoll=0;
-setInterval(async()=>{
-  if(pageMode()==="lcd"){await refreshLCD();return}
+const pollClass=singleFlight(async(force=false)=>{
   if(document.hidden)return;
+  if(pageMode()==="lcd"){await refreshLCD();return}
   const now=Date.now();
-  if(now-lastPassivePoll>3500){
+  if(force||now-lastPassivePoll>3500){
     lastPassivePoll=now;
-    const prev=JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation});
+    const prev=JSON.stringify({stage:state.serverStage,locked:state.locked,presentation:state.presentation,known:state.hasClassState});
     await syncState();
     if(pageMode()==="peserta"){
       const before=JSON.parse(prev),stageChanged=before.stage!==state.serverStage,lockChanged=before.locked!==state.locked;
@@ -1697,10 +1722,13 @@ setInterval(async()=>{
        if(startingLesson){state.active=STAGES[state.serverStage]?.key||"mulai";localStorage.setItem(STORAGE_VIEW,state.active)}
        const accessRevoked=stageChanged&&!isUnlocked(state.active);
        // Pembukaan tahap lanjut tidak menginterupsi peserta yang sedang menulis atau memilih foto.
-       if(lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
+       if((!before.known&&state.hasClassState)||lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
     }
   }
-},1800);
+});
+setInterval(()=>{void pollClass().catch(()=>{})},1800);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)void pollClass(true).catch(()=>{})});
+window.addEventListener("online",()=>{void pollClass(true).catch(()=>{})});
 async function restoreParticipantSession(){
  if(!state.online||!state.user?.token){participantReady=true;return}
  const owner={id:state.user.id,token:state.user.token};
@@ -1722,6 +1750,7 @@ async function restoreParticipantSession(){
   if(state.user.username)localStorage.setItem("lm26-last-username",state.user.username);
   saveWork();
   loadLearnerViews();
+  profileNeedsRestore=false;
  }catch(error){
   if(state.user?.id!==owner.id||state.user?.token!==owner.token)return;
   if(error.status!==401)return;
@@ -1733,6 +1762,7 @@ async function restoreParticipantSession(){
   if(!state.user||(state.user.id===owner.id&&state.user.token===owner.token))participantReady=true;
  }
 }
+loadLearnerViews();
 await syncState();
 await restoreParticipantSession();
 render();

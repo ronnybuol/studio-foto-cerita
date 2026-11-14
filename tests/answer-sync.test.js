@@ -100,3 +100,11 @@ test("uncertain legacy results stay as drafts for review and are not uploaded au
   assert.equal(local.caption._draft,true);await reload.flush(connected);
   assert.equal(s.calls.length,0);
 });
+test("submission revisions increase across reload and advance beyond the server's last version",async()=>{
+ const s=setup();s.store.queue("caption",{captionText:"B"},{caption:{captionText:"B"}});await s.store.flush(connected);
+ const first=s.calls[0].payload._clientRevision;
+ const reload=createAnswerSync(s.options);
+ reload.merge({caption:{captionText:"remote",_clientRevision:first+1000}},reload.activate());
+ reload.queue("caption",{captionText:"C"},{caption:{captionText:"C"}});await reload.flush(connected);
+ assert.ok(s.calls[1].payload._clientRevision>first+1000);
+});

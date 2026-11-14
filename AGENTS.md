@@ -17,6 +17,8 @@ Studio Foto Cerita mendukung pelatihan Lensa Muda pada 16 November 2026 untuk se
 - Trainer/mentor memakai PIN dari secrets dan token HMAC dengan masa berlaku 12 jam. Jangan menyimpan atau mencetak secrets.
 - Frontend menyimpan identitas pada localStorage; token trainer pada sessionStorage. `public/answer-sync.js` menyimpan pekerjaan dan antrean hasil per akun (`lm26-answers-v1-<id>`). Hanya hasil yang ditekan Simpan masuk antrean; draf tidak otomatis dikirim. Simpan serial per akun, respons lama tidak boleh menghapus pengiriman baru. Sinkronisasi status kelas memakai polling, bukan WebSocket.
 - Pemulihan memprioritaskan draf dan hasil pending lokal. Logout/401 mempertahankan salinan per akun; login akun lain tidak boleh membacanya. Data dari key lama dimigrasikan sebagai draf untuk diperiksa, tanpa mengirimnya otomatis. Lihat `docs/answer-recovery-2026-11-14.md`.
+- `public/connection.js` membatasi seluruh request termasuk body JSON: status kelas 6 detik, API lain 12 detik. Polling dan pembacaan status memakai single-flight. Produksi offline mempertahankan snapshot tahap terakhir (`lm26-class-state-v1`); tidak membuat akun demo atau membuka modul baru. Demo lokal hanya lewat `?demo=1` pada localhost.
+- Snapshot kiriman baru membawa `_clientRevision` yang meningkat per akun. Upsert jawaban menolak revisi lebih lama (409) agar request yang selesai setelah timeout tidak menimpa hasil baru; retry revisi yang sama tetap idempoten. Tidak ada migrasi skema. Klien lama tanpa revisi tetap kompatibel selama rollout. Lihat `docs/connection-recovery-2026-11-14.md`.
 
 ## Aturan perubahan dan data
 

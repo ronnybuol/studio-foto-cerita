@@ -10,7 +10,7 @@ export function createAnswerSync({storage,getUser,send,onStorageError=()=>{}}){
       let saved;
       try{saved=JSON.parse(storage.getItem(storageKey(id))||"null")}
       catch(error){onStorageError(error)}
-      records.set(id,{work:saved?.work||{},pending:saved?.pending||{}});
+      records.set(id,{work:saved?.work||{},pending:saved?.pending||{},revision:Number.isSafeInteger(saved?.revision)?saved.revision:0});
     }
     return records.get(id);
   }
@@ -43,12 +43,16 @@ export function createAnswerSync({storage,getUser,send,onStorageError=()=>{}}){
     const data=record(id);
     data.work=clone(work);
     // A distinct object identity is enough to protect edits made during a send.
-    data.pending[key]={payload:clone(payload)};
+    const observed=Object.values(data.work).map(answer=>Number.isSafeInteger(answer?._clientRevision)?answer._clientRevision:0);
+    data.revision=Math.max(Date.now(),data.revision+1,...observed.map(value=>value+1));
+    data.pending[key]={payload:{...clone(payload),_clientRevision:data.revision}};
     return persist(id);
   }
   function pendingKeys(){const id=getUser()?.id;return id?Object.keys(record(id).pending):[]}
   function merge(serverAnswers,localWork){
     const merged=clone(serverAnswers||{}),pending=new Set(pendingKeys());
+    const id=getUser()?.id;
+    if(id){const data=record(id);for(const key of MODULES){const revision=serverAnswers?.[key]?._clientRevision;if(Number.isSafeInteger(revision))data.revision=Math.max(data.revision,revision)}}
     for(const key of MODULES){
       const local=localWork[key];
       const draft=local?._draft===true||(key==="story"&&!local?.completedAt&&(local?.selected?.length||local?.title||local?.reason));
@@ -68,6 +72,10 @@ export function createAnswerSync({storage,getUser,send,onStorageError=()=>{}}){
         const key=MODULES.find((key,index)=>index+1<=stage&&data.pending[key]);
         if(!key)break;
         const entry=data.pending[key];
+        if(!Number.isSafeInteger(entry.payload._clientRevision)){
+          data.revision=Math.max(Date.now(),data.revision+1);
+          entry.payload._clientRevision=data.revision;durable=persist(owner.id)&&durable;
+        }
         try{
           const response=await send(key,clone(entry.payload),owner);
           if(response?.ok!==true)throw Error("Server belum mengonfirmasi penyimpanan");
