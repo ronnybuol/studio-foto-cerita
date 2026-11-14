@@ -26,17 +26,18 @@ export function captionVisual(i){
 // tertulis Mongabay Indonesia (8 Februari 2015). Bukan kutipan langsung.
 export const CAPTION_EXAMPLE={
  title:"Musik bambu, tradisi yang terus dimainkan",
- text:"Sejumlah pemain musik bambu memainkan instrumen tiup di Kabupaten Kepulauan Sangihe, Sulawesi Utara, pada 9 September 2017. Musik bambu adalah bagian dari tradisi masyarakat Sangihe yang digunakan untuk mengiringi berbagai kegiatan budaya dan keagamaan. Menurut laporan Mongabay Indonesia terbitan 8 Februari 2015, Agustinus Sasundu mengembangkan beragam instrumen dari bambu, antara lain klarinet, trombon, dan bas. Proses pembuatannya dimulai dengan memilih bambu tua, menebang, mengeringkan, lalu membentuknya menjadi instrumen. Pengembangan musik bambu ikut menjaga pengetahuan dan pemanfaatan bambu dalam kehidupan masyarakat. Identitas para pemain, tempat pemotretan yang lebih spesifik, serta nama kegiatan pada hari pengambilan foto masih perlu dikonfirmasi. Foto: Ronny Adolof Buol.",
+ text:"Sejumlah pemain musik bambu memainkan instrumen tiup di Kabupaten Kepulauan Sangihe, Sulawesi Utara, pada 9 September 2017. Musik bambu adalah bagian dari tradisi masyarakat Sangihe yang digunakan untuk mengiringi berbagai kegiatan budaya dan keagamaan. Agustinus Sasundu yang berusia 65 tahun mengembangkan beragam instrumen musik yang terbuat dari bambu, antara lain klarinet, trombon, dan bas. Proses pembuatannya dimulai dengan memilih bambu tua, menebang, mengeringkan, lalu membentuknya menjadi instrumen. Pengembangan musik bambu ikut menjaga pengetahuan dan pemanfaatan bambu dalam kehidupan masyarakat. \nMusik bambu dimainkan oleh satu group yang terdiri dari banyak orang, sesuai dengan jumlah instrumen. Group musik ini akan berlatih bersama sebelum tampil dalam sebuah acara atau pementasan. Agustinus selain pembuat, dia juga merupakan pelatih dan penata musik. Keterampilannya serta dedikasinya dalam merawat tradisi ini membuat Agustinus meraih gelar maestro seni dan juga meraih Kalpataru.(Foto: Ronny Adolof Buol)",
  sourceTitle:"Agustinus Sasundu, Mengkonservasi Bambu Dengan Musik",
  sourceUrl:"https://mongabay.co.id/2015/02/08/agustinus-sasundu-menkonservasi-bambu-dengan-musik/",
  photoDate:"9 September 2017",
  facts:[
- ["WHO","Para pemain musik bambu; nama mereka belum dikonfirmasi"],
- ["WHAT","Memainkan alat musik tiup berbahan bambu"],
- ["WHEN","9 September 2017 (tanggal foto)"],
+ ["WHO","Para pemain musik bambu dan Agustinus Sasundi"],
+ ["WHAT","Membuat dan berlatih memainkan alat musik tiup berbahan bambu"],
+ ["WHEN","9 September 2017"],
  ["WHERE","Kabupaten Kepulauan Sangihe, Sulawesi Utara"],
- ["WHY","Tradisi dan pelestarian musik bambu; konteks dari Mongabay (2015)"],
- ["HOW","Bambu tua dipilih, ditebang, dikeringkan, kemudian dibentuk menjadi instrumen (laporan 2015)"]
+ ["WHY","Tradisi dan pelestarian musik bambu"],
+ ["HOW","Bambu tua dipilih, ditebang, dikeringkan, kemudian dibentuk menjadi instrumen musik."]
+
  ]
 };
 export function captionExampleHTML(){
@@ -44,9 +45,9 @@ export function captionExampleHTML(){
  return `<section class="caption-example-content" aria-label="Contoh caption dan unsur 5W plus 1H">
  <div class="caption-example-head"><span class="theory-kicker">CONTOH CAPTION · DOKUMENTASI 2017</span><h3>${escaped(CAPTION_EXAMPLE.title)}</h3>
  <p class="caption-example-text">${escaped(CAPTION_EXAMPLE.text)}</p>
- <p class="caption-example-source">Konteks: <a href="${CAPTION_EXAMPLE.sourceUrl}" target="_blank" rel="noopener noreferrer">${escaped(CAPTION_EXAMPLE.sourceTitle)}</a> · Mongabay Indonesia, 8 Februari 2015.</p></div>
+</div>
  <div class="caption-example-facts">${CAPTION_EXAMPLE.facts.map(([k,v])=>`<div><b>${escaped(k)}</b><span>${escaped(v)}</span></div>`).join("")}</div>
- <p class="caption-example-warning">Tanggal pemotretan: 9 September 2017. Artikel tahun 2015 menjadi sumber konteks, bukan bukti bahwa orang atau peristiwa dalam foto identik dengan laporan 2015.</p>
+
  </section>`;
 }
 export function captionWordCount(text){return String(text||"").trim()?String(text).trim().split(/\s+/u).length:0}
