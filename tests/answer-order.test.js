@@ -23,15 +23,15 @@ test("real SQLite rejects a timed-out old write arriving after a newer submissio
  try{
   const registration=await api(env,"/participants",{method:"POST",body:{name:"Peserta Lokal",school:"Sekolah Uji",className:"XI",username:"revisiuji"}});
   assert.equal(registration.status,201);const {user}=await registration.json();
-  const save=body=>api(env,"/answers/caption",{method:"PUT",token:user.token,body});
-  assert.equal((await save({captionText:"new C",_clientRevision:200})).status,200);
-  assert.equal((await save({captionText:"late B",_clientRevision:100})).status,409);
-  assert.equal((await save({captionText:"new C",_clientRevision:200})).status,200);
+  const save=body=>api(env,"/answers/kamera",{method:"PUT",token:user.token,body});
+  assert.equal((await save({note:"new C",_clientRevision:200})).status,200);
+  assert.equal((await save({note:"late B",_clientRevision:100})).status,409);
+  assert.equal((await save({note:"new C",_clientRevision:200})).status,200);
   const profile=await (await api(env,"/me",{token:user.token})).json();
-  assert.equal(profile.answers.caption.captionText,"new C");
+  assert.equal(profile.answers.kamera.note,"new C");
   assert.equal(env.sqlite.prepare("SELECT COUNT(*) AS total FROM answers").get().total,1);
-  assert.equal((await save({captionText:"bad revision",_clientRevision:"300"})).status,400);
+  assert.equal((await save({note:"bad revision",_clientRevision:"300"})).status,400);
   // Existing clients remain compatible during rollout.
-  assert.equal((await save({captionText:"legacy compatible"})).status,200);
+  assert.equal((await save({note:"legacy compatible"})).status,200);
  }finally{env.sqlite.close()}
 });
