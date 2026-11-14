@@ -276,7 +276,7 @@ async function handleApi(req,env){
     const data=await bodyJson(req);
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(!Number.isInteger(data.page)||data.page<0||data.page>5)return failure("Halaman portofolio harus 0–5",400);
-    if(!await writeProjection(env,data,"json_set(camera_json,'$.portfolioPage',?)",[data.page]))
+    if(!await writeProjection(env,data,"json_set(json_remove(camera_json,'$.spotlight'),'$.portfolioPage',?)",[data.page]))
       return failure("Kendali kelas berubah. Segarkan dashboard",409);
     return output({ok:true,portfolioPage:data.page,controlRevision:data.controlRevision});
   }
