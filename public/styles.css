@@ -1523,3 +1523,21 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 @media(max-width:600px){
  .lcd-composition-lab .comp-demo-pair .comp-compare-image{height:clamp(100px,27vh,260px);max-height:none}
 }
+
+/* The same full-frame rule applies when a selected student's answer is projected. */
+.comp-spotlight .comp-compare-image{
+ aspect-ratio:auto;
+ height:clamp(125px,27vh,345px);
+ max-height:none;
+ min-height:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+.comp-spotlight .comp-compare-image img{
+ display:block;
+ width:100%;
+ height:100%;
+ object-fit:contain;
+ object-position:center;
+}
