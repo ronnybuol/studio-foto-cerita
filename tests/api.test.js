@@ -386,3 +386,28 @@ test("tahap 06: rencana etika peserta tersimpan dan bisa disorot tanpa mengubah 
  await call(env,"/api/spotlight","PUT",{participantId:null,module:null},trainer.token);
  assert.equal((await call(env,"/api/state")).data.presentation.slide,55);
 });
+
+test("komposisi A/B tersimpan di server dan trainer menyorot satu ulasan di LCD",async()=>{
+ const env=mockEnv();
+ const p=(await call(env,"/api/participants","POST",{name:"Sari",school:"SMA Sangihe",className:"XI",username:"sari"})).data.user;
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const before=await call(env,"/api/answers/komposisi","PUT",{challenges:{sepertiga:{choice:"A",reason:"Saya memilih A karena konteks ruang terlihat jelas."}}},p.token);
+ assert.equal(before.status,403,"belum boleh menyimpan sebelum tahap 02");
+ await call(env,"/api/state","PUT",{stage:2},trainer.token);
+ const partial={challenges:{sepertiga:{choice:"B",reason:"Notasi pada dinding menguatkan hubungan pemain dan lokasi."},framing:{choice:"A",reason:""}}};
+ assert.equal((await call(env,"/api/answers/komposisi","PUT",partial,p.token)).status,200);
+ const bad={challenges:{sepertiga:{choice:"C",reason:"Alasan yang cukup panjang untuk foto."}}};
+ assert.equal((await call(env,"/api/answers/komposisi","PUT",bad,p.token)).status,400);
+ const all=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.deepEqual(all.data.participants[0].answers.komposisi.challenges,partial.challenges);
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:p.id,module:"komposisi",challengeIndex:6},trainer.token)).status,400);
+ assert.equal((await call(env,"/api/spotlight","PUT",{participantId:p.id,module:"komposisi",challengeIndex:2},trainer.token)).status,404);
+ const spotlight=await call(env,"/api/spotlight","PUT",{participantId:p.id,module:"komposisi",challengeIndex:0},trainer.token);
+ assert.equal(spotlight.status,200);
+ assert.equal(spotlight.data.spotlight.challengeIndex,0);
+ assert.equal(spotlight.data.spotlight.answer.challenges.sepertiga.choice,"B");
+ const lcd=await call(env,"/api/state");
+ assert.equal(lcd.data.spotlight.challengeIndex,0);
+ await call(env,"/api/spotlight","PUT",{participantId:null,module:null},trainer.token);
+ assert.equal((await call(env,"/api/state")).data.spotlight,null);
+});
