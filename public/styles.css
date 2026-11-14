@@ -1760,3 +1760,43 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .ethics-upload-panel .ethics-upload-tools{margin:12px 0;padding:12px;border:1px solid #9cb0c155;border-radius:10px}
 .ethics-upload-tools summary{cursor:pointer;font-weight:700}
 .ethics-upload-tools input[type=file]{display:block;margin:13px 0;max-width:100%}
+
+/* Instructor-triggered, reversible full-bleed closing slide; no impact on lessons. */
+.closing-trainer-panel{margin:16px 0;padding:22px}
+.closing-trainer-panel h2{font-size:clamp(20px,2vw,30px);margin:8px 0}
+.closing-trainer-panel .actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.closing-upload-details{border:1px solid #c5cbd3;border-radius:10px;padding:13px;margin:12px 0}
+.closing-upload-details summary{font-weight:750;cursor:pointer}
+.closing-upload-details input[type=file]{display:block;margin:12px 0;max-width:100%}
+body.closing-visible .masthead,body.closing-visible .site-foot,body.closing-visible #connectivity{display:none}
+body.closing-visible .app{min-height:100vh;min-height:100svh;background:#07111d}
+body.closing-visible #root{min-height:100vh;min-height:100svh;width:100%;padding:0;margin:0;max-width:none}
+body.closing-visible #root>.closing-slide{height:100vh;height:100svh}
+body.closing-visible #root>.closing-lcd-page{min-height:100vh;min-height:100svh;padding:0;background:#07111d}
+.closing-slide{position:relative;isolation:isolate;display:flex;align-items:center;min-height:100vh;min-height:100svh;width:100%;overflow:hidden;color:#fff;background:#0c233c}
+.closing-slide-image{position:absolute;inset:0;background-image:url("/lensa-muda/api/closing/photo");background-position:35% 48%;background-size:cover;background-repeat:no-repeat;filter:brightness(.82) contrast(1.06) saturate(.92);z-index:-2}
+.closing-slide-gradient{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(4,12,25,.13) 0%,rgba(7,16,29,.28) 36%,rgba(7,17,31,.78) 66%,rgba(4,13,26,.90) 100%),linear-gradient(0deg,rgba(4,12,24,.58) 0%,transparent 26%)}
+.closing-slide-content{width:min(54%,740px);margin:0 6% 0 auto;padding:clamp(22px,3.2vw,64px) 0;display:flex;flex-direction:column;justify-content:center;align-items:start;gap:clamp(10px,1.15vw,20px);text-shadow:0 2px 12px rgba(0,0,0,.42)}
+.closing-eyebrow{font-size:clamp(11px,.95vw,17px);color:#ffd29d;letter-spacing:.20em;font-weight:850}
+.closing-slide h1{font-size:clamp(56px,7.2vw,128px);font-weight:950;line-height:.97;letter-spacing:-.045em;margin:6px 0 4px}
+.closing-subtitle{font-size:clamp(20px,2vw,35px);font-weight:720;line-height:1.24;margin:0}
+.closing-message{font-size:clamp(16px,1.3vw,23px);line-height:1.43;color:#e5ecf3;max-width:630px;margin:0}
+.closing-contact{display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(255,255,255,.45);padding-top:clamp(13px,1.7vw,28px);margin-top:clamp(5px,1vw,18px);font-size:clamp(15px,1.2vw,22px);line-height:1.35}
+.closing-contact strong{font-size:clamp(23px,2vw,37px);margin-bottom:3px}
+.closing-contact a{color:#fff;text-decoration:none;overflow-wrap:anywhere}
+.closing-contact a:hover{text-decoration:underline}
+.closing-credit{font-size:clamp(10px,.85vw,14px);color:#c2cdd8;margin-top:clamp(12px,2vw,36px)}
+.closing-lcd-page .closing-slide{min-height:calc(100svh - 64px)}
+.closing-lcd-page .lcd-toolbar{padding:8px 20px;margin:0;background:#070f1a}
+@media(max-width:760px){
+ .closing-slide{align-items:end}
+ .closing-slide-image{background-position:34% center}
+ .closing-slide-gradient{background:linear-gradient(0deg,rgba(4,12,25,.97) 0%,rgba(4,12,25,.86) 44%,rgba(4,12,25,.15) 95%)}
+ .closing-slide-content{width:100%;max-width:none;margin:auto 0 0;padding:28px 22px 35px;gap:10px}
+ .closing-slide h1{font-size:clamp(44px,13vw,75px)}
+ .closing-subtitle{font-size:clamp(17px,4.2vw,24px)}
+ .closing-message{font-size:14px}
+ .closing-contact{font-size:15px;gap:5px;margin-top:3px;padding-top:12px}
+ .closing-contact strong{font-size:21px}
+ .closing-credit{font-size:10px;margin-top:8px}
+}

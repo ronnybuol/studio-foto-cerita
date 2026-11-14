@@ -237,6 +237,51 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
 
+  // Optional full-screen closing slide. The classroom is not locked and answers
+  // remain intact; closingVisible is a reversible presentation override.
+  const closingPhotoKey="lecture/lensa-muda/closing-silhouette.jpg";
+  if(method==="GET"&&path==="/api/closing/status"){
+    const exists=env.PHOTO_BUCKET?!!(await env.PHOTO_BUCKET.head(closingPhotoKey)):false;
+    return output({ready:exists});
+  }
+  if(path==="/api/closing/photo"){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    if(method==="PUT"){
+      const admin=await access(req,env);
+      if(!admin)return failure("Autentikasi trainer diperlukan",401);
+      if(admin.role!=="trainer")return failure("Hanya trainer dapat mengunggah foto penutup",403);
+      if(req.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase()!=="image/jpeg")
+        return failure("Foto penutup harus JPG",415);
+      if(Number(req.headers.get("Content-Length")||0)>4*1024*1024)return failure("Foto maksimal 4 MB",413);
+      const bytes=new Uint8Array(await req.arrayBuffer());
+      if(bytes.length<20||bytes.length>4*1024*1024||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)
+        return failure("JPG tidak valid",415);
+      await env.PHOTO_BUCKET.put(closingPhotoKey,bytes,{httpMetadata:{contentType:"image/jpeg"},
+        customMetadata:{credit:"Ronny Adolof Buol",purpose:"Lensa Muda closing slide"}});
+      return output({ok:true,bytes:bytes.length});
+    }
+    if(method==="GET"){
+      const object=await env.PHOTO_BUCKET.get(closingPhotoKey);
+      if(!object)return failure("Foto penutup belum diunggah",404);
+      return new Response(object.body,{headers:{"Content-Type":"image/jpeg",
+        "Cache-Control":"no-store","X-Content-Type-Options":"nosniff",
+        "X-Robots-Tag":"noindex, nofollow"}});
+    }
+    return failure("Metode tidak didukung",405);
+  }
+  if(method==="PUT"&&path==="/api/closing/presentation"){
+    const admin=await access(req,env);
+    if(!admin)return failure("Autentikasi trainer diperlukan",401);
+    if(admin.role!=="trainer")return failure("Hanya trainer dapat mengendalikan slide penutup",403);
+    const data=await bodyJson(req);
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    if(typeof data.visible!=="boolean")return failure("Pilihan slide penutup tidak valid",400);
+    if(data.visible&&(!env.PHOTO_BUCKET||!(await env.PHOTO_BUCKET.head(closingPhotoKey))))
+      return failure("Unggah dulu foto siluet pilihan sebelum menampilkan penutup",409);
+    if(!await writeProjection(env,data,"json_set(camera_json,'$.closingVisible',?)",[data.visible?1:0]))
+      return failure("Kendali kelas berubah, muat ulang dashboard",409);
+    return output({ok:true,closingVisible:data.visible,controlRevision:data.controlRevision});
+  }
   // Six documentary photos for Modul 06, kept independent of participant R2 data.
   // Trainer may upload the six user-supplied WebP photos; lecture slide URLs are read-only.
   const ethicsImageMatch=/^\/api\/ethics\/slide-photo\/([1-6])$/.exec(path);
@@ -433,7 +478,7 @@ async function handleApi(req,env){
     const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const {stage,camera,composition,presentation,controlRevision,timer}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,locked:snapshot.locked,composition,spotlight,closingVisible:camera.closingVisible===true||camera.closingVisible===1,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -505,7 +550,7 @@ async function handleApi(req,env){
     }
     const {stage,camera,composition,presentation,controlRevision,timer}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},presentation,count:map.size,participants:[...map.values()],role:user.role});
+    return output({stage,locked:snapshot.locked,composition,spotlight,closingVisible:camera.closingVisible===true||camera.closingVisible===1,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},presentation,count:map.size,participants:[...map.values()],role:user.role});
   }
   if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
     const admin=await access(req,env);
