@@ -973,13 +973,13 @@ function captionPhotoStrip(selected,mode="hunting"){
 }
 function captionPage(){
  const saved=state.work.caption||{},draft=saved.captionText||"",story=state.work.story||{};
- const selected=Array.isArray(story.selected)?story.selected.filter(id=>Number.isInteger(id)&&id>=1&&id<=12).slice(0,9):[];
- const count=countWords(draft),validStory=selected.length===9;
+ const selected=storyHuntingSelection(story);
+ const count=countWords(draft),validStory=selected.length===9&&!!story.completedAt&&!story._draft;
  return `${titleBlock("caption")}<section class="card caption-story-link">
  <span class="eyebrow">DARI MODUL 04 KE MODUL 05</span><h2>Foto yang kamu pilih, cerita yang kamu tulis.</h2>
- <p>${validStory?"Ini sembilan foto dari meja editormu, ditampilkan dalam urutan pilihanmu.":"Belum ada sembilan foto dari Modul 04. Kamu boleh mulai membuat catatan, tetapi sebaiknya lengkapi urutan fotomu lebih dulu."}</p>
+ <p>${validStory?"Ini sembilan foto dari meja editormu, ditampilkan dalam urutan pilihanmu.":"Sembilan foto Modul 04 belum tersimpan sebagai karya final. Kamu boleh mencatat fakta dahulu, tetapi simpan dulu hasil Meja Editor sebelum mengirim narasi."}</p>
  ${validStory?`<div class="caption-story-title"><b>Judul kerja:</b> ${escapeHtml(story.title||"Belum ada judul")}</div>
- ${captionPhotoStrip(selected,story.mode==="hunting"?"hunting":"legacy")}`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
+ ${captionPhotoStrip(selected,"hunting")}\n <p class="small-note"><b>Arah cerita:</b> ${escapeHtml(story.reason||"Belum ada alasan editorial.")}</p>`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
  <p class="small-note">Sembilan foto hunting milikmu menjadi referensi utama. Foto tidak membuktikan otomatis nama, tanggal, atau alasan kejadian; verifikasi tetap diperlukan.</p></section>
  <form id="caption-form" class="card caption-workspace">
  <div class="story-head"><h2>Catatan fakta · 5W + 1H</h2><span class="pill">6 unsur</span></div>
@@ -999,10 +999,10 @@ function captionPage(){
  <label><input type="checkbox" name="reviewVisual" value="yes" ${saved.reviewVisual==="yes"?"checked":""}> Semua pernyataan tentang foto sesuai yang terlihat.</label>
  <label><input type="checkbox" name="reviewFacts" value="yes" ${saved.reviewFacts==="yes"?"checked":""}> Nama, tanggal, tempat, serta klaim lain telah diperiksa atau ditandai perlu verifikasi.</label>
  <label><input type="checkbox" name="reviewSequence" value="yes" ${saved.reviewSequence==="yes"?"checked":""}> Narasi sesuai urutan dan gagasan sembilan foto.</label></div>
- <div class="actions"><button class="btn primary" type="submit">Simpan hasil Caption Lab ✓</button></div>
+ <div class="actions"><button class="btn primary" type="submit" ${validStory?"":"disabled"}>Simpan hasil Caption Lab ✓</button></div>
  <p class="small-note" role="status" id="caption-save-status" aria-live="polite">Draf tersimpan di perangkat saat kamu mengetik. Tekan Simpan untuk mengirim hasil ke trainer.</p>
  </form>
- <section class="card caption-reminder"><h3>Catatan editorial</h3><p>Rangkaian ini dokumentasi musik bambu Sangihe, September 2017. Nama, gelar, tujuan kegiatan, dan rincian penghargaan tidak boleh ditambahkan sebagai fakta tanpa sumber yang dapat diperiksa.</p></section>`;
+ <section class="card caption-reminder"><h3>Catatan editorial</h3><p>Rangkaian ini berisi sembilan foto hasil hunting yang kamu pilih sendiri. Jangan menambahkan nama, tanggal, lokasi, alasan kegiatan, atau pernyataan tentang subjek tanpa observasi dan sumber yang dapat diperiksa.</p></section>`;
 }
 function countWords(v){return v.trim()?v.trim().split(/\s+/).length:0}
 const ETHICS_PLAN_FIELDS=[
@@ -1148,11 +1148,13 @@ function bindLessons(){
    form.onchange=updateDraft;
    form.onsubmit=async e=>{
     e.preventDefault();const data=currentDraft(),n=countWords(data.captionText||"");
+    const story=state.work.story||{},nine=storyHuntingSelection(story);
     const status=$("#caption-save-status");
+    if(nine.length!==9||!story.completedAt||story._draft){if(status)status.textContent="Selesaikan dan simpan sembilan foto Modul 04 sebelum mengirim narasi.";toast("Simpan Meja Editor terlebih dahulu");return}
     if(n<50){if(status)status.textContent="Narasi terlalu pendek untuk latihan; tulis minimal 50 kata.";toast("Lengkapi narasi terlebih dahulu");return}
     if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
       if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
-    const result={...data,storyMode:state.work.story?.mode==="hunting"?"hunting":"legacy",storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
+    const result={...data,storyMode:"hunting",storySelected:nine,storyTitle:story.title||"",completedAt:new Date().toISOString()};
     const saved=await saveAnswer("caption",result);
     if(status?.isConnected)status.textContent=answerSaveMessage(saved);
    };
@@ -1331,7 +1333,7 @@ function answerDetails(key,v){
 }
 if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
-   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Narasi (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p><p><b>Perlu verifikasi:</b> ${escapeHtml(v.verification||"Tidak ada catatan")}</p></div>`;
+   return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>${escapeHtml(v.storyTitle||"Foto cerita peserta")}</b><p><strong>Narasi (${countWords(v.captionText||"")} kata):</strong></p><p>${escapeHtml(v.captionText||"Belum ditulis")}</p><p><b>Perlu verifikasi:</b> ${escapeHtml(v.verification||"Tidak ada catatan")}</p></div>${v.storyMode==="hunting"&&Array.isArray(v.storySelected)?`<div class="story-trainer-preview-photos">${v.storySelected.map((id,i)=>`<figure><div class="hunting-photo-preview" data-story-trainer-preview="${id}">Memuat foto ${i+1}…</div><figcaption>${i+1}. Foto hunting ${id}</figcaption></figure>`).join("")}</div>`:""}`;
  }
  if(key==="etika")return `<div class="ethics-answer-review">
  <p><b>Keputusan:</b> ${Number(v.score)||0} dari ${ETHICS.length} sesuai pembahasan</p>
@@ -1369,7 +1371,7 @@ function lcdSpotlightContent(spot){
   const samples=[ids[0],ids[4],ids[8]].filter(id=>Number.isInteger(id));
   return `<div class="caption-spotlight"><div class="caption-spotlight-top">
    <span class="kicker">SOROTAN KARYA · CAPTION LAB</span><h1>${name}</h1>
-   <p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
+   <h2>${escapeHtml(a.storyTitle||"Foto cerita peserta")}</h2><p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
    ${samples.length?`<div class="caption-spotlight-photos">${samples.map((id,i)=>{
       if(a.storyMode==="hunting")return `<figure><img src="/lensa-muda/api/spotlight/story-photo/${id}" alt="Foto hunting ${id} pilihan peserta"><figcaption>Foto hunting ${id}</figcaption></figure>`;
       const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption>${escapeHtml(item.title)}</figcaption></figure>`:"";
