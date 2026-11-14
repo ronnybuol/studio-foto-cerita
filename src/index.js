@@ -237,6 +237,49 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
 
+  // Five original National Geographic magazine spreads. Upload only by trainer to
+  // the existing R2 bucket; public display is restricted to these five static keys.
+  const spreadMatch=/^\/api\/portfolio\/spread\/([1-5])$/.exec(path);
+  if(method==="GET"&&path==="/api/portfolio/status"){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan portofolio belum terhubung",503);
+    const existing=await Promise.all([1,2,3,4,5].map(async n=>!!(await env.PHOTO_BUCKET.head("portfolio/lensa-muda-2026/spread-"+n+".jpg"))));
+    return output({spreads:existing});
+  }
+  if(spreadMatch){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan portofolio belum terhubung",503);
+    const n=Number(spreadMatch[1]),key="portfolio/lensa-muda-2026/spread-"+n+".jpg";
+    if(method==="PUT"){
+      const admin=await access(req,env);
+      if(!admin)return failure("Autentikasi trainer diperlukan",401);
+      if(admin.role!=="trainer")return failure("Hanya trainer boleh mengunggah portofolio",403);
+      if(req.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase()!=="image/jpeg")
+        return failure("Pilih berkas JPG dari portofolio asli",415);
+      if(Number(req.headers.get("Content-Length")||0)>4*1024*1024)return failure("Foto terlalu besar, maksimal 4 MB",413);
+      const bytes=new Uint8Array(await req.arrayBuffer());
+      if(bytes.length<16||bytes.length>4*1024*1024||bytes[0]!==255||bytes[1]!==216||bytes[2]!==255)
+        return failure("Berkas harus JPEG valid maksimal 4 MB",415);
+      await env.PHOTO_BUCKET.put(key,bytes,{httpMetadata:{contentType:"image/jpeg"},
+        customMetadata:{portfolio:"Hudog Pekayang",spread:String(n),source:"Ronny Adolof Buol · National Geographic"}});
+      return output({ok:true,spread:n,bytes:bytes.length});
+    }
+    if(method==="GET"){
+      const object=await env.PHOTO_BUCKET.get(key);
+      if(!object)return failure("Spread portofolio "+n+" belum diunggah trainer",404);
+      return new Response(object.body,{headers:{"Content-Type":"image/jpeg","Cache-Control":"public, max-age=300","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow"}});
+    }
+    return failure("Metode tidak didukung",405);
+  }
+  if(method==="PUT"&&path==="/api/portfolio/presentation"){
+    const admin=await access(req,env);
+    if(!admin)return failure("Autentikasi trainer diperlukan",401);
+    if(admin.role!=="trainer")return failure("Hanya trainer boleh mengendalikan portofolio",403);
+    const data=await bodyJson(req);
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    if(!Number.isInteger(data.page)||data.page<0||data.page>5)return failure("Halaman portofolio harus 0–5",400);
+    if(!await writeProjection(env,data,"json_set(json_remove(camera_json,'$.spotlight'),'$.portfolioPage',?)",[data.page]))
+      return failure("Kendali kelas berubah. Segarkan dashboard",409);
+    return output({ok:true,portfolioPage:data.page,controlRevision:data.controlRevision});
+  }
   // Only the trainer can read an individual participant's hunting photo.
   const trainerPhoto=/^\/api\/trainer\/hunting\/photo\/([0-9a-f-]{36})\/([1-9]|1[0-2])$/i.exec(path);
   if(method==="GET"&&trainerPhoto){
@@ -270,6 +313,29 @@ async function handleApi(req,env){
     await ensureHuntingSchema(env.DB);
     const key=huntingKey(SESSION_ID,requested,slot);
     const row=await env.DB.prepare("SELECT object_key FROM hunting_photos WHERE participant_id=? AND slot=?").bind(requested,slot).first();
+    if(!row||row.object_key!==key)return failure("Foto belum tersedia",404);
+    const object=await env.PHOTO_BUCKET.get(key);
+    if(!object)return failure("Berkas foto belum tersedia",404);
+    return new Response(object.body,{headers:{"Content-Type":"image/webp","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow"}});
+  }
+  // LCD projects only confirmed hunting photos belonging to the current story/caption spotlight.
+  const storyPhoto=/^\/api\/spotlight\/story-photo\/([1-9]|1[0-2])$/.exec(path);
+  if(method==="GET"&&storyPhoto){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    const snapshot=await sessionSnapshot(env,lockReady);
+    const selected=snapshot.camera.spotlight;
+    if(!selected||!["story","caption"].includes(selected.module))return failure("Foto tidak sedang disorot",404);
+    const slot=Number(storyPhoto[1]),pid=selected.participantId;
+    const record=await env.DB.prepare("SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.id=? AND p.session_id=? AND a.stage=?")
+      .bind(pid,SESSION_ID,selected.module).first();
+    let answer;try{answer=JSON.parse(record?.payload||"null")}catch{}
+    const allowed=selected.module==="story"?answer?.mode==="hunting"&&answer?.selected:
+      answer?.storyMode==="hunting"&&answer?.storySelected;
+    if(!Array.isArray(allowed)||!allowed.includes(slot))return failure("Foto bukan bagian dari cerita pilihan",404);
+    const key=huntingKey(SESSION_ID,pid,slot);
+    await ensureHuntingSchema(env.DB);
+    const row=await env.DB.prepare("SELECT object_key FROM hunting_photos WHERE participant_id=? AND slot=?")
+      .bind(pid,slot).first();
     if(!row||row.object_key!==key)return failure("Foto belum tersedia",404);
     const object=await env.PHOTO_BUCKET.get(key);
     if(!object)return failure("Berkas foto belum tersedia",404);
@@ -328,7 +394,7 @@ async function handleApi(req,env){
     const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const {stage,camera,composition,presentation,controlRevision,timer}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,locked:snapshot.locked,composition,spotlight,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,portfolioPage:Number.isInteger(camera.portfolioPage)?camera.portfolioPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -461,6 +527,17 @@ async function handleApi(req,env){
          if(!photo)return failure("Foto pilihan peserta belum tersedia",404);
        }
      }
+     if(data.module==="story"||data.module==="caption"){
+       let answer;try{answer=JSON.parse(record.payload)}catch{}
+       const ids=data.module==="story"&&answer?.mode==="hunting"?answer.selected:
+         data.module==="caption"&&answer?.storyMode==="hunting"?answer.storySelected:null;
+       if(ids){
+         await ensureHuntingSchema(env.DB);
+         const rows=await env.DB.prepare("SELECT slot FROM hunting_photos WHERE participant_id=?").bind(data.participantId).all();
+         const owned=new Set((rows.results||[]).map(row=>row.slot));
+         if(!Array.isArray(ids)||ids.length!==9||ids.some(slot=>!owned.has(slot)))return failure("Foto cerita peserta tidak lengkap",409);
+       }
+     }
      if(data.module==="komposisi"&&(!Number.isInteger(data.challengeIndex)||data.challengeIndex<0||data.challengeIndex>3))return failure("Tantangan komposisi tidak valid",400);
      if(data.module==="komposisi"){
        let answer;try{answer=JSON.parse(record.payload)}catch{}
@@ -481,7 +558,7 @@ async function handleApi(req,env){
     if(data.stage!==undefined&&(!Number.isInteger(data.stage)||data.stage<0||data.stage>6))return failure("Tahap tidak valid",400);
     if(data.stage>0&&data.view==="theory"&&(data.slide<STAGE_FIRST_SLIDES[data.stage]||data.slide>STAGE_LAST_SLIDES[data.stage]))return failure("Slide ini bukan bagian tahap aktif. Segarkan dashboard trainer.",409);
     try{
-      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
+      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.portfolioPage',0,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
         .bind(data.view,data.slide,data.controlRevision??null,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null,data.stage??null,data.stage??null).run();
       if(written.meta?.changes===0)return failure("Tahap atau kendali kelas sudah berubah. Segarkan status sebelum memilih slide lagi.",409);
     }catch(error){
@@ -596,6 +673,22 @@ async function handleApi(req,env){
     }
     if(key==="story"){
       if(!Array.isArray(data.selected)||data.selected.length!==9||new Set(data.selected).size!==9||data.selected.some(n=>!Number.isInteger(n)||n<1||n>12))return failure("Pilih 9 foto latihan yang berbeda");
+      if(data.mode==="hunting"){
+        await ensureHuntingSchema(env.DB);
+        const records=await env.DB.prepare("SELECT slot FROM hunting_photos WHERE participant_id=? ORDER BY slot")
+          .bind(p.id).all();
+        const owned=new Set((records.results||[]).map(x=>x.slot));
+        if(data.selected.some(id=>!owned.has(id)))return failure("Sembilan foto harus berasal dari galeri hunting milikmu dan tersimpan di server",409);
+      }else if(data.mode!==undefined) return failure("Mode Meja Editor tidak valid",400);
+    }
+    if(key==="caption"&&data.storyMode==="hunting"){
+      if(!Array.isArray(data.storySelected)||data.storySelected.length!==9||new Set(data.storySelected).size!==9)
+        return failure("Caption harus mengikuti sembilan foto pilihan di Modul 04",400);
+      const record=await env.DB.prepare("SELECT payload FROM answers WHERE participant_id=? AND stage='story'")
+        .bind(p.id).first();
+      let story;try{story=JSON.parse(record?.payload||"null")}catch{}
+      if(story?.mode!=="hunting"||JSON.stringify(story.selected)!==JSON.stringify(data.storySelected))
+        return failure("Simpan susunan sembilan foto Modul 04 sebelum mengirim Caption Lab",409);
     }
     if(key==="caption"&&typeof data.captionText!=="string")return failure("Caption harus berupa teks");
     if(key==="komposisi"&&Object.hasOwn(data,"challenges")){

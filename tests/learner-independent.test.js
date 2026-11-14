@@ -33,7 +33,7 @@ test("Draf Modul 04 tidak dianggap sebagai permintaan mengikuti slide",()=>{
  assert.ok(app.includes('(learnerMode(state.active)==="follow"&&slideChanged)'));
  assert.ok(app.includes("accessRevoked"));
  assert.doesNotMatch(app,/if\(state.user&&data.stage!==previousStage\)\{state.active=/);
- assert.ok(app.includes("state.work.story={...current(),selected,_draft:true}"));
+ assert.ok(app.includes("state.work.story={...current(),mode:\"hunting\",selected,_draft:true}"));
  assert.ok(app.includes("state.work.edfat={...current,_draft:true}"));
  assert.ok(app.includes('const serverAnswers=response.answers||{}'));
  assert.ok(app.includes('if(learnerRange(state.active)&&!state.learnerViews[state.active])'));
