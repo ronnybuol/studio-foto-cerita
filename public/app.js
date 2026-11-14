@@ -626,7 +626,7 @@ function compositionChallengePhotos(challenge,{grid=false,forLCD=false}={}){
    <img src="${compositionChallengeImage(photo.image)}" alt="${escapeHtml(photo.title)} · Dokumentasi musik bambu Sangihe" loading="eager" decoding="async">
    <div class="comp-rule-grid" aria-hidden="true"></div>
   </div>
-  <figcaption><strong>FOTO ${label} · ${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.detail)}</span></figcaption>
+  <figcaption><strong>FOTO ${label} · ${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.detail)}</span>${["5625","5794","5711","5712"].includes(photo.image)?'<small class="comp-photo-disclosure">Penyempurnaan visual berbantuan AI</small>':""}</figcaption>
  </figure>`;
  return `<div class="comp-compare-photos ${forLCD?"comp-compare-projection":""}">${card(challenge.a,"A")}${card(challenge.b,"B")}</div>`;
 }
@@ -664,7 +664,7 @@ function compositionPage(){
  return `${titleBlock("komposisi")}<section class="card comp-compare-lab">
   <span class="eyebrow">LABORATORIUM KOMPOSISI · PILIH DAN JELASKAN</span>
   <h2>Empat keputusan. Empat alasan.</h2>
-  <p>Bandingkan dua foto dokumentasi asli Sangihe. Tidak ada jawaban sekadar benar atau salah: pilih foto yang paling cocok dengan tugasnya dan jelaskan alasan berdasarkan yang terlihat. Jawabanmu tidak mengubah layar LCD.</p>
+  <p>Bandingkan dua foto dari seri dokumentasi musik bambu Sangihe. Tidak ada jawaban sekadar benar atau salah: pilih foto yang paling cocok dengan tugasnya dan jelaskan alasan berdasarkan yang terlihat. Jawabanmu tidak mengubah layar LCD.</p>
   <nav class="comp-compare-tabs" aria-label="Pilih tantangan">${COMPOSITION_CHALLENGES.map((x,i)=>`<button class="choice" data-comp-tab="${i}" aria-pressed="${selected===x}">${i+1}. ${escapeHtml(x.title)}${draft[x.id]?.choice?" ✓":""}</button>`).join("")}</nav>
   <div class="comp-compare-heading"><span>TANTANGAN ${COMPOSITION_CHALLENGES.indexOf(selected)+1} / 4</span><h3>${escapeHtml(selected.topic)}</h3><p>${escapeHtml(selected.question)}</p></div>
   ${compositionChallengePhotos(selected,{grid:state.compositionGrid===true})}
