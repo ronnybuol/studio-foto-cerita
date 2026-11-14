@@ -1240,6 +1240,16 @@ if(key==="caption"){
 const SPOTLIGHT_MODULES=["story","edfat","komposisi","kamera","caption","etika"];
 function lcdSpotlightContent(spot){
  const a=spot.answer||{},label=escapeHtml(STAGES.find(x=>x.key===spot.module)?.name||spot.module),name=escapeHtml(spot.name);
+ if(spot.module==="komposisi"&&a.challenges){
+   const challenge=COMPOSITION_CHALLENGES[Math.max(0,Math.min(3,Number.isInteger(spot.challengeIndex)?spot.challengeIndex:0))];
+   const selected=a.challenges[challenge.id]||{};
+   return `<div class="comp-spotlight">
+    <div class="comp-spotlight-top"><span class="kicker">SOROTAN ULASAN PESERTA · KOMPOSISI</span><h1>${name}</h1><h2>${escapeHtml(challenge.title)} · Pilihan Foto ${escapeHtml(selected.choice||"—")}</h2></div>
+    ${compositionChallengePhotos(challenge,{grid:false,forLCD:true})}
+    <section class="comp-spotlight-reason"><strong>ALASAN PESERTA</strong><p>${escapeHtml(selected.reason||"Belum ada alasan.")}</p></section>
+    <p class="spotlight-prompt">${escapeHtml(challenge.question)}</p>
+   </div>`;
+ }
  if(spot.module==="story"){
   const ids=Array.isArray(a.selected)?a.selected.slice(0,9):[];
   return `<div class="spotlight-layout">
@@ -1784,7 +1794,7 @@ function lcdPage(){
     ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
     ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")}
-      <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
+      <div class="theory-question"><span>PILIHAN FOTO A / B</span><strong>Amati dua foto, pilih yang sesuai tujuan, lalu jelaskan alasan di HP kalian.</strong></div></div>`
     :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
    :stage===1
@@ -1827,12 +1837,14 @@ function paintLcdCamera(){
  paintCameraDials(c);
 }
 function paintLcdComposition(){
- const scene=$("#lcdCompositionDemo"),caption=$("#lcdCompositionDemo-caption");if(!scene)return;
- const example=compositionExample(state.demoComposition);
- scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
- const image=scene.querySelector("img");
- if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp")){image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";image.alt=example.caption}
- if(caption)caption.textContent=example.caption;
+ const scene=$("#lcdCompositionDemo");if(!scene)return;
+ const challenge=COMPOSITION_CHALLENGES[compositionChallengeIndex(state.demoComposition)];
+ scene.querySelector(".eyebrow").textContent="TANTANGAN "+(compositionChallengeIndex(state.demoComposition)+1)+" / 4";
+ scene.querySelector("h3").textContent=challenge.title;
+ scene.querySelector("p").textContent=challenge.question;
+ const pair=scene.querySelector(".comp-compare-photos");
+ if(pair)pair.outerHTML=compositionChallengePhotos(challenge,{grid:!!state.demoComposition.grid,forLCD:true});
+ const note=scene.querySelector(".small-note");if(note)note.textContent=challenge.guidance;
 }
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
