@@ -6,6 +6,7 @@ import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,capti
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
 import {createAnswerSync} from "./answer-sync.js";
 import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
+import {createTrainerControl} from "./trainer-sync.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -57,6 +58,7 @@ const SHOTS = [
 let state = {
   online:false,serverStage:0,count:0,demoStage:6,role:"participant",locked:false,
   demoMode:localDemo(location),hasClassState:false,
+  controlRevision:0,
   demoCamera:{a:1,s:3,i:1},
   demoComposition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"},
   presentation:{view:"theory",slide:0},
@@ -127,20 +129,42 @@ async function retryPendingAnswers(force=false){
 }
 function toast(message){const box=$("#toast");box.textContent=message;box.classList.add("visible");clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.classList.remove("visible"),2800)}
 const PUBLIC_BASE = "/lensa-muda";
+const trainerDisabledControls=new Map();
+function setTrainerControlsBusy(busy){
+ if(busy){
+  const selector="[data-stage],[data-slide-step],[data-slide],[data-present-mode],[data-ethics-step],[data-ethics-slide],[data-ethics-mode],[data-caption-step],[data-caption-slide],[data-caption-mode],[data-story-step],[data-story-slide],[data-story-mode],[data-edfat-slide-step],[data-edfat-slide],[data-edfat-mode],[data-comp-slide-step],[data-comp-slide],[data-comp-mode],#trainer-show-welcome,#trainer-show-registration,#trainer-show-roster,#trainer-roster-prev,#trainer-roster-next,[data-spotlight-id],#stop-spotlight";
+  $$(selector).forEach(button=>{if(!trainerDisabledControls.has(button))trainerDisabledControls.set(button,button.disabled);button.disabled=true});
+ }else{
+  for(const [button,disabled] of trainerDisabledControls)if(button.isConnected)button.disabled=disabled||state.trainerRole==="mentor";
+  trainerDisabledControls.clear();
+ }
+}
+const trainerControl=createTrainerControl({getRevision:()=>state.controlRevision,onBusy:setTrainerControlsBusy});
+const PROJECTION_PATHS=new Set(["/api/state","/api/presentation","/api/welcome","/api/orientation","/api/spotlight"]);
 const runStateSync=singleFlight(performStateSync);
 async function request(path,{method="GET",payload,auth=false,participantToken}={}){
+ const projection=auth&&method==="PUT"&&PROJECTION_PATHS.has(path);
+ if(projection)payload={...payload,controlRevision:payload?.controlRevision??trainerControl.nextRevision()};
   const headers={};
   if(payload!==undefined) headers["Content-Type"]="application/json";
   const token=auth?state.trainerToken:(participantToken??state.user?.token);
   if(token) headers.Authorization=`Bearer ${token}`;
-  return requestJSON(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"},
+  const body=await requestJSON(PUBLIC_BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:"no-store"},
     {timeoutMs:path==="/api/state"?6000:12000});
+  if(projection){
+   const revision=body.controlRevision??payload.controlRevision;
+   if(revision<state.controlRevision)throw Object.assign(new Error("Kendali yang lebih baru sudah diterima. Segarkan tampilan kelas."),{status:409});
+   state.controlRevision=revision;
+  }
+  return body;
 }
 function syncState(){return runStateSync()}
 async function performStateSync(){
   try {
     const data=await request("/api/state");
     if(!validClassSnapshot(data)) throw Error("Status kelas belum valid");
+    if((data.controlRevision||0)<state.controlRevision){state.online=true;return true}
+    state.controlRevision=data.controlRevision||0;
     const previousStage=state.serverStage;
     state.online=true;state.hasClassState=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
     state.spotlight=data.spotlight||null;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
@@ -1019,7 +1043,11 @@ function trainerLogin(){
 async function fetchDashboard(){
  if(state.demoMode&&!state.online){state.dashboard={stage:state.demoStage,camera:state.demoCamera,presentation:state.presentation,count:state.user?1:0,participants:state.user?[{...state.user,done:Object.keys(state.work).length,answers:state.work}]:[],answers:state.work};return}
  if(!state.online){if(state.dashboard)return;throw Error("Koneksi kelas terputus. Sesi trainer tetap disimpan; coba hubungkan kembali.")}
- state.dashboard=await request("/api/dashboard",{auth:true});
+ const incoming=await request("/api/dashboard",{auth:true});
+ if((incoming.controlRevision||0)<state.controlRevision){
+  Object.assign(incoming,{stage:state.serverStage,presentation:state.presentation,camera:state.demoCamera,composition:state.demoComposition,spotlight:state.spotlight});
+ }else state.controlRevision=incoming.controlRevision||0;
+ state.dashboard=incoming;
  state.serverStage=state.dashboard.stage;state.count=state.dashboard.count;
  if(state.dashboard.camera)state.demoCamera=state.dashboard.camera;
  if(state.dashboard.composition)state.demoComposition=state.dashboard.composition;
@@ -1234,12 +1262,12 @@ function bindDashboard(){
    if(state.trainerRole==="mentor")return;
    if(!state.online){if(!state.demoMode){toast("Tahap belum diubah. Hubungkan kembali ke kelas terlebih dahulu.");return}state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=6){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
-     await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage!==state.dashboard?.stage && stage>=1 && stage<=6){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START},auth:true});
-     }
-     await syncState();await fetchDashboard();render();
-     toast("Tahap kelas berhasil diperbarui");
+     await trainerControl.run(async controlRevision=>{
+      const result=await request("/api/state",{method:"PUT",payload:{stage,controlRevision},auth:true});
+      state.serverStage=result.stage;state.presentation=result.presentation||state.presentation;
+      await syncState();await fetchDashboard();await render();
+      toast("Tahap dan presentasi kelas berhasil diperbarui");
+     });
    }catch(e){toast("Tidak dapat mengubah tahap: "+e.message)}
  });
  async function choosePresentation(next){
@@ -1255,10 +1283,12 @@ function bindDashboard(){
    const status=$("#presentation-save-status");
    if(status)status.textContent="Mengirim slide ke layar LCD…";
    try{
-     await request("/api/presentation",{method:"PUT",payload:target,auth:true});
-     state.presentation=target;
-     if(state.dashboard)state.dashboard.presentation=target;
-     render();
+     await trainerControl.run(async controlRevision=>{
+      const result=await request("/api/presentation",{method:"PUT",payload:{...target,stage:state.serverStage,controlRevision},auth:true});
+      state.presentation=result.presentation||target;
+      if(state.dashboard)state.dashboard.presentation=state.presentation;
+      await render();
+     });
    }catch(error){
      if(status)status.textContent="Gagal: "+error.message;
      toast("Slide tidak tersinkron: "+error.message);
@@ -1501,6 +1531,7 @@ async function renderTrainer(){
     await fetchDashboard();
     root.innerHTML=renderDashboard();
     bindDashboard();
+    if(trainerControl.busy)setTrainerControlsBusy(true);
   }catch(error){
     if(error.status===401||error.status===403){
       state.trainerToken="";

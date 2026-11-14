@@ -8,6 +8,11 @@ function mockEnv(){
    return {async all(){if(sql.includes("PRAGMA table_info(participants)"))return {results:data.usernameSchema?[{name:"id"},{name:"username"}]:[{name:"id"}]};if(sql.includes("PRAGMA table_info(sessions)"))return {results:data.lockSchema?[{name:"id"},{name:"is_locked"}]:[{name:"id"}]};return {results:[]}},async run(){if(sql.includes("ALTER TABLE participants ADD COLUMN username"))data.usernameSchema=true;if(sql.includes("ALTER TABLE sessions ADD COLUMN is_locked"))data.lockSchema=true;if(sql.includes("UPDATE participants SET username="))data.participants.forEach(p=>{if(!p.username)p.username="LM-"+p.id.replace(/-/g,"").slice(0,12).toUpperCase()});return {success:true}},bind(...args){
      return {
        async first(){
+         if(sql.includes("SELECT active_stage,camera_json")){
+          if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
+          return {active_stage:data.stage,camera_json:JSON.stringify(data.camera),is_locked:data.locked?1:0};
+         }
+         if(sql.includes("SELECT active_stage,is_locked"))return {active_stage:data.stage,is_locked:data.locked?1:0};
          if(sql.includes("SELECT active_stage"))return {active_stage:data.stage};
           if(sql.includes("SELECT is_locked FROM sessions"))return {is_locked:data.locked?1:0};
          if(sql.includes("SELECT camera_json")){
@@ -39,6 +44,12 @@ function mockEnv(){
          return {results:[]};
        },
        async run(){
+         if(sql.includes("CASE WHEN active_stage<>?")){
+          if(!data.migrated)throw new Error("D1_ERROR: no such column: camera_json");
+          if(data.stage!==args[0]){delete data.camera.spotlight;if(args[0]>0)data.camera={...data.camera,view:"theory",slide:args[2]}}
+          data.stage=args[4];data.camera={...data.camera,welcome:false,orientation:null,controlRevision:args[3]??data.camera.controlRevision??0};
+          return {meta:{changes:1}};
+         }
          if(sql.includes("INSERT INTO participants")){
            const [id,session_id,name,school,class_name,token_hash,username,created_at]=args;
            data.participants.push({id,session_id,name,school,class_name,token_hash,username,created_at});

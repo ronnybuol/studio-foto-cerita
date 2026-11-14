@@ -59,4 +59,12 @@ Studio Foto Cerita mendukung pelatihan Lensa Muda pada 16 November 2026 untuk se
 
 ## Audit awal
 
+## Sinkronisasi trainer dan LCD
+
+- Perubahan tahap dan slide awal harus satu UPDATE atomik. Batas indeks modul wajib cocok dengan konstanta materi frontend; tes mengimpor sumber materi asli.
+- `controlRevision` pada `camera_json` menolak perintah presentasi lama yang selesai terlambat. Respons polling lama tidak boleh menurunkan revisi frontend. Klien lama tanpa revisi masih kompatibel; muat ulang trainer dan LCD setelah rilis.
+- `public/trainer-sync.js` membatasi navigasi menjadi satu permintaan aktif. Perintah presentasi gagal tidak diputar ulang otomatis. Baca ulang status sebelum mengulang tindakan.
+- Pergantian modul mengakhiri spotlight lama, mempertahankan pengaturan demonstrasi dan seluruh jawaban. `/api/state` dan dashboard membaca satu snapshot sesi untuk tahap, presentasi, kamera dan spotlight yang konsisten.
+- Lihat `docs/trainer-lcd-sync-2026-11-14.md` untuk bukti dan batas pengujian.
+
 Lihat `docs/audit-2026-11-14.md` untuk temuan, prioritas dan batas verifikasi awal. Dokumen ini bukan bukti bahwa seluruh risiko sudah diperbaiki.

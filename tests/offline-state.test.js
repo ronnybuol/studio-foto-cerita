@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 import {readFileSync} from "node:fs";
 import {singleFlight,validClassSnapshot} from "../public/connection.js";
+import {createTrainerControl} from "../public/trainer-sync.js";
 const source=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
 const syncCode=source.slice(source.indexOf('const PUBLIC_BASE ='),source.indexOf('function pageMode('));
 const unlockedCode=source.slice(source.indexOf('function isUnlocked('),source.indexOf('function lessonLayout('));
@@ -10,7 +11,7 @@ function setup(){
  const banner={},storage=new Map();
  const state={online:true,hasClassState:true,demoMode:false,serverStage:2,count:4,locked:false,user:{id:"alice",token:"token"},
   work:{caption:{captionText:"keep my draft",_draft:true}},presentation:{view:"theory",slide:30}};
- const c={state,singleFlight,validClassSnapshot,STORAGE_CLASS:"class",ETHICS_END:56,
+ const c={state,singleFlight,validClassSnapshot,createTrainerControl,$$:()=>[],STORAGE_CLASS:"class",ETHICS_END:56,
   localStorage:{setItem:(key,value)=>storage.set(key,value)},$:()=>banner,pageMode:()=>"peserta",participantReady:false,
   retryPendingAnswers(){},requestJSON:async()=>{throw Error("network down")},STAGES:[{key:"mulai"},{key:"kamera"},{key:"komposisi"},{key:"edfat"},{key:"story"},{key:"caption"},{key:"etika"}]};
  vm.createContext(c);vm.runInContext(syncCode+unlockedCode,c);return {c,banner,storage};
@@ -61,4 +62,9 @@ test("automatic retry updates both the global notice and current exercise save s
  const start=source.indexOf("function paintAnswerStatus("),end=source.indexOf("function answerSaveMessage(",start);
  vm.runInNewContext(source.slice(start,end)+";paintAnswerStatus('Hasil sudah diterima server kelas.');",context);
  assert.equal(global.textContent,detail.textContent);assert.equal(global.hidden,false);
+});
+test("a status response started before the latest control acknowledgement cannot roll back the trainer",async()=>{
+ const {c}=setup();c.state.controlRevision=200;c.state.serverStage=3;c.state.presentation={view:"theory",slide:35};
+ c.requestJSON=async()=>({stage:2,locked:false,count:4,presentation:{view:"theory",slide:30},controlRevision:100});
+ await c.syncState();assert.equal(c.state.serverStage,3);assert.equal(c.state.presentation.slide,35);assert.equal(c.state.controlRevision,200);
 });
