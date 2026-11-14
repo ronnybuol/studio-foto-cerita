@@ -39,6 +39,6 @@ test("UI membedakan berkas lokal yang mengantre dan unggahan yang dikonfirmasi s
  assert.match(uploader,/indexedDB\.open/);
  assert.match(uploader,/createImageBitmap\(file\)/);
  assert.match(uploader,/image\/webp/);
- assert.match(uploader,/const result=await/); // R2 ack required before queue deletion
+ assert.match(uploader,/if\(response\.status!==201\)/); // R2 ack required before queue deletion
  assert.match(uploader,/await deleteQueue\(owner,item\.slot\)/);
 });
