@@ -425,16 +425,21 @@ async function handleApi(req,env){
     const stage=await stageState(env);
     if(index>stage)return failure("Tahap ini belum dibuka trainer",403);
     const data=await bodyJson(req);
+    if(Object.hasOwn(data,"_clientRevision")&&(!Number.isSafeInteger(data._clientRevision)||data._clientRevision<=0))return failure("Versi jawaban tidak valid",400);
     if(key==="story"){
       if(!Array.isArray(data.selected)||data.selected.length!==9||new Set(data.selected).size!==9||data.selected.some(n=>!Number.isInteger(n)||n<1||n>12))return failure("Pilih 9 foto latihan yang berbeda");
     }
     if(key==="caption"&&typeof data.captionText!=="string")return failure("Caption harus berupa teks");
     const payload=JSON.stringify(data);
     if(payload.length>16000)return failure("Jawaban terlalu panjang");
-    await env.DB.prepare(`INSERT INTO answers(participant_id,stage,payload,updated_at)
+    const saved=await env.DB.prepare(`INSERT INTO answers(participant_id,stage,payload,updated_at)
       VALUES(?,?,?,?) ON CONFLICT(participant_id,stage)
-      DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at`)
+      DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at
+      WHERE json_extract(excluded.payload,'$._clientRevision') IS NULL
+        OR json_extract(answers.payload,'$._clientRevision') IS NULL
+        OR json_extract(excluded.payload,'$._clientRevision')>=json_extract(answers.payload,'$._clientRevision')`)
       .bind(p.id,key,payload,new Date().toISOString()).run();
+    if(saved.meta?.changes===0)return failure("Versi jawaban yang lebih baru sudah ada di server. Muat ulang lalu periksa dan simpan kembali hasilmu.",409);
     return output({ok:true,stage:key});
   }
   return failure("Endpoint tidak ditemukan",404);

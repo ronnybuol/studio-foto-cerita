@@ -88,8 +88,25 @@ await requireStatus(registrationSlide,200,"return to registration");
 const orientationState=await api("/state");
 assert.equal(orientationState.data.orientation,true,"registration slide must reactivate");
 
+// Login checks above rotate tokens; always use the latest token for each account.
+const currentTokens=new Map(registration.map(x=>[x.result.data.user.id,x.result.data.user.token]));
+for(const login of logins)currentTokens.set(login.data.user.id,login.data.user.token);
+await requireStatus(await api("/state",{method:"PUT",payload:{stage:6},token}),200,"open answer modules");
+const savedAnswers=await Promise.all(registration.map(x=>api("/answers/kamera",{method:"PUT",token:currentTokens.get(x.result.data.user.id),payload:{a:1,s:3,i:1,_clientRevision:200}})));
+for(const answer of savedAnswers)await requireStatus(answer,200,"70 simultaneous answer submissions");
+const sampleToken=currentTokens.get(registration[0].result.data.user.id);
+await requireStatus(await api("/answers/kamera",{method:"PUT",token:sampleToken,payload:{a:6,s:6,i:6,_clientRevision:100}}),409,"late old answer must be rejected");
+const recovered=await api("/me",{token:sampleToken});
+await requireStatus(recovered,200,"answer recovery");
+assert.equal(recovered.data.answers.kamera.a,1,"late old answer must not overwrite latest result");
+assert.equal(recovered.data.answers.kamera._clientRevision,200,"latest revision must survive");
+const dashboard=await api("/dashboard",{token});await requireStatus(dashboard,200,"trainer answer dashboard");
+assert.equal(dashboard.data.participants.filter(p=>p.answers.kamera?._clientRevision===200).length,70,"trainer sees all 70 submitted results");
+await requireStatus(await api("/state",{method:"PUT",payload:{stage:0},token}),200,"restore test orientation stage");
+await requireStatus(await api("/orientation",{method:"PUT",payload:{screen:"registration"},token}),200,"restore test registration slide");
+
 const timings=iterations.slice().sort((a,b)=>a-b);
 const percentile=p=>Number(timings[Math.min(timings.length-1,Math.ceil(p*timings.length)-1)].toFixed(0));
 const elapsed=Math.round(performance.now()-ab);
-const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","registration slide restore"]};
+const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","registration slide restore"]};
 console.log("LOAD TEST RESULT",JSON.stringify(report,null,2));
