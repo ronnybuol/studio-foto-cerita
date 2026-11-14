@@ -475,8 +475,8 @@ async function handleApi(req,env){
       const ids=["sepertiga","framing","jarak","subjek"];
       if(Object.keys(data.challenges).some(id=>!ids.includes(id)))return failure("Tantangan komposisi tidak dikenal");
       for(const answer of Object.values(data.challenges)){
-        if(!answer||typeof answer!=="object"||!["A","B"].includes(answer.choice)
-          ||typeof answer.reason!=="string"||answer.reason.trim().length<15||answer.reason.length>1400)
+        if(!answer||typeof answer!=="object"||(answer.choice!==undefined&&!["A","B"].includes(answer.choice))
+          ||(answer.reason!==undefined&&(typeof answer.reason!=="string"||answer.reason.length>1400)))
           return failure("Setiap jawaban komposisi harus memiliki pilihan A/B dan alasan minimal 15 karakter");
       }
     }
