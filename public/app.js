@@ -8,7 +8,7 @@ import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisu
 import {createAnswerSync} from "./answer-sync.js";
 import {timerParticipantHTML,timerLCDHTML,timerTrainerHTML,paintSharedHuntingTimer,EMPTY_HUNTING_TIMER} from "./hunting-timer-ui.js";
 import {huntingPanelHTML,bindHuntingUI} from "./hunting-ui.js";
-import {huntingSlotsFor,fetchHuntingSlots,hydrateHuntingImages} from "./story-hunting-ui.js";
+import {huntingSlotsFor,fetchHuntingSlots,hydrateHuntingImages,clearHuntingSlotCache} from "./story-hunting-ui.js";
 import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
 import {createTrainerControl} from "./trainer-sync.js";
 const $ = (s, root=document) => root.querySelector(s);
@@ -946,22 +946,24 @@ function ethicsTrainerPanel(data,isMentor){
  <button class="btn subtle" data-ethics-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>`}
  </section>`;
 }
-function captionPhotoStrip(selected){
+function captionPhotoStrip(selected,mode="hunting"){
  return `<div class="caption-photo-strip">${selected.map((id,i)=>{
+ if(mode==="hunting")return `<figure class="caption-photo-tile"><div class="hunting-photo-preview"><img data-hunting-photo-slot="${id}" alt="Foto hunting ${id} milikmu" hidden loading="lazy"></div>
+ <figcaption><b>${String(i+1).padStart(2,"0")}</b> Foto hunting ${id}</figcaption></figure>`;
  const photo=STORY_BANK.find(x=>x.id===id);return !photo?"":`<figure class="caption-photo-tile">${storyImage(photo,"Foto urutan "+(i+1)+": "+photo.title)}
  <figcaption><b>${String(i+1).padStart(2,"0")}</b> ${escapeHtml(photo.title)}</figcaption></figure>`;
  }).join("")}</div>`;
 }
 function captionPage(){
  const saved=state.work.caption||{},draft=saved.captionText||"",story=state.work.story||{};
- const selected=Array.isArray(story.selected)?story.selected.filter(id=>STORY_BANK.some(x=>x.id===id)).slice(0,9):[];
+ const selected=Array.isArray(story.selected)?story.selected.filter(id=>Number.isInteger(id)&&id>=1&&id<=12).slice(0,9):[];
  const count=countWords(draft),validStory=selected.length===9;
  return `${titleBlock("caption")}<section class="card caption-story-link">
  <span class="eyebrow">DARI MODUL 04 KE MODUL 05</span><h2>Foto yang kamu pilih, cerita yang kamu tulis.</h2>
  <p>${validStory?"Ini sembilan foto dari meja editormu, ditampilkan dalam urutan pilihanmu.":"Belum ada sembilan foto dari Modul 04. Kamu boleh mulai membuat catatan, tetapi sebaiknya lengkapi urutan fotomu lebih dulu."}</p>
  ${validStory?`<div class="caption-story-title"><b>Judul kerja:</b> ${escapeHtml(story.title||"Belum ada judul")}</div>
- ${captionPhotoStrip(selected)}`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
- <p class="small-note">Foto dokumentasi: Ronny Adolof Buol · Sangihe, September 2017. Sembilan bingkai menjadi referensi, bukan bukti otomatis seluruh klaim dalam tulisan.</p></section>
+ ${captionPhotoStrip(selected,story.mode==="hunting"?"hunting":"legacy")}`:`<div class="info">Buka <b>Sembilan Bingkai</b> melalui menu materi dan pilih tepat sembilan foto. Saat kembali ke Caption Lab, rangkaiannya akan tampil di sini.</div>`}
+ <p class="small-note">Sembilan foto hunting milikmu menjadi referensi utama. Foto tidak membuktikan otomatis nama, tanggal, atau alasan kejadian; verifikasi tetap diperlukan.</p></section>
  <form id="caption-form" class="card caption-workspace">
  <div class="story-head"><h2>Catatan fakta · 5W + 1H</h2><span class="pill">6 unsur</span></div>
  <p class="small-note">Isi berdasarkan foto, catatan lapangan, dan informasi yang telah dipastikan. Jika masih belum diketahui, tulis “perlu verifikasi”. Jangan menebak.</p>
@@ -1084,7 +1086,7 @@ function bindLessons(){
   for(const [selector,key] of [["#story-title","title"],["#story-reason","reason"]]){
    const field=$(selector);if(field)field.oninput=()=>{state.work.story={...current(),[key]:field.value,_draft:true};saveWork()};
   }
-  const refresh=$("#story-refresh-photos");if(refresh)refresh.onclick=()=>{toast("Segarkan Modul 03 jika foto baru belum terlihat di sini.");render()};
+  const refresh=$("#story-refresh-photos");if(refresh)refresh.onclick=()=>{clearHuntingSlotCache();void fetchHuntingSlots(user).then(()=>render()).catch(error=>toast(error.message))};
   $("#reset-story").onclick=()=>{if(!confirm("Kosongkan pilihan sembilan foto?"))return;setSelected([])};
   $("#save-story").onclick=async()=>{
    const data=current(),ids=data.selected||[],title=(data.title||"").trim(),reason=(data.reason||"").trim();
@@ -1096,6 +1098,7 @@ function bindLessons(){
   };
  }
  if(state.active==="caption"){
+  void hydrateHuntingImages(state.user);
   const form=$("#caption-form");
   if(form){
    function currentDraft(){
@@ -1119,7 +1122,7 @@ function bindLessons(){
     if(n<50){if(status)status.textContent="Narasi terlalu pendek untuk latihan; tulis minimal 50 kata.";toast("Lengkapi narasi terlebih dahulu");return}
     if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")){
       if(status)status.textContent="Periksa dan centang ketiga butir editorial sebelum mengirim.";toast("Lengkapi pemeriksaan editorial");return}
-    const result={...data,storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
+    const result={...data,storyMode:state.work.story?.mode==="hunting"?"hunting":"legacy",storySelected:Array.isArray(state.work.story?.selected)?state.work.story.selected.slice(0,9):[],completedAt:new Date().toISOString()};
     const saved=await saveAnswer("caption",result);
     if(status?.isConnected)status.textContent=answerSaveMessage(saved);
    };
@@ -1292,7 +1295,7 @@ function answerDetails(key,v){
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
  const ids=Array.isArray(v.selected)?v.selected:[];
- return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>
+ return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${v.mode==="hunting"?"Foto hunting "+id:escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>
  <div class="small-note"><b>Judul kerja:</b> ${escapeHtml(v.title||"Belum ditulis")}<p><b>Alasan urutan:</b> ${escapeHtml(v.reason||"Belum ditulis")}</p></div>`;
 }
 if(key==="caption"){
@@ -1322,6 +1325,7 @@ function lcdSpotlightContent(spot){
   const ids=Array.isArray(a.selected)?a.selected.slice(0,9):[];
   return `<div class="spotlight-layout">
    <div class="spotlight-gallery">${ids.map((id,i)=>{
+    if(a.mode==="hunting")return `<figure class="spotlight-tile"><img src="/lensa-muda/api/spotlight/story-photo/${id}" alt="Bingkai ${i+1} foto hunting ${id}" loading="lazy"><figcaption><b>${i+1}.</b> Foto hunting ${id}</figcaption></figure>`;
     const photo=STORY_BANK.find(x=>x.id===id);return !photo?"":`<figure class="spotlight-tile">${storyImage(photo,"Bingkai "+(i+1)+": "+photo.title)}<figcaption><b>${i+1}.</b> ${escapeHtml(photo.title)}</figcaption></figure>`;
    }).join("")}</div>
    <aside class="spotlight-editorial"><span class="kicker">SOROTAN KARYA · ${label}</span>
@@ -1336,6 +1340,7 @@ function lcdSpotlightContent(spot){
    <span class="kicker">SOROTAN KARYA · CAPTION LAB</span><h1>${name}</h1>
    <p>Narasi peserta · ${captionWordCount(a.captionText||"")} kata</p></div>
    ${samples.length?`<div class="caption-spotlight-photos">${samples.map((id,i)=>{
+      if(a.storyMode==="hunting")return `<figure><img src="/lensa-muda/api/spotlight/story-photo/${id}" alt="Foto hunting ${id} pilihan peserta"><figcaption>Foto hunting ${id}</figcaption></figure>`;
       const item=STORY_BANK.find(x=>x.id===id);return item?`<figure>${storyImage(item,"Foto pilihan peserta")}<figcaption>${escapeHtml(item.title)}</figcaption></figure>`:"";
     }).join("")}</div>`:""}
    <div class="caption-spotlight-text">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
@@ -1896,7 +1901,7 @@ function lcdPage(){
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 4 · SEMBILAN BINGKAI</span><span class="theory-slide-indicator">SLIDE ${storyLabel(state.presentation.slide)} / ${STORY_SLIDES.length}</span></div>${storyTheoryContent(state.presentation.slide,"lcd")}`
    :stage===4
    ?`<div class="story-lcd-mission"><span class="kicker">TAHAP 04 · MEJA EDITOR FOTO</span><h1>Pilih sembilan. <em>Susun ceritanya.</em></h1>
-   <p>Dari 12 kandidat foto dokumentasi, pilih sembilan yang saling melengkapi. Jelaskan pembuka, perkembangan, dan penutup.</p>
+   <p>Dari maksimal 12 foto hasil hunting sendiri, pilih sembilan yang saling melengkapi. Jelaskan pembuka, perkembangan, dan penutup.</p>
    ${storySlideVisual(STORY_END)}
    <div class="theory-question"><span>DISKUSI KELAS</span><strong>Foto mana yang sengaja tidak dipilih dan mengapa?</strong></div></div>`
    :stage===3&&state.presentation.view==="theory"
