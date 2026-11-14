@@ -5,10 +5,10 @@ export const NATGEO_SPREADS=Object.freeze([1,2,3,4,5]);
 export function portfolioViewerHTML(page=1,variant="participant"){
  const n=NATGEO_SPREADS.includes(page)?page:1;
  return `<section class="natgeo-portfolio natgeo-portfolio-${variant}" aria-label="Portofolio National Geographic Hudog Pekayang">
- <header><span class="eyebrow">PORTOFOLIO · RONNY ADOLof BUOL · NATIONAL GEOGRAPHIC</span>
+ <header><span class="eyebrow">PORTOFOLIO · RONNY ADOLOF BUOL · NATIONAL GEOGRAPHIC</span>
  <h2>Hudog Pekayang — cerita dalam layout majalah</h2>
  <p>Amati bagaimana foto, teks, ruang kosong dan urutan spread membentuk pengalaman membaca. Spread tampil utuh tanpa dipotong.</p></header>
- <div class="natgeo-portfolio-stage"><img src="${base+n}" alt="Spread ${n} dari lima halaman portofolio Hudog Pekayang — karya foto Ronny Adolof Buol" loading="${n===1?"eager":"lazy"}" decoding="async"></div>
+ <div class="natgeo-portfolio-stage"><a href="${base+n}" target="_blank" rel="noopener noreferrer" title="Buka spread ${n} ukuran penuh"><img src="${base+n}" alt="Spread ${n} dari lima halaman portofolio Hudog Pekayang — karya foto Ronny Adolof Buol" loading="${n===1?"eager":"lazy"}" decoding="async"></a></div>
  <div class="natgeo-portfolio-controls">
  <span class="natgeo-page-label">SPREAD ${String(n).padStart(2,"0")} / 05</span>
  ${NATGEO_SPREADS.map(i=>`<button type="button" data-portfolio-page="${i}" aria-pressed="${n===i}" class="btn small ${n===i?"primary":"subtle"}">${String(i).padStart(2,"0")}</button>`).join("")}
