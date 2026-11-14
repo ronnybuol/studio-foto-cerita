@@ -237,6 +237,44 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
 
+  // Only the trainer can read an individual participant's hunting photo.
+  const trainerPhoto=/^\/api\/trainer\/hunting\/photo\/([0-9a-f-]{36})\/([1-9]|1[0-2])$/i.exec(path);
+  if(method==="GET"&&trainerPhoto){
+    const admin=await access(req,env);
+    if(!admin)return failure("Autentikasi trainer diperlukan",401);
+    if(admin.role!=="trainer")return failure("Hanya trainer boleh meninjau foto",403);
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    await ensureHuntingSchema(env.DB);
+    const [,participantId,rawSlot]=trainerPhoto,slot=Number(rawSlot);
+    const row=await env.DB.prepare(
+      "SELECT h.object_key FROM hunting_photos h JOIN participants p ON p.id=h.participant_id WHERE h.participant_id=? AND h.slot=? AND p.session_id=?"
+    ).bind(participantId,slot,SESSION_ID).first();
+    const key=huntingKey(SESSION_ID,participantId,slot);
+    if(!row||row.object_key!==key)return failure("Foto tidak ditemukan",404);
+    const object=await env.PHOTO_BUCKET.get(key);
+    if(!object)return failure("Berkas foto belum tersedia",404);
+    return new Response(object.body,{headers:{"Content-Type":"image/webp","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
+  }
+  // The public LCD can see ONLY the one photo currently spotlighted by the trainer.
+  if(method==="GET"&&path==="/api/spotlight/photo"){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    const selected=(await sessionSnapshot(env,lockReady)).camera.spotlight;
+    const requested=url.searchParams.get("participant"),slot=Number(url.searchParams.get("slot"));
+    if(!selected||selected.module!=="edfat"||selected.participantId!==requested||
+       !Number.isInteger(slot)||slot<1||slot>12)return failure("Foto tidak sedang ditampilkan",404);
+    const record=await env.DB.prepare(
+      "SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE a.participant_id=? AND a.stage='edfat' AND p.session_id=?"
+    ).bind(requested,SESSION_ID).first();
+    let answer;try{answer=JSON.parse(record?.payload||"null")}catch{}
+    if(answer?.mode!=="hunting"||answer.photoSlot!==slot)return failure("Foto pilihan tidak ditemukan",404);
+    await ensureHuntingSchema(env.DB);
+    const key=huntingKey(SESSION_ID,requested,slot);
+    const row=await env.DB.prepare("SELECT object_key FROM hunting_photos WHERE participant_id=? AND slot=?").bind(requested,slot).first();
+    if(!row||row.object_key!==key)return failure("Foto belum tersedia",404);
+    const object=await env.PHOTO_BUCKET.get(key);
+    if(!object)return failure("Berkas foto belum tersedia",404);
+    return new Response(object.body,{headers:{"Content-Type":"image/webp","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow"}});
+  }
   // Personal hunting gallery. Uploads are owned by the authenticated participant.
   // Neither the public URL nor another participant can read the raw photo.
   if(path==="/api/hunting/photos" || path.startsWith("/api/hunting/photos/")){
@@ -413,6 +451,16 @@ async function handleApi(req,env){
        "SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.id=? AND p.session_id=? AND a.stage=?"
      ).bind(data.participantId,SESSION_ID,data.module).first();
      if(!record)return failure("Peserta belum menyimpan hasil modul tersebut",404);
+     if(data.module==="edfat"){
+       let answer;try{answer=JSON.parse(record.payload)}catch{}
+       if(answer?.mode==="hunting"){
+         if(!Number.isInteger(answer.photoSlot)||answer.photoSlot<1||answer.photoSlot>12)return failure("Foto pilihan belum valid",409);
+         await ensureHuntingSchema(env.DB);
+         const photo=await env.DB.prepare("SELECT slot FROM hunting_photos WHERE participant_id=? AND slot=?")
+           .bind(data.participantId,answer.photoSlot).first();
+         if(!photo)return failure("Foto pilihan peserta belum tersedia",404);
+       }
+     }
      if(data.module==="komposisi"&&(!Number.isInteger(data.challengeIndex)||data.challengeIndex<0||data.challengeIndex>3))return failure("Tantangan komposisi tidak valid",400);
      if(data.module==="komposisi"){
        let answer;try{answer=JSON.parse(record.payload)}catch{}
@@ -535,6 +583,17 @@ async function handleApi(req,env){
     if(index>stage)return failure("Tahap ini belum dibuka trainer",403);
     const data=await bodyJson(req);
     if(Object.hasOwn(data,"_clientRevision")&&(!Number.isSafeInteger(data._clientRevision)||data._clientRevision<=0))return failure("Versi jawaban tidak valid",400);
+    if(key==="edfat"&&data.mode==="hunting"){
+      if(!Number.isInteger(data.photoSlot)||data.photoSlot<1||data.photoSlot>12
+       ||!["Entire","Detail","Frame","Angle","Time"].includes(data.dominant)
+       ||typeof data.reason!=="string"||data.reason.trim().length<12||data.reason.length>1400)
+        return failure("Pilih satu foto, pendekatan EDFAT, dan alasan minimal 12 karakter",400);
+      await ensureHuntingSchema(env.DB);
+      const photo=await env.DB.prepare(
+        "SELECT slot FROM hunting_photos WHERE participant_id=? AND slot=?"
+      ).bind(p.id,data.photoSlot).first();
+      if(!photo)return failure("Foto pilihan belum tersimpan di server. Unggah foto terlebih dahulu.",409);
+    }
     if(key==="story"){
       if(!Array.isArray(data.selected)||data.selected.length!==9||new Set(data.selected).size!==9||data.selected.some(n=>!Number.isInteger(n)||n<1||n>12))return failure("Pilih 9 foto latihan yang berbeda");
     }
