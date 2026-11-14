@@ -1506,6 +1506,39 @@ async function refreshCaptionResponses(force=false){
 function bindDashboard(){
  const closingPanel=$("#closing-trainer-panel");
  if(closingPanel){
+  const bookletInput=$("#booklet-pdf-upload"),bookletStatus=$("#booklet-upload-status"),bookletReady=$("#booklet-upload-ready");
+  const refreshBooklet=async()=>{
+   if(!bookletReady?.isConnected)return;
+   try{
+    const r=await request("/api/booklet/status");
+    bookletReady.textContent=r.ready
+      ?"✓ Buku saku PDF sudah diterbitkan. QR pada layar penutup siap digunakan."
+      :"PDF lengkap belum diunggah. Buku saku digital tetap dapat dibaca dan dicetak.";
+   }catch(error){bookletReady.textContent="Status PDF belum tersedia: "+error.message}
+  };
+  void refreshBooklet();
+  if(bookletInput)bookletInput.onchange=async()=>{
+   const file=bookletInput.files?.[0];bookletInput.value="";
+   if(!file)return;
+   if(file.size>5*1024*1024||!(file.name||"").toLowerCase().endsWith(".pdf")){
+    if(bookletStatus)bookletStatus.textContent="Pilih PDF maksimal 5 MB.";return;
+   }
+   bookletInput.disabled=true;
+   try{
+    if(bookletStatus)bookletStatus.textContent="Mengunggah Buku Saku Lensa Muda…";
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
+    let response;
+    try{response=await fetch(PUBLIC_BASE+"/api/booklet/pdf",{
+      method:"PUT",headers:{Authorization:"Bearer "+state.trainerToken,"Content-Type":"application/pdf"},
+      body:file,signal:controller.signal,cache:"no-store"});
+    }finally{clearTimeout(timeout)}
+    if(!response.ok){const data=await response.json().catch(()=>({}));throw Error(data.error||"Unggah PDF gagal")}
+    if(bookletStatus)bookletStatus.textContent="✓ Buku saku diterbitkan. Semua peserta dapat mengunduh PDF lewat QR penutup.";
+    await refreshBooklet();
+   }catch(error){if(bookletStatus)bookletStatus.textContent="Unggah gagal: "+error.message}
+   finally{bookletInput.disabled=false}
+  };
+
   const message=$("#closing-trainer-status"),ready=$("#closing-photo-ready"),upload=$("#closing-photo-input");
   const refreshReady=async()=>{
    try{
