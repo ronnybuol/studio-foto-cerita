@@ -1651,3 +1651,11 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .spotlight-tile>img{display:block;width:100%;height:100%;object-fit:contain;background:#0b1421}
 .caption-spotlight-photos figure>img{width:100%;height:100%;object-fit:contain}
 @media(max-width:680px){.natgeo-portfolio{padding:10px}.natgeo-portfolio-controls .btn{flex:1;min-width:43px}.natgeo-portfolio-stage img{max-height:60vh}}
+
+.natgeo-portfolio-stage a{display:block;width:100%;text-align:center}
+.natgeo-portfolio-stage a img{margin:0 auto}
+.story-trainer-preview-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:15px 0}
+.story-trainer-preview-photos figure{margin:0;border:1px solid #8ca5b744;border-radius:8px;overflow:hidden}
+.story-trainer-preview-photos figure .hunting-photo-preview{min-height:105px;height:150px;overflow:hidden}
+.story-trainer-preview-photos img{width:100%;height:100%;object-fit:contain}
+.story-trainer-preview-photos figcaption{padding:6px 9px;font-size:12px;color:#a8b7c4}
