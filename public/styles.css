@@ -1626,3 +1626,28 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .edfat-submission span{font-size:13px;color:#ffd081;margin-top:5px}
 .edfat-submission p{font-size:14px;line-height:1.5;overflow-wrap:anywhere}
 .edfat-submission .actions{display:flex;flex-wrap:wrap;gap:7px}
+
+/* Original National Geographic spreads are always displayed uncropped. */
+.natgeo-portfolio{width:100%;margin:0 auto;padding:clamp(10px,1.3vw,22px);background:#0d1520;color:#f9fbff;border-radius:15px}
+.natgeo-portfolio header{max-width:100%;padding-bottom:12px}
+.natgeo-portfolio header h2{font-size:clamp(20px,2.5vw,38px);margin:8px 0}
+.natgeo-portfolio header p{font-size:clamp(12px,1.15vw,18px);line-height:1.5;margin:7px 0;color:#d6e2ed}
+.natgeo-portfolio-stage{width:100%;min-height:160px;display:flex;justify-content:center;align-items:center;background:#080d14;border:1px solid #30445a;border-radius:9px;overflow:hidden}
+.natgeo-portfolio-stage img{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain}
+.natgeo-portfolio-lcd{border-radius:0;background:#0a121a}
+.natgeo-portfolio-lcd .natgeo-portfolio-stage img{max-height:70vh}
+.natgeo-portfolio-controls{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:12px 0}
+.natgeo-page-label{font-weight:800;letter-spacing:.08em;margin-right:auto}
+.natgeo-trainer-panel{margin:16px 0}
+.natgeo-upload-tools{margin-top:13px;padding:12px;border:1px solid #9cb0c144;border-radius:9px}
+.natgeo-upload-tools summary{font-weight:800;cursor:pointer}
+.natgeo-upload-tools input[type=file]{margin:12px 0;max-width:100%}
+.natgeo-portfolio-reader{max-width:100%}
+.hunting-photo-preview{min-height:130px;display:flex;align-items:center;justify-content:center;background:#172333;border-radius:8px;overflow:hidden}
+.hunting-photo-preview img{width:100%;height:100%;max-height:310px;object-fit:contain}
+.hunting-photo-preview img[hidden]{display:none!important}
+.hunting-photo-preview:not(.loaded):after{content:"Memuat foto hunting…";font-size:12px;color:#c4d2df;padding:20px;text-align:center}
+.caption-photo-tile .hunting-photo-preview{min-height:96px}
+.spotlight-tile>img{display:block;width:100%;height:100%;object-fit:contain;background:#0b1421}
+.caption-spotlight-photos figure>img{width:100%;height:100%;object-fit:contain}
+@media(max-width:680px){.natgeo-portfolio{padding:10px}.natgeo-portfolio-controls .btn{flex:1;min-width:43px}.natgeo-portfolio-stage img{max-height:60vh}}
