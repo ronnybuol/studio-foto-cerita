@@ -66,5 +66,5 @@ test("Dashboard Modul 04 tampil pada tahap 04 atau lebih tinggi dan penanda rili
  const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
  assert.ok(app.includes("data.stage>=4?storyTrainerPanel(data,isMentor)"));
  assert.ok(app.includes('APP_RELEASE = "m06-finale-20261114"'));
- assert.ok(html.includes('app.js?v=20261115-shared-hunting-timer-v13'));
+ assert.ok(html.includes('app.js?v=20261115-natgeo-story-editor-v1'));
 });
