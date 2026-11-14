@@ -1007,3 +1007,44 @@ body[data-app-mode="peserta"] .masthead{justify-content:flex-start}
 .ethics-spotlight .ethics-slide-photo img{max-height:min(65vh,640px)}
 @media(max-width:900px){.ethics-theory-layout,.ethics-trainer-card .ethics-trainer-preview,.ethics-spotlight{grid-template-columns:1fr}.ethics-theory-copy h2{font-size:clamp(25px,5vw,37px)}}
 @media(max-width:650px){.ethics-plan-fields,.ethics-spotlight-plan{grid-template-columns:1fr}.ethics-final-question{padding:9px}.ethics-theory-lead,.ethics-theory-points li{font-size:14px}.ethics-spotlight-copy{overflow:visible}.ethics-option{font-size:13px}}
+
+/* Hong Bit: pembuka editorial, dua logo asli selalu di header. */
+.brand-logo-lensa{width:115px;max-height:55px;object-fit:contain}.brand-logo-zonautara{width:174px;max-height:50px;object-fit:contain}.brand-divider{width:1px;height:43px;background:#ffffff55;flex:none}
+.masthead .brand{gap:19px}.masthead .top-links{gap:8px}
+.welcome-page{background:#090a0d;min-height:calc(100svh - 94px);color:#fff}.welcome-hero{min-height:calc(100svh - 94px);display:flex;align-items:center;position:relative;overflow:hidden}
+.welcome-portrait{position:absolute;inset:0 auto 0 0;width:62%;background:#09090b url("/lensa-muda/assets/brand/hong-bit.webp") center 30%/cover no-repeat}
+.welcome-shade{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,#090a0d28 28%,#090a0d 56%,#090a0d 100%)}
+.welcome-copy{position:relative;z-index:1;width:min(56%,810px);margin-left:auto;padding:50px clamp(22px,5vw,90px) 70px 22px}
+.welcome-eyebrow{display:block;font-size:13px;letter-spacing:.14em;color:#ff8337;font-weight:850}
+.welcome-copy h1{font-size:clamp(41px,4.15vw,76px);line-height:1.07;letter-spacing:-.045em;margin:18px 0 25px;font-weight:900}
+.welcome-copy h1 em{font-style:normal;color:#ff7d32}.welcome-rule{width:83px;height:4px;border-radius:5px;background:#ff7d32;margin-bottom:16px}
+.welcome-intro{font-size:clamp(17px,1.55vw,24px);font-style:italic;color:#eee;line-height:1.45}
+.welcome-description{font-size:clamp(16px,1.2vw,20px);line-height:1.55;color:#d7d8da;margin:21px 0 28px}
+.welcome-actions{display:flex;gap:15px;flex-wrap:wrap}.welcome-actions .btn{font-size:16px;padding:17px 22px;text-decoration:none}
+.welcome-trainer-button{border:2px solid #e5e5e8;background:#09090b55;color:#fff}.welcome-trainer-button:hover{background:#ffffff20}
+.welcome-credit{margin-top:56px;padding-left:16px;border-left:3px solid #ff7d32;color:#d0d0d3;font-size:13px;font-style:italic;line-height:1.5;max-width:580px}.welcome-credit a{color:#ffad77;text-decoration:underline}
+body[data-app-mode="welcome"] .site-foot,body[data-app-mode="lcd"] .site-foot{display:none}
+.welcome-control{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.welcome-control .actions{display:flex;gap:10px;flex-wrap:wrap}
+.lcd-welcome-mode{position:relative;overflow:hidden;padding:32px 4vw 27px;min-height:90svh;justify-content:space-between}
+.lcd-welcome-photo{position:absolute;inset:0;width:66%;background:#111 url("/lensa-muda/assets/brand/hong-bit.webp") center 30%/cover no-repeat}
+.lcd-welcome-darken{position:absolute;inset:0;background:linear-gradient(90deg,#07080a20 0%,#07080aa0 45%,#07080a 74%)}
+.lcd-welcome-top,.lcd-welcome-body,.lcd-welcome-join,.lcd-welcome-credit{position:relative;z-index:1}
+.lcd-welcome-top{display:flex;align-items:center;justify-content:flex-end;gap:30px}
+.lcd-welcome-top img{object-fit:contain;max-height:58px;max-width:185px}
+.lcd-welcome-body{margin-left:40%;max-width:840px}.lcd-welcome-body h1{font-size:clamp(42px,4.6vw,82px);letter-spacing:-.05em;line-height:1.08;margin:12px 0}.lcd-welcome-body h1 em{color:#ff7e33;font-style:normal}
+.lcd-welcome-body p{font-size:clamp(15px,1.5vw,24px);line-height:1.35}
+.lcd-welcome-trainer{border-left:4px solid #ff7e33;padding-left:18px;margin-top:22px;display:flex;flex-direction:column;gap:5px}
+.lcd-welcome-trainer span{color:#ff9955;font-weight:900;letter-spacing:.13em;font-size:14px}
+.lcd-welcome-trainer strong{font-size:clamp(25px,2.6vw,42px);color:#fff}
+.lcd-welcome-trainer small{font-size:clamp(13px,1.12vw,18px);color:#ddd}
+.lcd-welcome-join{margin-left:40%;border:1px solid #ffffff33;background:#15191ee8;border-radius:17px;padding:16px 23px;display:flex;justify-content:space-between;align-items:center;gap:22px}
+.lcd-welcome-join>div:first-child{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lcd-welcome-join span{color:#ff9955;font-size:16px;font-weight:850;letter-spacing:.07em}
+.lcd-welcome-join strong{font-size:clamp(18px,1.8vw,32px);overflow-wrap:anywhere;color:#fff}
+.lcd-welcome-join small{font-size:13px;color:#dedee0}
+.lcd-welcome-qr{background:white;border-radius:11px;padding:10px;flex:none}
+.lcd-welcome-qr img{display:block;width:clamp(225px,21vw,370px);height:auto;aspect-ratio:1}
+.lcd-welcome-credit{font-size:12px;color:#dedee1}
+@media(max-width:850px){.brand-logo-lensa{width:78px}.brand-logo-zonautara{width:123px}.brand-divider{height:31px}.masthead .brand{gap:8px}.welcome-hero{align-items:flex-end}.welcome-portrait{width:100%;height:60%;inset:0 0 auto 0;background-position:center 25%}.welcome-shade{background:linear-gradient(180deg,transparent 0%,#090a0d 57%,#090a0d 100%)}.welcome-copy{width:100%;padding:43vh 24px 38px}.welcome-copy h1{font-size:clamp(37px,7vw,65px)}.welcome-credit{margin-top:30px}.lcd-welcome-body{margin-left:22%}.lcd-welcome-join{margin-left:17%}}
+@media(max-width:560px){.brand-logo-lensa{width:63px}.brand-logo-zonautara{width:99px}.brand-divider{height:26px}.welcome-copy{padding-top:39vh}.welcome-copy h1{font-size:36px}.lcd-welcome-photo{width:100%;opacity:.38}.lcd-welcome-darken{background:#08090acb}.lcd-welcome-body,.lcd-welcome-join{margin-left:0}.lcd-welcome-join{flex-direction:column;align-items:stretch}.lcd-welcome-qr{align-self:center}.lcd-welcome-qr img{width:225px}.lcd-welcome-top img{max-width:114px}.lcd-welcome-mode{padding:20px}}
