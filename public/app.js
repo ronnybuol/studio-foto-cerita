@@ -937,7 +937,10 @@ if(key==="caption"){
    const facts=CAPTION_FIELDS.filter(([k])=>v[k]).map(([k,label])=>`<div><b>${escapeHtml(label)}</b> ${escapeHtml(v[k])}</div>`).join("");
    return `<div class="small-note">${facts||"Belum ada unsur 5W+1H."}</div><div class="response-caption"><b>Narasi (${countWords(v.captionText||"")} kata):</b><p>${escapeHtml(v.captionText||"Belum ditulis")}</p><p><b>Perlu verifikasi:</b> ${escapeHtml(v.verification||"Tidak ada catatan")}</p></div>`;
  }
- if(key==="etika")return `<p class="small-note">Jawaban benar: <b>${Number(v.score)||0} dari 4</b></p>`;
+ if(key==="etika")return `<div class="ethics-answer-review">
+ <p><b>Keputusan:</b> ${Number(v.score)||0} dari ${ETHICS.length} sesuai pembahasan</p>
+ ${ETHICS.map((q,i)=>`<div><b>${i+1}. ${escapeHtml(q.q)}</b><p>Jawaban: ${escapeHtml(q.a?.[v.answers?.[i]]||"Belum ada")} · Alasan: ${escapeHtml(v.reasons?.[i]||"Belum ditulis")}</p></div>`).join("")}
+ <h4>Rencana foto cerita</h4>${ETHICS_PLAN_FIELDS.map(([key,label])=>`<p><b>${escapeHtml(label)}</b> ${escapeHtml(v.plan?.[key]||"Belum ditulis")}</p>`).join("")}</div>`;
  return `<p class="small-note">Latihan tersimpan.</p>`;
 }
 const SPOTLIGHT_MODULES=["story","edfat","komposisi","kamera","caption","etika"];
@@ -966,6 +969,15 @@ function lcdSpotlightContent(spot){
    <div class="caption-spotlight-text">${escapeHtml(a.captionText||"Belum ada narasi.")}</div>
    <div class="caption-spotlight-question">Diskusi: Klaim apa yang kuat dan informasi apa yang masih perlu diverifikasi?</div>
   </div>`;
+ }
+ if(spot.module==="etika"){
+   return `<div class="ethics-spotlight"><div class="ethics-spotlight-copy">
+   <span class="kicker">SOROTAN KARYA · ETIKA & TANTANGAN</span><h1>${name}</h1>
+   <h2>${escapeHtml(a.plan?.topic||"Rencana foto cerita budaya")}</h2>
+   <div class="ethics-spotlight-plan">
+   ${[["subject","Tokoh / sumber"],["permission","Izin dan batasan"],["frames","Bingkai yang dicari"],["verify","Verifikasi fakta"],["safety","Martabat dan keselamatan"]].map(([key,label])=>`<div><b>${label}</b><p>${escapeHtml(a.plan?.[key]||"Belum dicatat")}</p></div>`).join("")}
+   </div><p class="ethics-spotlight-prompt">Diskusi: Apa keputusan etis paling penting sebelum liputan ini dimulai?</p>
+   </div>${ethicsVisual(ETHICS_END)}</div>`;
  }
  if(spot.module==="edfat"){
   return `<div class="spotlight-generic"><span class="kicker">SOROTAN KARYA · ${label}</span><h1>${name}</h1>
