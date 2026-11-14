@@ -63,7 +63,7 @@ let state = {
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
   learnerViews:{},
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
-  dashboard:null,justRegistered:false,welcome:false
+  dashboard:null,justRegistered:false,welcome:false,orientation:false
 };
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
 function saveWork(){localStorage.setItem(STORAGE_WORK,JSON.stringify(state.work))}
@@ -89,7 +89,7 @@ async function syncState(){
     if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
     const previousStage=state.serverStage;
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
-    state.spotlight=data.spotlight||null;state.welcome=!!data.welcome;
+    state.spotlight=data.spotlight||null;state.welcome=!!data.welcome;state.orientation=data.orientation===true;
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
@@ -182,6 +182,32 @@ function participantWelcomePage(){
  <div class="username-ticket"><strong>${escapeHtml(state.user.username||"Mode demo")}</strong><button class="btn small" id="copy-participant-username">Salin</button></div>
  <p class="small-note">Jangan bagikan username di grup publik karena tidak ada password tambahan.</p>
  <button class="btn primary block" id="participant-continue">Mulai belajar →</button></div></div>`;
+}
+function orientationRegistrationSlide(){
+  // The phone preview deliberately reuses the genuine participant signup form.
+  // The parent is a non-interactive LCD representation; participant accounts are NOT created here.
+  return `<section class="lcd-orientation-registration">
+    <div class="orientation-phone-side">
+      <div class="orientation-phone" aria-label="Contoh layar pendaftaran peserta di HP">
+        <div class="orientation-phone-status"><span>9:41</span><span>●●● ▰</span></div>
+        <div class="orientation-phone-address"><span>🔒</span> kelasbelajar.org/lensa-muda/peserta</div>
+        <div class="orientation-phone-screen">${signupPage()}</div>
+        <div class="orientation-phone-home"></div>
+      </div>
+    </div>
+    <div class="orientation-instructions">
+      <div class="orientation-eyebrow">TAHAP 00 / ORIENTASI · PANDUAN PESERTA</div>
+      <h1>Cara <em>mendaftar</em><br>di kelas belajar</h1>
+      <p class="orientation-lead">Setelah membuka tautan peserta, formulir seperti di sebelah kiri akan muncul di HP kalian.</p>
+      <ol class="orientation-steps">
+        <li><span>01</span><div><strong>Isi nama peserta</strong><p>Gunakan nama lengkap.</p></div></li>
+        <li><span>02</span><div><strong>Isi asal sekolah dan kelas</strong><p>Sesuaikan dengan identitas sekolah kalian.</p></div></li>
+        <li><span>03</span><div><strong>Buat username sendiri</strong><p>Satu kata, huruf kecil a–z, sepanjang 3–20 huruf. Harus unik.</p></div></li>
+        <li><span>04</span><div><strong>Tekan “Daftar dan Masuk”</strong><p>Simpan username untuk masuk kembali. Tidak perlu mendaftar dua kali.</p></div></li>
+      </ol>
+      <div class="orientation-bottom"><strong>kelasbelajar.org/lensa-muda/peserta</strong><p>Jika sudah pernah mendaftar, pilih “Sudah punya username? Masuk”.</p></div>
+    </div>
+  </section>`;
 }
 function showParticipantAuth(which){
  $("#root").innerHTML=which==="login"?participantLoginPage():signupPage();
@@ -1026,7 +1052,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · LCD mengikuti presentasi trainer; peserta dapat mengerjakan latihan secara mandiri. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="/lensa-muda/#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card welcome-control" style="margin-top:16px"><div><span class="eyebrow">PEMBUKAAN KELAS</span><h2>Layar Selamat Datang</h2><p class="small-note">Tampilkan Hong Bit, identitas trainer, dan QR pendaftaran di LCD tanpa mengubah tahap atau jawaban peserta.</p></div><div class="actions"><button id="trainer-show-welcome" class="btn primary" ${isMentor?"disabled":""}>Tampilkan Sambutan di LCD</button><a href="/lensa-muda/#/lcd" target="_blank" rel="noopener noreferrer" class="btn subtle">Buka / Lempar ke LCD ↗</a></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses peserta. LCD mengikuti slide yang Anda kendalikan; pekerjaan mandiri peserta tetap terbuka."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===6?ethicsTrainerPanel(data,isMentor):data.stage===5?captionTrainerPanel(data,isMentor):data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · LCD mengikuti presentasi trainer; peserta dapat mengerjakan latihan secara mandiri. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="/lensa-muda/#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card welcome-control" style="margin-top:16px"><div><span class="eyebrow">PEMBUKAAN KELAS</span><h2>Layar Selamat Datang</h2><p class="small-note">Tampilkan Hong Bit, identitas trainer, dan QR pendaftaran di LCD tanpa mengubah tahap atau jawaban peserta.</p></div><div class="actions"><button id="trainer-show-welcome" class="btn primary" ${isMentor?"disabled":""}>Tampilkan Sambutan di LCD</button><a href="/lensa-muda/#/lcd" target="_blank" rel="noopener noreferrer" class="btn subtle">Buka / Lempar ke LCD ↗</a></div></div><section class="card orientation-control" style="margin-top:16px"><div><span class="eyebrow">TAHAP 00 · ORIENTASI</span><h2>Cara mendaftar melalui HP</h2><p class="small-note">Tampilkan contoh formulir pendaftaran peserta di kiri LCD dan empat petunjuk singkat di kanan. Hanya untuk tahap 00.</p></div><button id="trainer-show-registration" class="btn primary" ${isMentor||data.stage!==0?"disabled":""}>Tampilkan Cara Mendaftar di LCD →</button></section><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses peserta. LCD mengikuti slide yang Anda kendalikan; pekerjaan mandiri peserta tetap terbuka."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===6?ethicsTrainerPanel(data,isMentor):data.stage===5?captionTrainerPanel(data,isMentor):data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
 <h3>${state.spotlight?"Menampilkan karya: "+escapeHtml(state.spotlight.name):"LCD mengikuti presentasi trainer"}</h3>
 <p class="small-note">Pilih hasil peserta untuk diskusi. Sorotan tidak mengubah slide atau mode presentasi terakhir.</p></div>
 <button class="btn primary" id="stop-spotlight" ${!state.spotlight||isMentor?"disabled":""}>Kembali ke Presentasi</button></section><div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
@@ -1044,6 +1070,18 @@ function bindDashboard(){
   try{await request("/api/welcome",{method:"PUT",payload:{active:true},auth:true});
    state.welcome=true;welcomeButton.textContent="✓ Sambutan tampil di LCD";toast("Layar pembuka siap di proyektor");
   }catch(error){welcomeButton.disabled=false;welcomeButton.textContent="Coba tampilkan sambutan";toast(error.message)}
+ };
+ const registrationButton=$("#trainer-show-registration");
+ if(registrationButton)registrationButton.onclick=async()=>{
+   if(state.trainerRole!=="trainer"||state.dashboard?.stage!==0)return;
+   registrationButton.disabled=true;registrationButton.textContent="Mengirim panduan ke LCD…";
+   try{
+     if(!state.online)throw Error("LCD bersama memerlukan koneksi kelas");
+     await request("/api/orientation",{method:"PUT",payload:{screen:"registration"},auth:true});
+     state.orientation=true;state.welcome=false;
+     registrationButton.textContent="✓ Panduan tampil di LCD";
+     toast("Panduan pendaftaran tampil di proyektor");
+   }catch(error){registrationButton.disabled=false;registrationButton.textContent="Coba tampilkan panduan";toast(error.message)}
  };
  const isMentor=state.trainerRole==="mentor";
  $("#trainer-out").onclick=()=>{
@@ -1421,6 +1459,9 @@ function lcdPage(){
  const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight&&!state.welcome)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+ if(stage===0&&state.orientation&&!state.welcome){
+   return `<div class="page lcd-page"><div class="lcd-mode lcd-orientation-mode">${orientationRegistrationSlide()}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+ }
  if(state.welcome){
   return `<div class="page lcd-page">${welcomePage(true,count)}<div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  }
@@ -1521,6 +1562,7 @@ async function refreshLCD(){
  lcdPolling=true;
  const prevStage=state.online?state.serverStage:state.demoStage;
   const prevWelcome=state.welcome;
+  const prevOrientation=state.orientation;
  const prevCamera=JSON.stringify(state.demoCamera);
  const prevComposition=JSON.stringify(state.demoComposition);
  const prevPresentation=JSON.stringify(state.presentation);
@@ -1528,7 +1570,7 @@ async function refreshLCD(){
  try{
    await syncState();
    const nextStage=state.online?state.serverStage:state.demoStage;
-   if(prevStage!==nextStage||prevWelcome!==state.welcome||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
+   if(prevStage!==nextStage||prevWelcome!==state.welcome||prevOrientation!==state.orientation||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
