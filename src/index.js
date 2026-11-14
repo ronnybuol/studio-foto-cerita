@@ -237,7 +237,7 @@ async function handleApi(req,env){
     const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const {stage,camera,composition,presentation,controlRevision}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -419,7 +419,7 @@ async function handleApi(req,env){
     const admin=await access(req,env);
     if(!admin||admin.role!=="trainer")return failure("Hanya trainer yang dapat menampilkan orientasi",403);
     const data=await bodyJson(req);
-    if(!["registration","roster"].includes(data.screen))return failure("Slide orientasi tidak valid",400);
+    if(!["registration","roster","guide"].includes(data.screen))return failure("Slide orientasi tidak valid",400);
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(data.screen==="roster"&&(!Number.isInteger(data.page)||data.page<0||data.page>99))return failure("Halaman daftar peserta tidak valid",400);
     if(await stageState(env)!==0)return failure("Slide ini hanya tersedia pada tahap 00 · Orientasi",409);
