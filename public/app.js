@@ -186,7 +186,7 @@ async function performStateSync(){
         void restoreParticipantSession().then(()=>retryPendingAnswers(true));
       }else void retryPendingAnswers();
     }
-    paintSharedHuntingTimer(state.timer,state.timerClockOffset);
+    paintClassTimer();
     return true;
   }catch{
     state.online=false;
@@ -198,6 +198,7 @@ async function performStateSync(){
     return false;
   }
 }
+function paintClassTimer(){paintSharedHuntingTimer(state.serverStage===3?state.timer:EMPTY_HUNTING_TIMER,state.timerClockOffset)}
 function pageMode(){const hash=location.hash.replace(/^#\//,"").split("/")[0];if(["trainer","lcd","peserta"].includes(hash))return hash;const path=location.pathname.replace(/\/+$/,"").split("/").pop();return ["trainer","lcd","peserta"].includes(path)?path:"welcome"}
 const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END],etika:[ETHICS_START,ETHICS_END]};
 function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
@@ -1172,7 +1173,7 @@ function renderParticipant(){
    saveLearnerViews();
  }
  try{localStorage.setItem(STORAGE_VIEW,state.active)}catch{}
- $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();paintSharedHuntingTimer(state.timer,state.timerClockOffset);
+ $("#root").innerHTML=lessonLayout();bindLearnerMode();bindLessons();paintClassTimer();
  const select=$("#participant-module-select");
  if(select)select.onchange=()=>{if(isUnlocked(select.value))goModule(select.value)};
  const rename=$("#participant-rename-form");
@@ -1358,7 +1359,7 @@ function bindDashboard(){
   if(!button||button.disabled||state.trainerRole!=="trainer")return;
   if(!state.online){toast("Timer kelas memerlukan koneksi server");return}
   timerControl.dataset.busy="true";
-  paintSharedHuntingTimer(state.timer,state.timerClockOffset);
+  paintClassTimer();
   const payload={action:button.dataset.huntingTimer};
   if(button.dataset.phase)payload.phase=button.dataset.phase;
   if(button.dataset.minutes)payload.minutes=Number(button.dataset.minutes);
@@ -1371,7 +1372,7 @@ function bindDashboard(){
    const feedback=$("#shared-timer-feedback");
    if(feedback)feedback.textContent="Gagal mengubah timer: "+error.message;
    toast("Perubahan timer tidak terkirim: "+error.message);
-  }finally{timerControl.dataset.busy="false";paintSharedHuntingTimer(state.timer,state.timerClockOffset)}
+  }finally{timerControl.dataset.busy="false";paintClassTimer()}
  };
  const welcomeButton=$("#trainer-show-welcome");
  if(welcomeButton)welcomeButton.onclick=async()=>{
@@ -1734,7 +1735,7 @@ async function renderTrainer(){
   try{
     await fetchDashboard();
     root.innerHTML=renderDashboard();
-    bindDashboard();paintSharedHuntingTimer(state.timer,state.timerClockOffset);
+    bindDashboard();paintClassTimer();
     if(trainerControl.busy)setTrainerControlsBusy(true);
   }catch(error){
     if(error.status===401||error.status===403){
@@ -1904,7 +1905,7 @@ function paintLcdComposition(){
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
  $("#root").insertAdjacentHTML("beforeend",timerLCDHTML());
- paintSharedHuntingTimer(state.timer,state.timerClockOffset);
+ paintClassTimer();
  $("#lcd-refresh").onclick=refreshLCD;
  // Fullscreen menempel pada #root yang tidak diganti saat LCD diperbarui.
  $("#lcd-fullscreen").onclick=()=>{
@@ -1973,7 +1974,7 @@ const pollClass=singleFlight(async(force=false)=>{
 });
 setInterval(()=>{void pollClass().catch(()=>{})},1800);
 // Countdown animates locally; server is polled only on the existing class interval.
-setInterval(()=>paintSharedHuntingTimer(state.timer,state.timerClockOffset),1000);
+setInterval(()=>paintClassTimer(),1000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)void pollClass(true).catch(()=>{})});
 window.addEventListener("online",()=>{void pollClass(true).catch(()=>{})});
 async function restoreParticipantSession(){
