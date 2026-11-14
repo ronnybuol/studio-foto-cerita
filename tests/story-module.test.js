@@ -42,7 +42,7 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(app.includes('data-move'));
  assert.ok(css.includes('.story-editor-workspace'));
  assert.ok(css.includes('.story-learner-theory .story-theory-lead'));
- assert.ok(api.includes('data.slide>56'));
+ assert.ok(api.includes('data.slide>57'));
  assert.ok(api.includes('data.selected.length!==9'));
  assert.ok(api.includes('data.mode==="hunting"'));
  assert.ok(app.includes('portfolioTrainerHTML('));
