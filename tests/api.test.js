@@ -159,7 +159,7 @@ test("trainer mengendalikan 8 slide teori dan beralih ke simulator tanpa menghap
  const mentor=(await call(env,"/lensa-muda/api/login","POST",{pin:"mentor-67890"})).data;
  const forbidden=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:2},mentor.token);
  assert.equal(forbidden.status,403);
- const invalid=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:51},trainer.token);
+ const invalid=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:57},trainer.token);
  assert.equal(invalid.status,400);
  const detailSlide=await call(env,"/lensa-muda/api/presentation","PUT",{view:"theory",slide:20},trainer.token);
  assert.equal(detailSlide.status,200);
