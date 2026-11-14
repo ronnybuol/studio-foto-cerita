@@ -1688,3 +1688,51 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .caption-story-link .caption-photo-tile{min-width:0}
 .caption-story-link .caption-photo-tile figcaption{overflow-wrap:anywhere}
 @media(max-width:600px){.caption-review-panel .story-head{flex-direction:column}.caption-review-panel .story-head button{align-self:start}}
+
+/* Caption Lab 07: a sourced, readable 5W+1H example across LCD and participant screens. */
+.caption-example-theory{display:grid;grid-template-columns:minmax(0,.34fr) minmax(0,.66fr);gap:clamp(12px,1.5vw,24px);min-width:0;min-height:0;align-items:start;flex:1}
+.caption-example-theory .caption-slide-photo{margin:0;min-height:0}
+.caption-example-theory .caption-slide-photo img{max-height:min(60vh,570px);width:100%;aspect-ratio:auto;object-fit:contain}
+.caption-example-content{color:#ecf1f6;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+.caption-example-head h3{font-size:clamp(21px,2vw,35px);margin:7px 0}
+.caption-example-text{font-size:clamp(14px,1.16vw,20px);line-height:1.55;max-height:27vh;overflow-y:auto;white-space:normal}
+.caption-example-source{font-size:clamp(11px,.9vw,15px);line-height:1.4;color:#c4d4e1}
+.caption-example-source a{color:#ffce99;text-decoration:underline}
+.caption-example-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.caption-example-facts>div{background:#253341;border:1px solid #425467;border-radius:7px;padding:7px 9px;display:flex;align-items:start;gap:8px;min-width:0}
+.caption-example-facts b{font-size:12px;letter-spacing:.05em;color:#ffc27d;flex:none;min-width:44px}
+.caption-example-facts span{font-size:clamp(11px,.86vw,14px);line-height:1.35;overflow-wrap:anywhere}
+.caption-example-warning{font-size:12px;line-height:1.4;color:#ffcb94;border-left:3px solid #ffa85d;padding-left:10px}
+.caption-learner-theory .caption-example-content,.caption-trainer-preview .caption-example-content{color:#243143}
+.caption-learner-theory .caption-example-facts>div,.caption-trainer-preview .caption-example-facts>div{background:#f1f4f7;border-color:#d5dfe8}
+.caption-learner-theory .caption-example-facts span,.caption-trainer-preview .caption-example-facts span{color:#25364a}
+.caption-learner-theory .caption-example-source,.caption-trainer-preview .caption-example-source{color:#516274}
+.caption-learner-theory .caption-example-source a,.caption-trainer-preview .caption-example-source a{color:#904116}
+.caption-learner-theory .caption-example-warning,.caption-trainer-preview .caption-example-warning{color:#7b4722}
+.caption-trainer-preview:has(.caption-example-content){grid-template-columns:minmax(0,.25fr) minmax(0,.75fr)}
+.caption-trainer-preview .caption-example-text{max-height:200px;font-size:14px}
+.caption-trainer-preview .caption-example-facts{gap:5px}
+.caption-trainer-preview .caption-example-facts b{min-width:40px}
+.caption-trainer-preview .caption-example-facts span{font-size:12px}
+@media(max-width:950px){.caption-example-theory{grid-template-columns:1fr}.caption-example-theory .caption-slide-photo img{max-height:32vh}.caption-example-text{max-height:none;overflow:visible}.caption-example-facts{grid-template-columns:1fr 1fr}}
+@media(max-width:550px){.caption-example-facts{grid-template-columns:1fr}.caption-example-theory .caption-slide-photo img{max-height:35vh}}
+
+/* LCD spotlight: all NINE photo-story frames and the full scrollable caption. */
+.caption-spotlight{display:flex;flex-direction:column;gap:clamp(8px,1vw,16px);height:100%;min-height:0;min-width:0;overflow:hidden;flex:1}
+.caption-spotlight-top{display:flex;align-items:end;justify-content:space-between;gap:20px;min-height:0;flex:none}
+.caption-spotlight-top h1{font-size:clamp(24px,3vw,45px);margin:3px 0;line-height:1.1}
+.caption-spotlight-top h2{font-size:clamp(16px,1.5vw,26px);margin:3px 0;color:#e8f0f7;line-height:1.2}
+.caption-spotlight-count{display:flex;flex-direction:column;text-align:right;flex:none;gap:4px}
+.caption-spotlight-count b{font-size:clamp(23px,2.8vw,45px);color:#ffac71}
+.caption-spotlight-count span{font-size:clamp(11px,1vw,15px);color:#cdd8e4}
+.caption-spotlight-main{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(12px,1.6vw,24px);min-width:0;min-height:0;flex:1;overflow:hidden}
+.caption-spotlight .caption-spotlight-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(5px,.7vw,12px);min-width:0;min-height:0;max-width:none;height:100%;overflow:hidden}
+.caption-spotlight .caption-spotlight-photos figure{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:0;overflow:hidden;border-radius:7px;background:#0c1520;margin:0}
+.caption-spotlight .caption-spotlight-photos figure>img,.caption-spotlight .caption-spotlight-photos figure>.story-photo{width:100%;height:calc(100% - 24px);max-height:none;min-height:0;object-fit:contain;flex:1;background:#0c1520;border-radius:0;aspect-ratio:auto}
+.caption-spotlight .caption-spotlight-photos figcaption{font-size:clamp(10px,.9vw,14px);padding:3px 6px;color:#d5e1eb;flex:none;height:24px}
+.caption-spotlight .caption-spotlight-photos figcaption b{color:#ffad77}
+.caption-spotlight-narrative{display:flex;flex-direction:column;min-width:0;min-height:0;gap:8px}
+.caption-spotlight-narrative>.kicker{flex:none}
+.caption-spotlight .caption-spotlight-text{white-space:pre-wrap;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere;min-height:0;flex:1;font-size:clamp(14px,1.33vw,22px);line-height:1.5;padding:clamp(12px,1.2vw,20px);border-radius:10px;scrollbar-width:auto}
+.caption-spotlight .caption-spotlight-question{font-size:clamp(12px,1vw,16px);flex:none;line-height:1.3}
+@media(max-width:900px){.caption-spotlight{height:auto;min-height:0;overflow:visible}.caption-spotlight-main{grid-template-columns:1fr;overflow:visible;display:flex;flex-direction:column}.caption-spotlight .caption-spotlight-photos{height:55vw;max-height:450px;min-height:280px;flex:none}.caption-spotlight-narrative{min-height:180px}.caption-spotlight .caption-spotlight-text{max-height:40vh;overflow-y:auto}.caption-spotlight-top{align-items:start}}
