@@ -25,13 +25,13 @@ export function timerTrainerHTML(disabled=false){
  <div class="shared-timer-heading"><div><span class="eyebrow">MODUL 03 · PENGATURAN WAKTU BERSAMA</span><h2>Timer Hunting dan Unggah Foto</h2><p class="small-note">Mulai, jeda, lanjutkan, atau tambah waktu. LCD dan HP peserta akan mengikuti timer kelas.</p></div>
  <div id="shared-hunting-trainer" class="shared-hunting-timer trainer-hunting-timer" role="timer">${timerBase()}</div></div>
  <div class="shared-timer-actions">
-  <button class="btn primary" data-hunting-timer="start" data-phase="hunting" ${disabled?"disabled":""}>▶ Mulai Hunting · 25 menit</button>
-  <button class="btn primary" data-hunting-timer="start" data-phase="upload" ${disabled?"disabled":""}>▶ Mulai Seleksi & Unggah · 15 menit</button>
-  <button class="btn subtle" data-hunting-timer="pause" ${disabled?"disabled":""}>⏸ Jeda</button>
-  <button class="btn subtle" data-hunting-timer="resume" ${disabled?"disabled":""}>▶ Lanjutkan</button>
-  <button class="btn subtle" data-hunting-timer="extend" data-minutes="5" ${disabled?"disabled":""}>+5 menit</button>
-  <button class="btn subtle" data-hunting-timer="extend" data-minutes="10" ${disabled?"disabled":""}>+10 menit</button>
-  <button class="btn subtle" data-hunting-timer="finish" ${disabled?"disabled":""}>■ Akhiri fase</button>
+  <button class="btn primary" data-hunting-timer="start" data-phase="hunting" data-role-disabled="${disabled}" ${disabled?"disabled":""}>▶ Mulai Hunting · 25 menit</button>
+  <button class="btn primary" data-hunting-timer="start" data-phase="upload" data-role-disabled="${disabled}" ${disabled?"disabled":""}>▶ Mulai Seleksi & Unggah · 15 menit</button>
+  <button class="btn subtle" data-hunting-timer="pause" data-role-disabled="${disabled}" ${disabled?"disabled":""}>⏸ Jeda</button>
+  <button class="btn subtle" data-hunting-timer="resume" data-role-disabled="${disabled}" ${disabled?"disabled":""}>▶ Lanjutkan</button>
+  <button class="btn subtle" data-hunting-timer="extend" data-minutes="5" data-role-disabled="${disabled}" ${disabled?"disabled":""}>+5 menit</button>
+  <button class="btn subtle" data-hunting-timer="extend" data-minutes="10" data-role-disabled="${disabled}" ${disabled?"disabled":""}>+10 menit</button>
+  <button class="btn subtle" data-hunting-timer="finish" data-role-disabled="${disabled}" ${disabled?"disabled":""}>■ Akhiri fase</button>
  </div><p id="shared-timer-feedback" class="small-note" role="status" aria-live="polite">Timer tidak membatalkan unggahan ketika waktunya habis.</p>
  </section>`;
 }
