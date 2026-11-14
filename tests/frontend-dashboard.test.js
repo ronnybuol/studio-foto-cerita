@@ -98,6 +98,6 @@ test("tampilan peserta berfokus pada materi, navigasi ringkas, identitas Zonauta
  assert.ok(css.includes('body[data-app-mode="peserta"] .top-links'));
  assert.ok(css.includes('@media print'));
  assert.ok(html.includes("brand-logo-kamisama"));
- assert.ok(html.includes("Ronny Adolof Buol"));
+ assert.ok(source.includes("Ronny Adolof Buol"));
  assert.ok(html.includes("brand-logo-zonautara"));
 });
