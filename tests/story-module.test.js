@@ -13,7 +13,8 @@ test("Modul 04 menyediakan enam slide dan dua belas kandidat foto dengan sembila
   const slide=storySlide(i);
   assert.ok(slide.title&&slide.lead&&slide.prompt&&slide.note&&slide.points.length===3);
   assert.equal(storyLabel(i),String(i-STORY_START+1).padStart(2,"0"));
-  assert.match(storySlideVisual(i),/sangihe-2017-[0-9]{4}\.webp/);
+  if(i===STORY_END)assert.match(storySlideVisual(i),/\/api\/portfolio\/spread\/1/);
+  else assert.match(storySlideVisual(i),/sangihe-2017-[0-9]{4}\.webp/);
  }
  for(const image of STORY_BANK){
   assert.ok(storyAsset(image).startsWith("/lensa-muda/assets/composition/"));
@@ -47,6 +48,10 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(app.includes('portfolioTrainerHTML('));
  assert.ok(app.includes('huntingShot('));
  assert.ok(app.includes('hydrateHuntingImages('));
+ assert.ok(app.includes('storyHuntingSelection(current())'));
+ assert.ok(app.includes('addStoryHuntingPhoto(current(),id,huntingSlotsFor(user))'));
+ assert.ok(app.includes('storySubmissionList(data,isMentor)'));
+ assert.ok(app.includes('refreshStoryResponses('));
 });
 
 test("Semua foto Modul 04 benar-benar ada di public/assets/composition",()=>{
@@ -58,7 +63,7 @@ test("Semua foto Modul 04 benar-benar ada di public/assets/composition",()=>{
  for(let i=STORY_START;i<=STORY_END;i++){
   const id=storySlide(i).image;
   const file=new URL("../public/assets/composition/sangihe-2017-"+id+".webp",import.meta.url);
-  assert.ok(existsSync(file),"Foto slide hilang: "+id);
+  if(i!==STORY_END)assert.ok(existsSync(file),"Foto slide hilang: "+id);
  }
 });
 test("Dashboard Modul 04 tampil pada tahap 04 atau lebih tinggi dan penanda rilis jelas",()=>{
@@ -66,5 +71,13 @@ test("Dashboard Modul 04 tampil pada tahap 04 atau lebih tinggi dan penanda rili
  const html=readFileSync(new URL("../public/index.html",import.meta.url),"utf8");
  assert.ok(app.includes("data.stage>=4?storyTrainerPanel(data,isMentor)"));
  assert.ok(app.includes('APP_RELEASE = "m06-finale-20261114"'));
- assert.ok(html.includes('app.js?v=20261115-natgeo-story-editor-v1'));
+ assert.ok(html.includes('app.js?v=20261115-story-editor-pickfix-v2'));
+});
+
+test("Slide 06 menugaskan foto sendiri, memakai spread NatGeo pertama, tanpa mengubah kelima slide Sangihe",()=>{
+ const slide=storySlide(STORY_END);
+ assert.equal(slide.title,"Sekarang giliranmu memilih foto sendiri menjadi rangkaia foto cerita");
+ assert.equal(slide.lead,"Dari 12 foto yang sudah kamu unggah sebelumnya, pilih 9 foto, susun urutannya, lalu tuliskan arah ceritamu.");
+ assert.match(storySlideVisual(STORY_END),/api\/portfolio\/spread\/1/);
+ for(let i=STORY_START;i<STORY_END;i++)assert.match(storySlideVisual(i),/sangihe-2017-/);
 });

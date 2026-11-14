@@ -1659,3 +1659,17 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .story-trainer-preview-photos figure .hunting-photo-preview{min-height:105px;height:150px;overflow:hidden}
 .story-trainer-preview-photos img{width:100%;height:100%;object-fit:contain}
 .story-trainer-preview-photos figcaption{padding:6px 9px;font-size:12px;color:#a8b7c4}
+
+/* Modul 04 slide 06: first NatGeo spread displayed whole; no crop or overlay. */
+.story-slide-natgeo .story-photo{aspect-ratio:1654/1083;max-height:min(57vh,560px)}
+.story-slide-natgeo .story-photo img{width:100%;height:100%;object-fit:contain}
+.story-lcd-mission .story-slide-natgeo .story-photo{max-height:min(43vh,455px)}
+/* Trainer can review the exact nine selected frames without opening each participant. */
+.story-review-panel{margin:16px 0}
+.story-review-panel .story-head{align-items:flex-start;gap:14px}
+.story-review-panel h3{font-size:clamp(18px,1.8vw,25px);margin:5px 0}
+.story-review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,275px),1fr));gap:12px;margin-top:12px}
+.story-review-item{border:1px solid #d4dbe1;border-radius:12px;background:#f9fafb;padding:14px;min-width:0}
+.story-review-item b,.story-review-item span{display:block;overflow-wrap:anywhere}
+.story-review-item p{font-size:13px;line-height:1.5;color:#44536a;margin:8px 0}
+.story-review-item .actions{display:flex;flex-wrap:wrap;gap:7px}
