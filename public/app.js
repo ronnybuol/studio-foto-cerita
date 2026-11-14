@@ -3,10 +3,11 @@ import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,co
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
+import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
 const escapeHtml = (s="") => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const APP_RELEASE = "m05-caption-20261114";
+const APP_RELEASE = "m06-finale-20261114";
 const STORAGE_USER = "lm26-user";
 const STORAGE_WORK = "lm26-work";
 const STORAGE_VIEW = "lm26-view";
@@ -92,7 +93,7 @@ async function syncState(){
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
-    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=CAPTION_END)
+    if(data.presentation&&["theory","simulator"].includes(data.presentation.view)&&Number.isInteger(data.presentation.slide)&&data.presentation.slide>=0&&data.presentation.slide<=ETHICS_END)
       state.presentation=data.presentation;
     $("#connectivity").className="connection online";
     $("#connectivity").textContent=`● Terhubung ke kelas langsung · ${data.count||0} peserta terdaftar`;
@@ -103,7 +104,7 @@ async function syncState(){
   }
 }
 function pageMode(){const mode=location.hash.replace(/^#\//,"").split("/")[0];return ["trainer","lcd","peserta"].includes(mode)?mode:"peserta"}
-const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END]};
+const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END],etika:[ETHICS_START,ETHICS_END]};
 function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
 function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
 function saveLearnerViews(){localStorage.setItem(learnerKey(),JSON.stringify(state.learnerViews))}
@@ -138,7 +139,7 @@ function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode
  case "edfat":return theory?edfatParticipantSlide(slide):edfatPage();
  case "story":return theory?storyParticipantSlide(slide):storyPage();
  case "caption":return theory?captionParticipantSlide(slide):captionPage();
- case "etika":return ethicsPage();
+ case "etika":return theory?ethicsParticipantSlide(slide):ethicsPage();
  default:return startPage();
 }}
 function landing(){
@@ -908,7 +909,7 @@ function participantFormHTML(p=null){
 }
 function renderDashboard(){
  const data=state.dashboard||{stage:state.serverStage,count:state.count,participants:[]},isMentor=state.trainerRole==="mentor";
- return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · LCD mengikuti presentasi trainer; peserta dapat mengerjakan latihan secara mandiri. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses peserta. LCD mengikuti slide yang Anda kendalikan; pekerjaan mandiri peserta tetap terbuka."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===5?captionTrainerPanel(data,isMentor):data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
+ return `<div class="page"><div class="module-top"><div><span class="eyebrow">DASHBOARD ${isMentor?"PENDAMPING":"TRAINER"}</span><h1>Kendali Studio Foto Cerita</h1><p>16 November 2026 · kelas berlangsung 180 menit · LCD mengikuti presentasi trainer; peserta dapat mengerjakan latihan secara mandiri. <span class="small-note">Rilis: ${APP_RELEASE}</span></p></div><button id="trainer-out" class="btn subtle">Keluar dashboard</button></div><div class="grid"><div class="card"><div class="eyebrow">Peserta terdaftar</div><h2 style="font-size:38px">${data.count||0}</h2><p class="small-note">Tidak ada batas jumlah peserta dalam formulir.</p></div><div class="card"><div class="eyebrow">Tahap terbuka</div><h2 style="font-size:22px">${STAGES[data.stage||0]?.name||"Orientasi"}</h2><p class="small-note">Peserta dapat mengakses tahap ini dan semua tahap sebelumnya.</p></div><div class="card"><div class="eyebrow">Tampilan publik</div><a href="${location.pathname}#/lcd" target="_blank" rel="noopener noreferrer" class="btn">Buka layar LCD ↗</a><p class="small-note">Gunakan jendela/tab terpisah di proyektor.</p></div></div><div class="card class-lock-panel" style="margin-top:16px"><div><span class="eyebrow">AKSES KELAS</span><h2>${data.locked?"Kelas sedang dikunci":"Kelas terbuka"}</h2><p class="small-note">${data.locked?"Peserta tidak dapat masuk, mendaftar atau menyimpan latihan. Data tetap aman di D1.":"Ketika kegiatan berakhir, kunci kelas agar pendaftaran dan akses peserta berhenti."}</p></div><button id="trainer-toggle-class-lock" class="btn ${data.locked?"primary":"subtle"}" ${isMentor?"disabled":""}>${data.locked?"Buka kembali kelas":"Kunci aplikasi peserta"}</button></div><div class="card" style="margin-top:16px"><h2>Alur pelajaran</h2><p class="small-note">${isMentor?"Mode pendamping: memantau kelas tanpa mengubah tahap.":"Pilih tahap untuk membuka akses peserta. LCD mengikuti slide yang Anda kendalikan; pekerjaan mandiri peserta tetap terbuka."}</p><div class="choice-set">${STAGES.map((s,i)=>`<button class="choice" data-stage="${i}" ${isMentor?"disabled":""} aria-pressed="${data.stage===i}">${String(i).padStart(2,"0")} · ${s.name}</button>`).join("")}</div></div>${data.stage===6?ethicsTrainerPanel(data,isMentor):data.stage===5?captionTrainerPanel(data,isMentor):data.stage>=4?storyTrainerPanel(data,isMentor):data.stage===3?edfatTrainerPanel(data,isMentor):data.stage===2?compositionTrainerPanel(data,isMentor):theoryTrainerPanel(data,isMentor)}${data.stage===1&&state.presentation.view==="simulator"?trainerCameraPanel(data,isMentor):""}<section class="card trainer-spotlight-banner" id="trainer-spotlight-status"><div><span class="eyebrow">SOROTAN KARYA DI LCD</span>
 <h3>${state.spotlight?"Menampilkan karya: "+escapeHtml(state.spotlight.name):"LCD mengikuti presentasi trainer"}</h3>
 <p class="small-note">Pilih hasil peserta untuk diskusi. Sorotan tidak mengubah slide atau mode presentasi terakhir.</p></div>
 <button class="btn primary" id="stop-spotlight" ${!state.spotlight||isMentor?"disabled":""}>Kembali ke Presentasi</button></section><div class="card" style="margin-top:16px"><div class="story-head"><h2>Manajemen peserta & progres</h2><button class="btn small subtle" id="refresh-dashboard">↻ Segarkan</button></div>
@@ -957,11 +958,11 @@ function bindDashboard(){
  $$("[data-stage]").forEach(b=>b.onclick=async()=>{
    const stage=Number(b.dataset.stage);
    if(state.trainerRole==="mentor")return;
-   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=5){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:CAPTION_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
+   if(!state.online){state.demoStage=stage;state.dashboard.stage=stage;if(stage>=1&&stage<=6){state.presentation={view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START};state.dashboard.presentation=state.presentation}render();toast("Tahap demo diubah pada perangkat ini");return}
    try{
      await request("/api/state",{method:"PUT",payload:{stage},auth:true});
-     if(stage!==state.dashboard?.stage && stage>=1 && stage<=5){
-       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:CAPTION_START},auth:true});
+     if(stage!==state.dashboard?.stage && stage>=1 && stage<=6){
+       await request("/api/presentation",{method:"PUT",payload:{view:"theory",slide:stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START},auth:true});
      }
      await syncState();await fetchDashboard();render();
      toast("Tahap kelas berhasil diperbarui");
@@ -969,7 +970,7 @@ function bindDashboard(){
  });
  async function choosePresentation(next){
    if(state.trainerRole==="mentor")return;
-   const target={view:next.view,slide:Math.max(0,Math.min(CAPTION_END,next.slide))};
+   const target={view:next.view,slide:Math.max(0,Math.min(ETHICS_END,next.slide))};
    if(!state.online){
      state.presentation=target;
      if(state.dashboard)state.dashboard.presentation=target;
@@ -999,7 +1000,13 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $$("[data-caption-step]").forEach(button=>button.onclick=()=>{
+ $("[data-ethics-step]").forEach(btn=>btn.onclick=()=>{
+   const next=state.presentation.slide+Number(btn.dataset.ethicsStep);
+   if(next>=ETHICS_START&&next<=ETHICS_END)choosePresentation({view:"theory",slide:next});
+ });
+ $("[data-ethics-slide]").forEach(btn=>btn.onclick=()=>choosePresentation({view:"theory",slide:Number(btn.dataset.ethicsSlide)}));
+ $("[data-ethics-mode]").forEach(btn=>btn.onclick=()=>choosePresentation({view:btn.dataset.ethicsMode,slide:state.presentation.slide>=ETHICS_START&&state.presentation.slide<=ETHICS_END?state.presentation.slide:ETHICS_START}));
+ $("[data-caption-step]").forEach(button=>button.onclick=()=>{
     const next=state.presentation.slide+Number(button.dataset.captionStep);
     if(next>=CAPTION_START&&next<=CAPTION_END)choosePresentation({view:"theory",slide:next});
  });
@@ -1290,7 +1297,13 @@ function lcdPage(){
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  const camera=state.demoCamera;
- const content=stage===5&&state.presentation.view==="theory"
+ const content=stage===6&&state.presentation.view==="theory"
+    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 6 · ETIKA & TANTANGAN</span><span class="theory-slide-indicator">SLIDE ${ethicsLabel(state.presentation.slide)} / ${ETHICS_SLIDES.length}</span></div>${ethicsTheoryContent(state.presentation.slide,"lcd")}`
+    :stage===6
+    ?`<div class="ethics-lcd-mission"><span class="kicker">TAHAP 06 · TANTANGAN AKHIR</span><h1>Foto yang jujur. <em>Cerita yang bertanggung jawab.</em></h1>
+      <p>Peserta menyelesaikan empat pilihan etis dan menyusun rencana foto cerita budaya yang ingin mereka kerjakan.</p>
+      ${ethicsVisual(ETHICS_END)}<div class="theory-question"><span>DISKUSI KELAS</span><strong>Apa yang akan kamu potret, dan siapa yang perlu kamu ajak bicara terlebih dahulu?</strong></div></div>`
+    :stage===5&&state.presentation.view==="theory"
     ?`<div class="lcd-theory-intro"><span class="kicker">BAB 5 · CAPTION LAB</span><span class="theory-slide-indicator">SLIDE ${captionLabel(state.presentation.slide)} / ${CAPTION_SLIDES.length}</span></div>${captionTheoryContent(state.presentation.slide,"lcd")}`
     :stage===5
     ?`<div class="caption-lcd-mission"><span class="kicker">TAHAP 05 · MENULIS NARASI FOTO</span><h1>Sembilan foto. <em>Satu cerita yang akurat.</em></h1>
@@ -1334,7 +1347,7 @@ function lcdPage(){
    :`<div><div class="kicker">LENSA MUDA 2026 · STUDIO FOTO CERITA</div>
       <h1>${escapeHtml(step.title)}</h1><p>${escapeHtml(step.blurb)}</p></div>`;
  return `<div class="page lcd-page">
-   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":stage===4?"lcd-story-mode":stage===5?"lcd-caption-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
+   <div class="lcd-mode ${stage===1?(state.presentation.view==="theory"?"lcd-theory-mode":"lcd-camera-mode"):stage===2?"lcd-composition-mode":stage===3?"lcd-edfat-mode":stage===4?"lcd-story-mode":stage===5?"lcd-caption-mode":stage===6?"lcd-ethics-mode":""} ${stage===1&&state.presentation.view==="theory"&&photoDetail(state.presentation.slide)?"lcd-photo-detail":""}">
      ${content}
      ${footer}
    </div>
