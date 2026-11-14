@@ -13,7 +13,7 @@ export const CAPTION_SLIDES=[
  "Jangan menebak nama pemain atau kegiatan khusus yang belum terverifikasi."],
  prompt:"Mana informasi dari foto, mana yang berasal dari liputan Mongabay, dan mana yang masih perlu diperiksa?",
  note:"Bacakan caption lengkap dan tunjukkan pemisahan observasi foto 2017 dari laporan latar 2015. Nama pemain maupun jenis acara pada 9 September 2017 belum terkonfirmasi.",image:"9010"},
- {tag:"07 / PRAKTIK CAPTION",title:"Sekarang tulis narasimu",lead:"Gunakan rangkaian sembilan foto yang sudah dipilih sebelumnya. Isi lembar fakta lalu susun satu caption sekitar 150 kata.",points:["Lihat sembilan foto pilihanmu sebelum menulis.","Isi 5W+1H; yang belum pasti boleh ditandai.","Baca ulang: adakah klaim yang belum didukung bukti?"],prompt:"Sebutkan satu fakta yang sudah diketahui dan satu hal yang perlu ditanyakan lagi.",note:"Buka Caption Lab dan beri waktu peserta bekerja mandiri. Jangan pindahkan otomatis dari tugas mereka.",image:"8824"}
+ {tag:"07 / PRAKTIK CAPTION",title:"Sekarang tulis narasimu",lead:"Gunakan rangkaian sembilan foto yang sudah dipilih sebelumnya. Isi lembar fakta lalu tulis satu caption; panjang tulisan bebas sebagai bahan latihan dan diskusi.",points:["Lihat sembilan foto pilihanmu sebelum menulis.","Isi 5W+1H; yang belum pasti boleh ditandai.","Baca ulang: adakah klaim yang belum didukung bukti?"],prompt:"Sebutkan satu fakta yang sudah diketahui dan satu hal yang perlu ditanyakan lagi.",note:"Buka Caption Lab dan beri waktu peserta bekerja mandiri. Jangan pindahkan otomatis dari tugas mereka.",image:"8824"}
 ];
 export const CAPTION_END=CAPTION_START+CAPTION_SLIDES.length-1;
 export const captionSlide=i=>CAPTION_SLIDES[i-CAPTION_START]||CAPTION_SLIDES[0];
