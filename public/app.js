@@ -599,7 +599,7 @@ function compositionTrainerPanel(data,isMentor){
 }
 
 function compositionChallengeIndex(c){
- const keys=["position","frame","distance","angle"];
+ const keys=["distance","frame","position","angle"];
  return Math.max(0,keys.indexOf(c?.preview));
 }
 function compositionChallengePhotos(challenge,{grid=false,forLCD=false}={}){
