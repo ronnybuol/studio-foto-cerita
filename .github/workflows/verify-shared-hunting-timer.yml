@@ -1,0 +1,44 @@
+name: Verify shared hunting timer in Cloudflare
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/verify-shared-hunting-timer.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live timer without modifying class status
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,json,time,sys
+          base="https://kelasbelajar.org/lensa-muda/"
+          for i in range(1,7):
+            try:
+              def get(path):
+                r=urllib.request.Request(base+path,headers={"Cache-Control":"no-cache","User-Agent":"Mozilla/5.0"})
+                with urllib.request.urlopen(r,timeout=25) as x:return x.status,x.read()
+              h,html=get("?timer-verify="+str(i))
+              j,js=get("app.js?timer-verify="+str(i))
+              c,css=get("styles.css?timer-verify="+str(i))
+              t,ui=get("hunting-timer-ui.js?timer-verify="+str(i))
+              a,state=get("api/state?timer-verify="+str(i))
+              body=json.loads(state)
+              checks={
+                "assets":b"20261115-shared-hunting-timer-v13" in html,
+                "app":b"timerTrainerHTML(isMentor)" in js and b"timerLCDHTML()" in js and b"/api/hunting/timer" in js,
+                "ui":b"Mulai Hunting" in ui and b"Mulai Seleksi" in ui and b"data-hunting-timer" in ui,
+                "css":b".lcd-hunting-timer" in css and b".participant-hunting-timer" in css,
+                "api":"timer" in body and "serverNow" in body and isinstance(body["serverNow"],int),
+                "http":all(x==200 for x in (h,j,c,t,a))
+              }
+              print("ATTEMPT",i,checks,"STAGE",body.get("stage"),flush=True)
+              if all(checks.values()):
+                print("PASS: countdown UI and server timer state are deployed in Cloudflare",flush=True)
+                sys.exit(0)
+            except Exception as e: print("ERROR",i,repr(e),flush=True)
+            time.sleep(12)
+          sys.exit("FAIL: shared timer not fully deployed")
+          PY
