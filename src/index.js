@@ -40,7 +40,11 @@ function newUsername(){return "LM-"+Array.from(crypto.getRandomValues(new Uint8A
 function cleanUsername(v){return typeof v==="string"?v.trim():""}
 function validUsername(v){return /^[a-z]{3,20}$/.test(v)}
 function isLegacyUsername(v){return /^LM-[A-F0-9]{12}$/.test(v)}
-function usernameConflict(error){return /UNIQUE constraint failed: participants.username|idx_participants_username/i.test(String(error))}
+function usernameConflict(error){
+ const detail=[error?.message,error?.cause?.message,String(error)].filter(Boolean).join(" | ");
+ // SQLite may report the composite index columns, not just participants.username.
+ return /UNIQUE constraint failed:.*participants\.(?:username|session_id)|idx_participants_username/i.test(detail);
+}
 function validParticipantData(v){
  const name=norm(v.name,90),school=norm(v.school,140),className=norm(v.className,30),username=cleanUsername(v.username);
  return {name,school,className,username,valid:name.length>=2&&!!school&&!!className&&validUsername(username)};
