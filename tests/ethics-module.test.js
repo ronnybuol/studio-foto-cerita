@@ -28,7 +28,7 @@ test("Tantangan akhir menghubungkan trainer, LCD, peserta, jawaban, dan sorotan 
  ])assert.ok(app.includes(anchor),"Fitur hilang: "+anchor);
  assert.ok(api.includes('data.slide>56'));
  assert.ok(api.includes('value.slide<=56'));
- assert.ok(html.includes('app.js?v=20261114-ethics'));
+ assert.ok(html.includes('app.js?v=20261114-hongbit-v1'));
  assert.ok(css.includes('.ethics-final-question'));
  assert.ok(css.includes('.ethics-theory-layout'));
 });
