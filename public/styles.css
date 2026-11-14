@@ -1128,3 +1128,46 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
  .welcome-class-actions .btn{width:100%;text-align:center}
  .welcome-projector .welcome-copy{padding-top:24vh}
 }
+
+/* Stage 00: split-screen orientation slide with faithful, inert phone version of signupPage(). */
+.lcd-orientation-mode{padding:0!important;min-height:calc(100svh - 82px)!important;background:#0b0d10;color:#f8f8fa;border-radius:0!important}
+.lcd-orientation-registration{display:grid;grid-template-columns:minmax(370px,43%) minmax(0,57%);align-items:center;min-height:calc(100svh - 82px);background:radial-gradient(ellipse at 10% 50%,#27313c 0,#11151c 50%,#0b0d10 85%);overflow:hidden}
+.orientation-phone-side{min-width:0;height:100%;display:flex;justify-content:center;align-items:center;padding:28px 24px 22px;position:relative}
+.orientation-phone-side:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#b6212720,transparent 60%);pointer-events:none}
+.orientation-phone{position:relative;z-index:1;width:min(360px,92%);height:min(720px,79vh);min-height:560px;overflow:hidden;background:#fff;border:9px solid #262930;border-radius:39px;box-shadow:0 28px 75px #000c,0 0 0 2px #555861;color:#14181e;display:flex;flex-direction:column}
+.orientation-phone:before{content:"";position:absolute;top:5px;left:50%;transform:translateX(-50%);width:85px;height:17px;background:#262930;border-radius:0 0 12px 12px;z-index:2}
+.orientation-phone-status{height:27px;flex:none;padding:5px 19px 1px;display:flex;justify-content:space-between;font-size:11px;font-weight:800;background:#f9fafb}
+.orientation-phone-address{margin:4px 11px 6px;padding:7px 9px;background:#f0f2f4;border-radius:8px;color:#50565d;text-align:center;white-space:nowrap;font-size:10px;font-weight:700}
+.orientation-phone-screen{flex:1;min-height:0;overflow-y:auto;background:#f8f7f5;scrollbar-width:thin;overscroll-behavior:contain;pointer-events:none}
+.orientation-phone-screen .page{min-width:0!important;max-width:none!important;margin:0!important;padding:5px 10px 14px!important}
+.orientation-phone-screen .login-card{max-width:none!important;min-width:0!important;width:100%!important;padding:14px!important;margin:0!important;border-radius:10px!important;box-shadow:none!important}
+.orientation-phone-screen .login-card>.btn:first-child{display:none!important}
+.orientation-phone-screen .login-card .eyebrow{font-size:9px!important;margin:0!important;color:#df5f20!important}
+.orientation-phone-screen .login-card h1{font-size:23px!important;line-height:1.13!important;margin:5px 0 8px!important}
+.orientation-phone-screen .login-card p.muted{font-size:10px!important;line-height:1.4!important;margin:0 0 10px!important}
+.orientation-phone-screen form{margin:0!important;display:flex;flex-direction:column;gap:7px!important}
+.orientation-phone-screen .field{margin:0!important}
+.orientation-phone-screen label{display:block;font-size:11px!important;font-weight:800!important;margin-bottom:3px!important}
+.orientation-phone-screen input{font-size:12px!important;width:100%!important;height:32px!important;min-height:0!important;padding:6px 9px!important;border:1px solid #d9dce0!important;border-radius:6px!important}
+.orientation-phone-screen small{font-size:9px!important;line-height:1.2!important;display:block;margin-top:3px!important}
+.orientation-phone-screen .btn.block{min-height:35px!important;padding:7px 10px!important;font-size:11px!important;margin-top:2px!important}
+.orientation-phone-screen .login-card>p.small-note{display:none!important}
+.orientation-phone-screen .login-card>button[data-choose-login]{display:none!important}
+.orientation-phone-home{width:105px;height:4px;border-radius:8px;background:#292c30;position:absolute;bottom:6px;left:50%;transform:translateX(-50%);z-index:3}
+.orientation-instructions{min-width:0;max-width:1000px;padding:45px clamp(30px,5vw,100px) 42px 8px;align-self:center}
+.orientation-eyebrow{font-size:clamp(12px,1.04vw,18px);font-weight:850;letter-spacing:.14em;color:#ff823a;margin-bottom:17px}
+.orientation-instructions h1{font-size:clamp(43px,4.5vw,82px)!important;line-height:1.08;letter-spacing:-.05em;margin:0 0 18px;color:#fff}
+.orientation-instructions h1 em{font-style:normal;color:#ff7f35}
+.orientation-lead{font-size:clamp(17px,1.38vw,24px)!important;line-height:1.43;margin:0 0 26px;color:#d8dae0}
+.orientation-steps{counter-reset:none;list-style:none;display:grid;gap:14px;padding:0;margin:0}
+.orientation-steps li{display:flex;align-items:flex-start;gap:18px}
+.orientation-steps li>span{display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid #fb803c;background:#ff81251b;border-radius:11px;font-size:16px;font-weight:900;color:#ff9a5b}
+.orientation-steps li strong{display:block;font-size:clamp(18px,1.37vw,24px);line-height:1.25;color:#fff}
+.orientation-steps li p{font-size:clamp(14px,1.07vw,19px)!important;line-height:1.35;color:#c4c8d1;margin:3px 0 0}
+.orientation-bottom{margin-top:27px;border-top:1px solid #ffffff3b;padding-top:16px}
+.orientation-bottom strong{font-size:clamp(17px,1.67vw,28px);color:#fff;overflow-wrap:anywhere}
+.orientation-bottom p{font-size:clamp(13px,1vw,18px)!important;color:#ffb589;margin:5px 0}
+.orientation-control{display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.orientation-control .btn{flex:none}
+@media(max-width:1050px){.lcd-orientation-registration{grid-template-columns:minmax(290px,41%) minmax(0,59%)}.orientation-phone{width:295px;height:610px;min-height:540px}.orientation-phone-side{padding:15px}.orientation-instructions{padding:30px 20px 35px 0}.orientation-steps{gap:11px}}
+@media(max-width:680px){.lcd-orientation-registration{grid-template-columns:1fr;min-height:0}.orientation-phone-side{height:620px}.orientation-instructions{padding:22px 25px 45px}.orientation-instructions h1{font-size:41px!important}.orientation-steps{gap:14px}}

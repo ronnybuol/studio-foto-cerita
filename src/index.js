@@ -209,7 +209,7 @@ async function handleApi(req,env){
   if(method==="GET"&&path==="/api/state"){
     const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const [camera,composition,spotlight]=await Promise.all([liveCamera(env),liveComposition(env),liveSpotlight(env)]);
-    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -343,7 +343,7 @@ async function handleApi(req,env){
     if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>56)
       return failure("Mode presentasi atau nomor slide tidak valid",400);
     try{
-      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false')),updated_at=? WHERE id=?")
+      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null),updated_at=? WHERE id=?")
         .bind(data.view,data.slide,new Date().toISOString(),SESSION_ID).run();
     }catch(error){
       if(/no such column:\\s*camera_json/i.test(String(error?.message)))
@@ -383,12 +383,22 @@ async function handleApi(req,env){
     }
     return output({ok:true,camera:{a:data.a,s:data.s,i:data.i}});
   }
+  if(method==="PUT"&&path==="/api/orientation"){
+    const admin=await access(req,env);
+    if(!admin||admin.role!=="trainer")return failure("Hanya trainer yang dapat menampilkan orientasi",403);
+    const data=await bodyJson(req);
+    if(data.screen!=="registration")return failure("Slide orientasi tidak valid",400);
+    if(await stageState(env)!==0)return failure("Slide ini hanya tersedia pada tahap 00 · Orientasi",409);
+    await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.orientation','registration','$.welcome',json('false')),updated_at=? WHERE id=?")
+      .bind(new Date().toISOString(),SESSION_ID).run();
+    return output({ok:true,orientation:"registration"});
+  }
   if(method==="PUT"&&path==="/api/welcome"){
     const admin=await access(req,env);
     if(!admin||admin.role!=="trainer")return failure("Hanya trainer yang dapat mengatur layar sambutan",403);
     const data=await bodyJson(req);
     if(typeof data.active!=="boolean")return failure("Status sambutan tidak valid",400);
-    await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.welcome',json(?)),updated_at=? WHERE id=?")
+    await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.welcome',json(?),'$.orientation',null),updated_at=? WHERE id=?")
       .bind(data.active?"true":"false",new Date().toISOString(),SESSION_ID).run();
     return output({ok:true,welcome:data.active});
   }
@@ -398,7 +408,7 @@ async function handleApi(req,env){
     if(user.role!=="trainer")return failure("Hanya trainer yang boleh mengubah tahap",403);
     const data=await bodyJson(req);
     if(!Number.isInteger(data.stage)||data.stage<0||data.stage>6)return failure("Tahap tidak valid");
-    await env.DB.prepare("UPDATE sessions SET active_stage=?,camera_json=json_set(camera_json,'$.welcome',json('false')),updated_at=? WHERE id=?")
+    await env.DB.prepare("UPDATE sessions SET active_stage=?,camera_json=json_set(camera_json,'$.welcome',json('false'),'$.orientation',null),updated_at=? WHERE id=?")
       .bind(data.stage,new Date().toISOString(),SESSION_ID).run();
     return output({stage:data.stage,ok:true});
   }
