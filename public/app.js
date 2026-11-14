@@ -822,6 +822,21 @@ function storyParticipantSlide(i=state.presentation.slide){
  <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
  ${storyTheoryContent(i,"participant")}</section>`;
 }
+function storySubmissionList(data,isMentor){
+ const people=(data.participants||[]).filter(p=>p.answers?.story?.mode==="hunting"
+  &&Array.isArray(p.answers.story.selected)&&p.answers.story.selected.length===9);
+ return `<section class="card story-review-panel" id="story-review-panel">
+ <div class="story-head"><div><span class="eyebrow">HASIL MEJA EDITOR · MODUL 04</span><h3>Rangkaian sembilan foto peserta</h3>
+ <p class="small-note">Foto dan urutan diperbarui dari server. Pilih peserta untuk meninjau sembilan foto, lalu sorot di LCD.</p></div>
+ <button type="button" id="refresh-story-answers" class="btn small subtle">↻ Segarkan hasil</button></div>
+ <div class="story-review-grid">${people.map(p=>`<article class="story-review-item">
+ <b>${escapeHtml(p.name)}</b><span class="small-note">${escapeHtml(p.answers.story.title||"Belum ada judul")}</span>
+ <p>9 foto: ${p.answers.story.selected.map(id=>String(id).padStart(2,"0")).join(" · ")}</p>
+ <div class="actions"><button type="button" data-story-review="${escapeHtml(p.id)}" class="btn small subtle">Lihat 9 foto</button>
+ <button type="button" data-story-spotlight="${escapeHtml(p.id)}" class="btn small primary" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div></article>`).join("")||'<p class="small-note">Belum ada peserta yang menyimpan sembilan foto hunting. Hasil akan muncul setelah peserta menyimpan karya.</p>'}</div>
+ <p id="story-review-updated" class="small-note" role="status" aria-live="polite"></p>
+ </section>`;
+}
 function storyTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
  const x=storySlide(i),theory=state.presentation.view==="theory";
@@ -837,7 +852,7 @@ function storyTrainerPanel(data,isMentor){
  `<div class="trainer-theory-compact"><div><strong>Meja editor peserta sedang terbuka</strong><p class="small-note">Peserta memilih, mengurutkan sembilan foto, memberi judul dan alasan editorial.</p></div>
  <button class="btn subtle" data-story-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
  <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan tiga foto yang tidak dipilih. Tidak wajib memilih sembilan foto paling indah; cari sembilan informasi yang saling melengkapi.</p></div>`}
- </section>`;
+ </section>${theory?"":storySubmissionList(data,isMentor)}`;
 }
 function captionTheoryContent(index,variant="lcd"){
  const slide=captionSlide(index);
@@ -1415,7 +1430,43 @@ function renderDashboard(){
 <div id="participant-management"></div><div id="inspect" style="margin-top:12px"></div></div>
 <section id="participant-print-sheet" class="participant-print-sheet"><h1>Daftar Peserta Lensa Muda</h1><p>Studio Foto Cerita · 16 November 2026 · Kelas Belajar Zonautara.com</p><table><thead><tr><th>No.</th><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th></tr></thead><tbody>${(data.participants||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.username||"—")}</td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td></tr>`).join("")}</tbody></table><p class="small-note">Dokumen internal, username merupakan akses akun peserta tanpa password.</p></section></div>`;
 }
+let storyResponsesBusy=false;
+let storyResponsesFingerprint="";
+async function refreshStoryResponses(force=false){
+ const panel=$("#story-review-panel");
+ if(!panel||pageMode()!=="trainer"||storyResponsesBusy||!state.trainerToken)return;
+ storyResponsesBusy=true;
+ try{
+  const incoming=await request("/api/dashboard",{auth:true});
+  const people=incoming.participants||[];
+  const fingerprint=JSON.stringify(people.map(p=>[p.id,p.answers?.story]));
+  if(!force&&fingerprint===storyResponsesFingerprint)return;
+  state.dashboard.participants=people;
+  state.dashboard.count=incoming.count;
+  const fresh=document.createElement("div");
+  fresh.innerHTML=storySubmissionList({...state.dashboard,participants:people},state.trainerRole==="mentor");
+  const grid=panel.querySelector(".story-review-grid");
+  if(grid)grid.innerHTML=fresh.querySelector(".story-review-grid").innerHTML;
+  const label=$("#story-review-updated");
+  if(label)label.textContent="Karya terbaru diperiksa · "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+  storyResponsesFingerprint=fingerprint;
+ }finally{storyResponsesBusy=false}
+}
 function bindDashboard(){
+ const storyPanel=$("#story-review-panel");
+ if(storyPanel)storyPanel.onclick=event=>{
+  if(event.target.closest("#refresh-story-answers")){
+   void refreshStoryResponses(true).catch(error=>toast("Gagal memperbarui karya: "+error.message));return;
+  }
+  const review=event.target.closest("[data-story-review]");
+  if(review){
+   const button=$("[data-inspect]").find(b=>b.dataset.inspect===review.dataset.storyReview);
+   if(button){button.click();$("#inspect")?.scrollIntoView({block:"nearest",behavior:"smooth"})}
+   return;
+  }
+  const spot=event.target.closest("[data-story-spotlight]");
+  if(spot&&state.trainerRole==="trainer")void changeSpotlight(spot.dataset.storySpotlight,"story");
+ };
  const portfolioPanel=$("#natgeo-trainer-panel");
  if(portfolioPanel){
   $$("[data-portfolio-project]").forEach(button=>button.onclick=async()=>{
@@ -2126,6 +2177,8 @@ const pollClass=singleFlight(async(force=false)=>{
        if((!before.known&&state.hasClassState)||lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
     }else if(pageMode()==="trainer"&&state.dashboard?.stage===2&&state.presentation.view==="simulator"&&$("#comp-response-panel")){
        await refreshCompositionResponses();
+    }else if(pageMode()==="trainer"&&state.dashboard?.stage===4&&state.presentation.view==="simulator"&&$("#story-review-panel")){
+       await refreshStoryResponses();
     }
   }
 });
