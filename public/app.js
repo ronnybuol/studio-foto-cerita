@@ -63,7 +63,7 @@ let state = {
   active:localStorage.getItem(STORAGE_VIEW)||"mulai",
   learnerViews:{},
   camera:{a:1,s:3,i:1},composition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:""},
-  dashboard:null,justRegistered:false
+  dashboard:null,justRegistered:false,welcome:false
 };
 function readJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
 function saveWork(){localStorage.setItem(STORAGE_WORK,JSON.stringify(state.work))}
@@ -89,7 +89,7 @@ async function syncState(){
     if(!data||typeof data.stage!=="number") throw Error("API belum terpasang");
     const previousStage=state.serverStage;
     state.online=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
-    state.spotlight=data.spotlight||null;
+    state.spotlight=data.spotlight||null;state.welcome=!!data.welcome;
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
@@ -103,7 +103,7 @@ async function syncState(){
     $("#connectivity").textContent="◌ Mode demo lokal — latihan tersimpan pada perangkat ini, belum tersinkron ke kelas";
   }
 }
-function pageMode(){const mode=location.hash.replace(/^#\//,"").split("/")[0];return ["trainer","lcd","peserta"].includes(mode)?mode:"peserta"}
+function pageMode(){const hash=location.hash.replace(/^#\//,"").split("/")[0];if(["trainer","lcd","peserta"].includes(hash))return hash;const path=location.pathname.replace(/\/+$/,"").split("/").pop();return ["trainer","lcd","peserta"].includes(path)?path:"welcome"}
 const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END],etika:[ETHICS_START,ETHICS_END]};
 function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
 function loadLearnerViews(){state.learnerViews=readJSON(learnerKey(),{})}
@@ -142,11 +142,20 @@ function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode
  case "etika":return theory?ethicsParticipantSlide(slide):ethicsPage();
  default:return startPage();
 }}
+function welcomePage(){
+return `<div class="welcome-page"><section class="welcome-hero"><div class="welcome-portrait" role="img" aria-label="Hong Bit, perempuan Dayak berkuping panjang, foto Ronny Adolof Buol, Kalimantan 2016"></div><div class="welcome-shade"></div><div class="welcome-copy">
+<span class="welcome-eyebrow">LENSA MUDA 2026 · KELAS BELAJAR FOTOGRAFI</span>
+<h1>Selamat Datang di<br>Platform Kelas Belajar <em>Fotografi</em></h1><div class="welcome-rule"></div>
+<p class="welcome-intro">Dikembangkan oleh <strong>Zonautara.com</strong> untuk Program <strong>Lensa Muda</strong></p>
+<p class="welcome-description">Pelajari fotografi, foto cerita, komposisi, penulisan caption, dan etika memotret melalui pengalaman belajar yang interaktif.</p>
+<div class="welcome-actions"><a class="btn primary" href="/lensa-muda/peserta">Masuk sebagai Peserta →</a><a class="btn welcome-trainer-button" href="/lensa-muda/trainer">Masuk sebagai Trainer →</a></div>
+<p class="welcome-credit">Hong Bit, perempuan Dayak berkuping panjang. Foto: Ronny Adolof Buol, ekspedisi Kalimantan, 2016. <a href="https://vik.kompas.com/perempuan-dayak/" target="_blank" rel="noopener noreferrer">Baca kisah di Kompas.com</a></p></div></section></div>`;
+}
 function landing(){
   return `<div class="page"><div class="hero"><div><div class="kicker">Kelas Lensa Muda • 16 November 2026</div><h1>Dari jepretan menjadi <span>cerita.</span></h1><p>Pelajari kamera, komposisi, dan foto jurnalistik melalui eksperimen visual. Tanpa kamera pun kamu tetap bisa belajar. Siapkan cerita tentang budaya Sulawesi Utara.</p><div class="actions"><button class="btn primary" id="start-signup">Daftar peserta baru →</button><button class="btn ghost-dark" id="start-login">Sudah punya username? Masuk</button></div></div><div class="hero-icon"><svg viewBox="0 0 240 200" fill="none"><rect x="18" y="55" width="205" height="125" rx="24" stroke="currentColor" stroke-width="12"/><path d="M75 54 91 22h66l17 32" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="44" stroke="currentColor" stroke-width="12"/><circle cx="119" cy="115" r="19" fill="currentColor"/><circle cx="191" cy="81" r="8" fill="currentColor"/></svg></div></div><div style="margin-top:26px" class="grid"><div class="card feature"><span class="num">01 / TEKNIK</span><span class="mini-icon">◉</span><strong>Atur kamera</strong><p>Geser slider dan lihat hubungan bukaan, rana, ISO, gerak, serta kedalaman ruang.</p></div><div class="card feature"><span class="num">02 / CERITA</span><span class="mini-icon">▧</span><strong>Susun 9 bingkai</strong><p>Seleksi dan urutkan ilustrasi landscape menjadi rangkaian photo story.</p></div><div class="card feature"><span class="num">03 / JURNALISTIK</span><span class="mini-icon">✎</span><strong>Perkuat caption</strong><p>Latih 5W+1H dan etika sebelum hunting budaya sesungguhnya.</p></div></div><div class="info" style="margin-top:18px"><b>Belum punya kamera?</b> Semua simulator dan latihan bisa dikerjakan melalui browser HP atau komputer. Fotografi lapangan dilakukan belakangan bersama pendamping.</div></div>`;
 }
 function signupPage(){
-  return `<div class="page"><div class="card login-card"><button type="button" class="btn small subtle" data-back-auth>← Kembali</button><span class="eyebrow">Pendaftaran peserta • tanpa batas kuota aplikasi</span><h1>Masuk ke kelas</h1><p class="muted">Gunakan nama yang kamu setujui untuk ditampilkan selama kegiatan. Data sekolah dan kelas membantu guru serta fotografer pendamping mengenali peserta.</p><form id="signup-form"><div class="field"><label for="name">Nama peserta</label><input id="name" name="name" required minlength="2" maxlength="90" autocomplete="name" placeholder="Nama lengkap"></div><div class="field"><label for="school">Asal sekolah</label><input id="school" name="school" required maxlength="140" placeholder="SMA/SMK/MA ..."></div><div class="field"><label for="className">Kelas</label><input id="className" name="className" required maxlength="30" placeholder="Contoh: XI IPA 2"></div><div class="field"><label for="new-signup-username">Buat username sendiri</label><input id="new-signup-username" name="username" required minlength="3" maxlength="20" pattern="[a-z]{3,20}" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="contoh: jufri"><small>Satu kata, huruf kecil semua (a–z), 3–20 huruf, tanpa spasi. Harus unik.</small></div><button class="btn primary block" type="submit">Masuk Studio Foto Cerita →</button></form><p class="small-note">Setelah mendaftar, kamu mendapatkan username untuk masuk kembali tanpa mengisi ulang data sekolah.</p></div></div>`;
+  return `<div class="page"><div class="card login-card"><button type="button" class="btn small subtle" data-back-auth>← Kembali</button><span class="eyebrow">Pendaftaran peserta • tanpa batas kuota aplikasi</span><h1>Masuk ke kelas</h1><p class="muted">Gunakan nama yang kamu setujui untuk ditampilkan selama kegiatan. Data sekolah dan kelas membantu guru serta fotografer pendamping mengenali peserta.</p><form id="signup-form"><div class="field"><label for="name">Nama peserta</label><input id="name" name="name" required minlength="2" maxlength="90" autocomplete="name" placeholder="Nama lengkap"></div><div class="field"><label for="school">Asal sekolah</label><input id="school" name="school" required maxlength="140" placeholder="SMA/SMK/MA ..."></div><div class="field"><label for="className">Kelas</label><input id="className" name="className" required maxlength="30" placeholder="Contoh: XI IPA 2"></div><div class="field"><label for="new-signup-username">Buat username sendiri</label><input id="new-signup-username" name="username" required minlength="3" maxlength="20" pattern="[a-z]{3,20}" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="contoh: jufri"><small>Satu kata, huruf kecil semua (a–z), 3–20 huruf, tanpa spasi. Harus unik.</small></div><button class="btn primary block" type="submit">Daftar dan Masuk →</button></form><button type="button" class="btn subtle block" data-choose-login>Sudah punya username? Masuk</button><p class="small-note">Setelah mendaftar, kamu mendapatkan username untuk masuk kembali tanpa mengisi ulang data sekolah.</p></div></div>`;
 }
 function participantLoginPage(){
  return `<div class="page"><div class="card login-card"><button class="btn small subtle" data-back-auth>← Kembali</button>
@@ -154,7 +163,7 @@ function participantLoginPage(){
  <p class="muted">Masukkan username dari pendaftaran sebelumnya. Kamu tidak perlu mengisi ulang data sekolah.</p>
  <form id="participant-login-form"><div class="field"><label for="participant-username">Username</label>
  <input id="participant-username" name="username" required maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="contoh: jufri" value=""></div>
- <button class="btn primary block" type="submit">Masuk ke kelas →</button></form>
+ <button class="btn primary block" type="submit">Masuk ke kelas →</button></form><button type="button" class="btn subtle block" data-choose-signup>Belum terdaftar? Daftar</button>
  <p class="small-note">Username ini adalah kunci masuk tanpa password. Simpan secara pribadi. Jika lupa, hubungi trainer.</p></div></div>`;
 }
 function participantWelcomePage(){
@@ -168,6 +177,8 @@ function showParticipantAuth(which){
  $("#root").innerHTML=which==="login"?participantLoginPage():signupPage();
  const form=which==="login"?$("#participant-login-form"):$("#signup-form");
  form.onsubmit=which==="login"?participantLogin:signup;
+ const login=$("#root [data-choose-login]");if(login)login.onclick=()=>showParticipantAuth("login");
+ const register=$("#root [data-choose-signup]");if(register)register.onclick=()=>showParticipantAuth("signup");
  $$("[data-back-auth]").forEach(b=>b.onclick=renderParticipant);
  window.scrollTo(0,0);
 }
@@ -830,9 +841,7 @@ function logout(){localStorage.removeItem(learnerKey());state.learnerViews={};st
 function renderParticipant(){
  if(state.locked){$("#root").innerHTML=`<div class="page"><div class="card login-card class-closed"><span class="eyebrow">KELAS DITUTUP</span><h1>Kegiatan belajar telah selesai</h1><p>Akses peserta sedang dikunci oleh trainer. Terima kasih telah mengikuti Lensa Muda.</p></div></div>`;return}
  if(!state.user){
-  $("#root").innerHTML=landing();
-  $("#start-signup").onclick=()=>showParticipantAuth("signup");
-  $("#start-login").onclick=()=>showParticipantAuth("login");
+  showParticipantAuth("signup");
   return;
  }
  if(state.justRegistered){
@@ -1390,8 +1399,8 @@ function lcdPage(){
  const stage=state.online?state.serverStage:state.demoStage;
  const step=STAGES[stage]||STAGES[0];
  const count=state.online?state.count:(state.user?1:0);
- const link=location.origin+location.pathname+"#/peserta";
- const qr=`https://api.qrserver.com/v1/create-qr-code/?size=210x210&margin=1&data=${encodeURIComponent(link)}`;
+ const link=location.origin+"/lensa-muda/peserta";
+ const qr=`https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=2&data=${encodeURIComponent(link)}`;
  const footer=lcdFooter(stage,count,link,qr);
  if(state.spotlight)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  const camera=state.demoCamera;
@@ -1490,6 +1499,7 @@ async function refreshLCD(){
  if(lcdPolling||pageMode()!=="lcd")return;
  lcdPolling=true;
  const prevStage=state.online?state.serverStage:state.demoStage;
+  const prevWelcome=state.welcome;
  const prevCamera=JSON.stringify(state.demoCamera);
  const prevComposition=JSON.stringify(state.demoComposition);
  const prevPresentation=JSON.stringify(state.presentation);
@@ -1497,7 +1507,7 @@ async function refreshLCD(){
  try{
    await syncState();
    const nextStage=state.online?state.serverStage:state.demoStage;
-   if(prevStage!==nextStage||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
+   if(prevStage!==nextStage||prevWelcome!==state.welcome||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
@@ -1509,7 +1519,7 @@ async function refreshLCD(){
 }
 async function render(){
  document.title=`Studio Foto Cerita — Lensa Muda 2026`;
- const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else renderParticipant();
+ const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else if(mode==="welcome")$("#root").innerHTML=welcomePage();else renderParticipant();
 }
 window.addEventListener("hashchange",render);
 window.addEventListener("visibilitychange",()=>{
