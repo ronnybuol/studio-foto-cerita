@@ -349,3 +349,29 @@ test("sorotan peserta terhapus tak tampil lagi",async()=>{
  await call(env,"/api/participants/"+p.id,"DELETE",undefined,trainer.token);
  assert.equal((await call(env,"/api/state")).data.spotlight,null);
 });
+
+
+test("tahap 06: rencana etika peserta tersimpan dan bisa disorot tanpa mengubah presentasi",async()=>{
+ const env=mockEnv();
+ const p=(await call(env,"/api/participants","POST",{name:"Rani",school:"SMA Sangihe",className:"XI",username:"rani"})).data.user;
+ const trainer=(await call(env,"/api/login","POST",{pin:"trainer-12345"})).data;
+ const notOpen=await call(env,"/api/answers/etika","PUT",{answers:[1,2,0,1]},p.token);
+ assert.equal(notOpen.status,403);
+ await call(env,"/api/state","PUT",{stage:6},trainer.token);
+ await call(env,"/api/presentation","PUT",{view:"theory",slide:55},trainer.token);
+ const result={answers:[1,2,0,1],reasons:["Tidak boleh mengarang momen","Jangan menghapus objek","Perlu bertanya dahulu","Menghormati aturan komunitas"],
+ plan:{topic:"Musik bambu di kampung",subject:"Pemain dan pembuat instrumen",permission:"Minta izin kepada pelaku",frames:"Konteks, detail, dan tokoh",verify:"Periksa sejarah dan nama tokoh",safety:"Hormati batasan ritual"},
+ checks:{original:true,respect:true,facts:true},score:4,completedAt:"2026-11-14T00:00:00.000Z"};
+ const save=await call(env,"/api/answers/etika","PUT",result,p.token);
+ assert.equal(save.status,200);
+ const dashboard=await call(env,"/api/dashboard","GET",undefined,trainer.token);
+ assert.deepEqual(dashboard.data.participants[0].answers.etika.plan,result.plan);
+ const spotlight=await call(env,"/api/spotlight","PUT",{participantId:p.id,module:"etika"},trainer.token);
+ assert.equal(spotlight.status,200);
+ assert.equal(spotlight.data.spotlight.answer.plan.topic,"Musik bambu di kampung");
+ const display=await call(env,"/api/state");
+ assert.equal(display.data.spotlight.module,"etika");
+ assert.equal(display.data.presentation.slide,55);
+ await call(env,"/api/spotlight","PUT",{participantId:null,module:null},trainer.token);
+ assert.equal((await call(env,"/api/state")).data.presentation.slide,55);
+});
