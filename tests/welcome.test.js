@@ -50,7 +50,7 @@ test("beranda dan LCD menggunakan hero Hong Bit yang sama, hanya aksi yang berbe
  assert.match(css,/\.welcome-shared-hero/);
  assert.match(css,/\.welcome-projector \.welcome-shared-hero/);
  assert.match(css,/\.welcome-shared-hero \.welcome-portrait/);
- assert.match(html,/app\.js\?v=20261114-camera-diagrams-v6/);
+ assert.match(html,/app\.js\?v=20261114-participant-guide-v8/);
 });
 
 test("orientasi 00 menampilkan formulir peserta yang sama dengan pendaftaran HP",()=>{
@@ -84,6 +84,28 @@ test("counter real-time dan daftar nama hanya saat dipicu trainer",()=>{
  assert.match(worker,/camera.orientation==="roster"&&stage===0/);
  assert.match(worker,/SELECT name FROM participants/);
  assert.match(worker,/LIMIT 48 OFFSET/);
- assert.match(worker,/\["registration","roster"\]/);
+ assert.match(worker,/\["registration","roster","guide"\]/);
  assert.match(worker,/data.screen==="roster"&&\(!Number.isInteger\(data.page\)/);
+});
+
+test("orientasi 00 memiliki tur layar peserta yang dipicu trainer sesudah panduan pendaftaran",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.match(app,/function orientationParticipantGuideSlide\(\)/);
+ assert.match(app,/Sebelum mulai, mari pahami tampilan aplikasi/);
+ assert.match(app,/di device anda sebagai Peserta/);
+ assert.match(app,/orientation-guide-phone/);
+ assert.match(app,/orientation-guide-callouts left/);
+ assert.match(app,/orientation-guide-callouts right/);
+ assert.match(app,/orientation-guide-save-status/);
+ assert.match(app,/trainer-show-participant-guide/);
+ assert.match(app,/payload:\{screen:"guide"\}/);
+ assert.match(app,/stage===0&&state.participantGuide&&!state.welcome/);
+ assert.match(app,/prevParticipantGuide!==state.participantGuide/);
+ assert.match(app,/participantGuide:state.participantGuide/);
+ assert.match(worker,/participantGuide:camera.orientation==="guide"/);
+ assert.match(worker,/\["registration","roster","guide"\]/);
+ assert.match(css,/\.lcd-orientation-guide/);
+ assert.match(css,/\.orientation-guide-callouts/);
+ assert.match(css,/\.orientation-guide-phone/);
+ assert.match(css,/\.orientation-guide-tip/);
 });
