@@ -1,0 +1,35 @@
+name: Verify uncut camera simulator in production
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/verify-uncropped-camera-live.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read only verify released stylesheet and cache key
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,time,sys
+          base="https://kelasbelajar.org/lensa-muda/"
+          for n in range(1,6):
+            try:
+              def fetch(path):
+                req=urllib.request.Request(base+path,headers={"Cache-Control":"no-cache","User-Agent":"Mozilla/5.0"})
+                with urllib.request.urlopen(req,timeout=20) as r:return r.status,r.read().decode("utf-8")
+              sh,html=fetch("?camera-check="+str(n))
+              sc,css=fetch("styles.css?camera-check="+str(n))
+              snippet=css[css.rfind("/* Modul 01 — never crop"):]
+              ok=(sh==200 and sc==200 and "20261114-camera-photo-contain-v7" in html
+                  and "object-fit:contain" in snippet
+                  and "width:min(100%,72vh)" in snippet
+                  and ".participant-camera-image .scene.photo-camera-scene" in snippet)
+              print("CHECK",n,"RESULT",ok,"HTML_VERSION", "20261114-camera-photo-contain-v7" in html,"CSS_UNCROPPED", "object-fit:contain" in snippet,flush=True)
+              if ok:print("PASS: new uncropped CSS is live",flush=True);sys.exit(0)
+            except Exception as e:print("ERROR",repr(e),flush=True)
+            time.sleep(12)
+          sys.exit("FAIL: production has not picked up new CSS")
+          PY
