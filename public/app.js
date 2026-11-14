@@ -361,12 +361,50 @@ function photoSceneHTML(id="cameraScene"){
    <div class="view-label">SIMULASI FOTO GENERATIF · BUKAN FOTO PERISTIWA NYATA</div>
  </div>`;
 }
+// Visual aids for six photo sub-slides. Keep existing photos and participant answers untouched.
+function cameraDetailVisual(detail){
+ const key=String(detail.parent+1).padStart(2,"0")+detail.suffix;
+ const iris=(wide,label)=>`<div class="camera-diagram-iris ${wide?"iris-wide":"iris-narrow"}" role="img" aria-label="Simulasi bilah diafragma lensa ${label}, bukaan ${wide?"besar":"kecil"}"><div class="camera-diagram-blades"><div class="camera-diagram-opening"></div></div></div>`;
+ const aperture=(wide)=>`<aside class="camera-diagram camera-diagram-aperture" aria-label="Ilustrasi bukaan lensa">
+   <span class="camera-diagram-eyebrow">BILAH APERTURE · ILUSTRASI</span>
+   ${iris(wide,wide?"f/1.8":"f/11")}
+   <strong class="camera-diagram-value">${wide?"f/1.8":"f/11"}</strong>
+   <span class="camera-diagram-caption">${wide?"Bukaan lebih lebar":"Bukaan lebih sempit"}</span>
+   <p>${wide?"Pada pengaturan lain yang sama, lebih banyak cahaya masuk; latar lebih mudah blur.":"Pada pengaturan lain yang sama, lebih sedikit cahaya masuk; area tajam lebih luas."}</p>
+  </aside>`;
+ const shutter=(slow)=>`<aside class="camera-diagram camera-diagram-shutter" aria-label="Ilustrasi durasi rana">
+   <span class="camera-diagram-eyebrow">DURASI RANA · PERBANDINGAN</span>
+   <strong class="camera-diagram-value">${slow?"1/15":"1/1000"} <small>detik</small></strong>
+   <div class="camera-shutter-track" role="img" aria-label="Durasi ${slow?"sekitar 67 kali lebih lama":"sekitar 67 kali lebih singkat"} dibanding contoh lainnya"><span class="${slow?"shutter-long":"shutter-short"}"></span></div>
+   <span class="camera-diagram-caption">${slow?"Sensor menerima cahaya lebih lama":"Sensor menerima cahaya sangat singkat"}</span>
+   <p>${slow?"Gerakan lebih mudah terekam sebagai jejak blur.":"Gerakan lebih mudah dibekukan."}</p>
+   <small class="camera-shutter-scale">1/15 detik ≈ 67× durasi 1/1000 detik</small>
+  </aside>`;
+ const exposure=(fast)=>`<aside class="camera-diagram camera-diagram-exposure" aria-label="Kombinasi segitiga exposure">
+   <span class="camera-diagram-eyebrow">TIGA PENGATURAN FOTO</span>
+   <div class="camera-exposure-reading"><span>APERTURE ${iris(true,"f/2.8")}</span><strong>f/2.8</strong><small>TETAP</small></div>
+   <div class="camera-exposure-reading"><span>RANA <i class="camera-exposure-mini-shutter ${fast?"fast":"moderate"}"></i></span><strong>${fast?"1/500":"1/125"}</strong><small>${fast?"2 STOP LEBIH CEPAT":"ACUAN"}</small></div>
+   <div class="camera-exposure-reading"><span>ISO <i class="camera-exposure-mini-iso ${fast?"iso-high":"iso-low"}"></i></span><strong>${fast?"800":"200"}</strong><small>${fast?"2 STOP LEBIH TINGGI":"ACUAN"}</small></div>
+   <p>Terang dapat serupa; jejak gerak dan noise dapat berbeda. Nilai ini ilustratif, bukan EXIF foto.</p>
+  </aside>`;
+ if(key==="04a")return aperture(true);
+ if(key==="04b")return aperture(false);
+ if(key==="05a")return shutter(true);
+ if(key==="05b")return shutter(false);
+ if(key==="07a")return exposure(false);
+ if(key==="07b")return exposure(true);
+ return "";
+}
 function photoDetailContent(index,variant="lcd"){
  const detail=photoDetail(index);
  if(!detail)return "";
- return `<div class="photo-detail-layout photo-detail-${variant}">
+ const diagram=cameraDetailVisual(detail);
+ return `<div class="photo-detail-layout photo-detail-${variant} ${diagram?"photo-detail-has-diagram":""}">
   <div class="photo-detail-heading"><span class="theory-kicker">FOTO ${presentationLabel(index)} · ILUSTRASI GENERATIF</span><h2>${escapeHtml(detail.title)}</h2></div>
-  <figure class="photo-detail-figure"><img src="${cameraPhotoUrl(detail.image)}" alt="${escapeHtml(detail.caption)}" loading="eager" decoding="async"><figcaption>${escapeHtml(detail.caption)}</figcaption></figure>
+  <div class="photo-detail-media ${diagram?"photo-detail-media-split":""}">
+   <figure class="photo-detail-figure"><img src="${cameraPhotoUrl(detail.image)}" alt="${escapeHtml(detail.caption)}" loading="eager" decoding="async"><figcaption>${escapeHtml(detail.caption)}</figcaption></figure>
+   ${diagram}
+  </div>
   <div class="photo-detail-question"><b>AMATI & DISKUSIKAN</b><span>${escapeHtml(detail.question)}</span></div>
  </div>`;
 }

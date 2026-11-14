@@ -1200,3 +1200,78 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 @media (max-width:1200px){.orientation-roster-grid{gap:5px 10px}.orientation-roster-name{padding:5px 7px}.orientation-roster-name strong{font-size:clamp(13px,1.2vw,19px)}.orientation-roster-count{right:35px;top:45px}}
 @media (max-width:800px){.orientation-roster-count{position:static;margin-top:-12px}.orientation-roster-count strong{font-size:65px}.orientation-roster-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(24,minmax(0,1fr));grid-auto-flow:column;min-height:950px}.lcd-orientation-roster{overflow:visible}.orientation-live-counter{max-width:none}}
 @media (prefers-reduced-motion:reduce){.count-pulse{animation:none}}
+
+/* Modul 01 — six compact physical-camera aids beside the original photo.
+   Deliberately CSS-only: no timers, network images, or JavaScript animation. */
+.photo-detail-media{display:flex;flex:1;min-height:0;min-width:0;align-items:stretch;gap:clamp(12px,1.8vw,28px);width:100%}
+.photo-detail-media>.photo-detail-figure{min-width:0;flex:1;margin:0}
+.photo-detail-media-split{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(235px,.82fr)}
+.photo-detail-media-split .photo-detail-figure{min-height:0;max-height:100%;overflow:hidden}
+.photo-detail-media-split .photo-detail-figure img{min-height:0;width:100%;max-height:100%;object-fit:contain}
+.camera-diagram{border:1px solid #65707b66;background:linear-gradient(145deg,#1d2630,#11171e);border-radius:16px;color:#f5f8fb;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(12px,1.35vw,25px);gap:clamp(9px,.95vw,17px);min-width:0;min-height:0;overflow:hidden}
+.camera-diagram-eyebrow{color:#ffa266;text-align:center;font-size:clamp(10px,.84vw,15px);font-weight:900;letter-spacing:.12em;line-height:1.4}
+.camera-diagram-value{font-size:clamp(28px,3.2vw,56px);font-weight:900;line-height:1;letter-spacing:-.04em;color:#fff;white-space:nowrap}
+.camera-diagram-value small{font-size:clamp(14px,1vw,20px);letter-spacing:0;color:#d1d7df}
+.camera-diagram-caption{text-align:center;color:#ffbc8a;font-size:clamp(14px,1.15vw,20px);font-weight:800;line-height:1.35}
+.camera-diagram p{max-width:330px;text-align:center;font-size:clamp(12px,.94vw,17px);color:#d6dde4;line-height:1.35;margin:0}
+.camera-diagram-iris{width:clamp(100px,12.8vw,212px);height:clamp(100px,12.8vw,212px);border-radius:50%;flex:none;background:radial-gradient(circle at 30% 25%,#72808d,#242e38 70%);border:clamp(6px,.78vw,13px) solid #a5afb9;box-shadow:inset 0 0 0 6px #0a0d12,0 8px 24px #0008;display:grid;place-items:center}
+.camera-diagram-blades{height:82%;width:82%;border-radius:50%;background:repeating-conic-gradient(from 12deg,#8a98a7 0deg 38deg,#303d4b 38deg 45deg);display:grid;place-items:center;box-shadow:inset 0 0 0 4px #1a222b}
+.camera-diagram-opening{width:var(--iris-opening);height:var(--iris-opening);background:radial-gradient(circle,#020306 70%,#161f28);clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%);box-shadow:0 0 0 2px #0b0f15}
+.iris-wide{--iris-opening:77%}.iris-narrow{--iris-opening:19%}
+.camera-shutter-track{height:clamp(24px,2.3vw,39px);width:100%;background:#0b1016;border:1px solid #515d6a;border-radius:9px;overflow:hidden;padding:4px}
+.camera-shutter-track>span{display:block;height:100%;background:linear-gradient(90deg,#e86929,#ffb175);border-radius:5px}
+.camera-shutter-track .shutter-long{width:100%}
+.camera-shutter-track .shutter-short{width:1.5%;min-width:4px}
+.camera-shutter-scale{font-size:clamp(11px,.82vw,15px);color:#aab9c9;text-align:center;line-height:1.4}
+.camera-diagram-exposure{justify-content:space-evenly;gap:8px}
+.camera-exposure-reading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 8px;width:100%;padding:clamp(7px,.8vw,14px);background:#101922;border:1px solid #455260;border-radius:10px}
+.camera-exposure-reading>span{font-size:clamp(11px,.89vw,15px);font-weight:800;letter-spacing:.07em;color:#e4eaf0;display:flex;align-items:center;gap:7px}
+.camera-exposure-reading>strong{font-size:clamp(20px,1.95vw,34px);line-height:1.05;white-space:nowrap;color:#fff;grid-column:2;grid-row:1/3}
+.camera-exposure-reading>small{font-size:clamp(10px,.79vw,14px);color:#ffab72;font-weight:700;grid-column:1}
+.camera-exposure-reading .camera-diagram-iris{width:28px;height:28px;border-width:2px;box-shadow:inset 0 0 0 1px #0a0d12}
+.camera-exposure-reading .camera-diagram-blades{box-shadow:none}
+.camera-exposure-mini-shutter{display:inline-block;width:34px;height:8px;border:1px solid #a6b3bf;border-radius:4px;background:#101820;overflow:hidden;position:relative}
+.camera-exposure-mini-shutter:before{content:"";display:block;height:100%;background:#ff8b3f;width:100%}
+.camera-exposure-mini-shutter.fast:before{width:25%}
+.camera-exposure-mini-iso{width:33px;height:17px;display:inline-block;background:linear-gradient(to top,#ff8b3f 0 40%,transparent 40% 100%) 0 bottom/7px 100% repeat-x;border-bottom:1px solid #596a79}
+.camera-exposure-mini-iso.iso-high{background:linear-gradient(to top,#ff8b3f 0 90%,transparent 90% 100%) 0 bottom/7px 100% repeat-x}
+.photo-detail-trainer .camera-diagram{padding:9px;gap:7px}
+.photo-detail-trainer .camera-diagram-iris{width:75px;height:75px;border-width:5px}
+.photo-detail-trainer .camera-diagram-value{font-size:28px}
+.photo-detail-trainer .camera-diagram-caption{font-size:12px}
+.photo-detail-trainer .camera-diagram p,.photo-detail-trainer .camera-shutter-scale{font-size:10px}
+.photo-detail-trainer .camera-diagram-eyebrow{font-size:9px}
+.photo-detail-trainer .camera-exposure-reading{padding:5px}
+.photo-detail-trainer .camera-exposure-reading>strong{font-size:17px}
+.photo-detail-trainer .photo-detail-media-split{grid-template-columns:minmax(0,1fr) minmax(145px,.85fr)}
+.photo-detail-participant .camera-diagram{padding:10px;gap:9px}
+.photo-detail-participant .camera-diagram-iris{width:110px;height:110px}
+.photo-detail-participant .camera-diagram-value{font-size:32px}
+.photo-detail-participant .photo-detail-media-split{grid-template-columns:minmax(0,1.5fr) minmax(190px,1fr)}
+@media(max-width:900px){
+ .photo-detail-media-split{grid-template-columns:minmax(0,1.45fr) minmax(190px,.9fr)}
+ .camera-diagram{gap:8px}
+ .camera-diagram-iris{width:110px;height:110px}
+ .camera-diagram-value{font-size:32px}
+ .camera-diagram p{font-size:12px}
+ .camera-exposure-reading>strong{font-size:22px}
+}
+@media(max-width:700px){
+ .photo-detail-media-split,.photo-detail-participant .photo-detail-media-split{grid-template-columns:minmax(0,1fr)}
+ .photo-detail-media-split .photo-detail-figure img{max-height:33vh}
+ .camera-diagram{padding:11px;gap:7px}
+ .camera-diagram-iris{width:85px;height:85px;border-width:6px}
+ .camera-diagram-value{font-size:26px}
+ .camera-diagram p{font-size:12px}
+ .camera-diagram-exposure{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .camera-diagram-exposure>.camera-diagram-eyebrow,.camera-diagram-exposure>p{grid-column:1/-1}
+ .camera-exposure-reading{grid-template-columns:1fr;padding:7px}
+ .camera-exposure-reading>strong{grid-column:1;grid-row:auto;font-size:19px}
+ .camera-exposure-reading>small{grid-column:1}
+ .camera-exposure-reading .camera-diagram-iris{display:none}
+ .lcd-photo-detail .photo-detail-media-split{grid-template-columns:minmax(0,1fr) minmax(165px,.85fr)}
+ .lcd-photo-detail .photo-detail-media-split .photo-detail-figure img{max-height:100%}
+ .lcd-photo-detail .camera-diagram{padding:8px;gap:6px}
+ .lcd-photo-detail .camera-diagram-iris{width:70px;height:70px}
+ .lcd-photo-detail .camera-diagram p{font-size:10px}
+}
