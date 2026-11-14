@@ -48,7 +48,7 @@ test("Alur EDFAT mengikuti pembukaan tahap, slide LCD, dan pilihan foto hunting 
  assert.ok(app.includes('onSelect:slot=>'));
  assert.ok(api.includes('answer?.mode==="hunting"'));
  assert.ok(api.includes('photoSlot!==slot'));
- assert.ok(api.includes('/api/trainer/hunting/photo/'));
+ assert.ok(api.includes('const trainerPhoto='));
  assert.ok(api.includes('data.slide>56'));
  assert.ok(css.includes('.edfat-learner-theory .edfat-lead'));
  assert.ok(css.includes('object-fit:contain'));
