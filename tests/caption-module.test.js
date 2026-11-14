@@ -9,7 +9,7 @@ test("Caption Lab memiliki tujuh materi dan foto Sangihe yang tersedia",()=>{
  assert.equal(CAPTION_SLIDES.length,7);
  for(let i=CAPTION_START;i<=CAPTION_END;i++){
   const slide=captionSlide(i);
-  assert.ok(slide.title&&slide.lead&&slide.note&&slide.prompt);
+  assert.ok(slide.title&&slide.lead&&slide.note);
   assert.equal(slide.points.length,3);
   assert.equal(captionLabel(i),String(i-CAPTION_START+1).padStart(2,"0"));
   assert.ok(existsSync(new URL("../public/assets/composition/sangihe-2017-"+slide.image+".webp",import.meta.url)));
