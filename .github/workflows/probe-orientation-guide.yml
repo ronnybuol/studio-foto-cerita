@@ -1,0 +1,42 @@
+name: Verify orientation participant guide live
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-orientation-guide.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm HTML, JS, CSS and API are deployed without writing class data
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,json,time,sys
+          base="https://kelasbelajar.org/lensa-muda/"
+          for n in range(1,7):
+            try:
+              def fetch(path):
+                request=urllib.request.Request(base+path,headers={"Cache-Control":"no-cache","User-Agent":"Mozilla/5.0"})
+                with urllib.request.urlopen(request,timeout=25) as r:return r.status,r.read()
+              sh,html=fetch("?orientation-guide-check="+str(n))
+              sj,js=fetch("app.js?orientation-guide-check="+str(n))
+              sc,css=fetch("styles.css?orientation-guide-check="+str(n))
+              sa,api=fetch("api/state?orientation-guide-check="+str(n))
+              state=json.loads(api)
+              tests={
+                "html":b"20261114-participant-guide-v8" in html,
+                "js":b"function orientationParticipantGuideSlide()" in js and b"trainer-show-participant-guide" in js and b"di device anda sebagai Peserta" in js,
+                "css":b".lcd-orientation-guide" in css and b".orientation-guide-phone" in css and b".orientation-guide-callouts" in css,
+                "api":("participantGuide" in state and isinstance(state.get("count"),int)),
+                "http":all(x==200 for x in (sh,sj,sc,sa))
+              }
+              print("ATTEMPT",n,tests,"STAGE",state.get("stage"),flush=True)
+              if all(tests.values()):
+                print("PASS: new participant guide frontend and read-only API live",flush=True)
+                sys.exit(0)
+            except Exception as e:print("ERROR",str(e),flush=True)
+            time.sleep(12)
+          sys.exit("FAIL: Cloudflare has not served new participant guide")
+          PY
