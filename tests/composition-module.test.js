@@ -87,3 +87,11 @@ test("trainer-LCD mempunyai empat tantangan, ringkasan respons dan sorotan per u
  assert.match(backend,/key==="komposisi"&&Object\.hasOwn\(data,"challenges"\)/);
  assert.match(backend,/challengeIndex:Number\.isInteger/);
 });
+
+test("empat versi foto yang diproses AI diberi label transparansi di peserta, LCD, trainer dan sorotan",()=>{
+ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.match(app,/\["5625","5794","5711","5712"\]\.includes\(photo\.image\)/);
+ assert.match(app,/Penyempurnaan visual berbantuan AI/);
+ assert.match(css,/\.comp-photo-disclosure/);
+});

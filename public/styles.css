@@ -1471,3 +1471,7 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
  .lcd-composition-lab .comp-compare-photos,.comp-spotlight .comp-compare-photos{grid-template-columns:repeat(2,minmax(0,1fr))}
  .lcd-composition-lab .comp-demo-pair .comp-compare-image{max-height:28vh}
 }
+
+/* Transparansi editorial: empat versi foto di laboratorium mendapat olah visual berbantuan AI. */
+.comp-photo-disclosure{display:block;font-size:clamp(10px,.82vw,13px);color:#f5b78b;font-weight:750;line-height:1.35}
+.lcd-composition-lab .comp-photo-disclosure,.comp-spotlight .comp-photo-disclosure{font-size:clamp(11px,.9vw,14px)}
