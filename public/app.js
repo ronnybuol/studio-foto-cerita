@@ -581,6 +581,38 @@ function storyPage(){
  <div class="story-bank-grid">${remaining.map(x=>renderStoryShot(x)).join("")||`<div class="story-empty">Semua foto sudah dipilih.</div>`}</div></section>
  <div class="info"><b>Catatan editor:</b> foto pembuka mengenalkan, bagian tengah mengembangkan, dan penutup memberi pemahaman. Jangan membuat cerita yang tidak didukung fakta.</div>`;
 }
+function ethicsTheoryContent(index,variant="lcd"){
+ const x=ethicsSlide(index);
+ return `<div class="ethics-theory-layout ethics-theory-${variant}">
+ <div class="ethics-theory-copy"><span class="theory-kicker">BAB 6 · ${escapeHtml(x.tag)} · ${ethicsLabel(index)} / ${ETHICS_SLIDES.length}</span>
+ <h2>${escapeHtml(x.title)}</h2><p class="ethics-theory-lead">${escapeHtml(x.lead)}</p>
+ <ul class="ethics-theory-points">${x.points.map(p=>`<li>${escapeHtml(p)}</li>`).join("")}</ul>
+ <div class="theory-question"><span>DISKUSI KELAS</span><strong>${escapeHtml(x.prompt)}</strong></div></div>
+ ${ethicsVisual(index)}</div>`;
+}
+function ethicsParticipantSlide(index){
+ return `${titleBlock("etika")}<section class="card ethics-learner-theory">
+ <p class="small-note">Amati contoh foto, pikirkan dampaknya bagi orang yang dipotret, dan diskusikan pilihanmu. Latihan tetap bisa dibuka kapan saja.</p>
+ ${ethicsTheoryContent(index,"participant")}</section>`;
+}
+function ethicsTrainerPanel(data,isMentor){
+ const i=state.presentation.slide>=ETHICS_START&&state.presentation.slide<=ETHICS_END?state.presentation.slide:ETHICS_START;
+ const x=ethicsSlide(i),theory=state.presentation.view==="theory";
+ return `<section class="card ethics-trainer-card">
+ <div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 6</span><h2>Etika & Tantangan</h2>
+ <p class="small-note">Enam slide terakhir, empat skenario keputusan etis, dan rencana foto cerita peserta.</p></div>
+ <span class="pill green">● MODUL 06 SIAP</span></div>
+ ${theory?`<div class="ethics-trainer-preview"><div class="ethics-trainer-notes"><span class="eyebrow">SLIDE ${ethicsLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
+ <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>${ethicsVisual(i)}</div>
+ <div class="trainer-slide-nav"><button class="btn subtle" data-ethics-step="-1" ${i===ETHICS_START||isMentor?"disabled":""}>← Sebelumnya</button><strong>Slide ${ethicsLabel(i)} / 06</strong>
+ <button class="btn primary" data-ethics-step="1" ${i===ETHICS_END||isMentor?"disabled":""}>Berikutnya →</button></div>
+ <div class="story-slide-dots">${ETHICS_SLIDES.map((x,j)=>`<button class="theory-dot" data-ethics-slide="${ETHICS_START+j}" aria-pressed="${i===ETHICS_START+j}" ${isMentor?"disabled":""}>${ethicsLabel(ETHICS_START+j)}</button>`).join("")}</div>
+ <div class="actions"><button class="btn primary" data-ethics-mode="simulator" ${isMentor?"disabled":""}>Buka tantangan akhir peserta →</button></div>`:
+ `<div class="trainer-theory-compact"><div><strong>Tantangan akhir sedang terbuka</strong>
+ <p class="small-note">Peserta menyelesaikan empat situasi etis serta merencanakan liputan budaya. Trainer dapat membuka slide tanpa memindahkan pekerjaan mereka.</p></div>
+ <button class="btn subtle" data-ethics-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>`}
+ </section>`;
+}
 function captionPhotoStrip(selected){
  return `<div class="caption-photo-strip">${selected.map((id,i)=>{
  const photo=STORY_BANK.find(x=>x.id===id);return !photo?"":`<figure class="caption-photo-tile">${storyImage(photo,"Foto urutan "+(i+1)+": "+photo.title)}
