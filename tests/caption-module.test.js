@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "../public/caption.js";
 
-test("Caption Lab memiliki enam materi dan foto Sangihe yang tersedia",()=>{
+test("Caption Lab memiliki tujuh materi dan foto Sangihe yang tersedia",()=>{
  assert.equal(CAPTION_START,45);
- assert.equal(CAPTION_END,50);
- assert.equal(CAPTION_SLIDES.length,6);
+ assert.equal(CAPTION_END,51);
+ assert.equal(CAPTION_SLIDES.length,7);
  for(let i=CAPTION_START;i<=CAPTION_END;i++){
   const slide=captionSlide(i);
   assert.ok(slide.title&&slide.lead&&slide.note&&slide.prompt);
@@ -33,7 +33,7 @@ test("Trainer, LCD, peserta, draf, dan sorotan Caption Lab tetap terhubung",()=>
  ])assert.ok(app.includes(text),"Fitur caption hilang: "+text);
  assert.ok(app.includes('stage===5?captionTrainerPanel(data,isMentor)'));
  assert.ok(app.includes('stage===5&&state.presentation.view==="theory"'));
- assert.ok(api.includes('data.slide>56'));
+ assert.ok(api.includes('data.slide>57'));
  assert.ok(css.includes('.caption-photo-strip'));
  assert.ok(css.includes('.caption-theory-layout'));
  assert.ok(html.includes('app.js?v=20261115-caption-lab-final-v1'));
