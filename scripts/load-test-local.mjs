@@ -119,10 +119,17 @@ await requireStatus(await api("/state",{method:"PUT",payload:{stage:1,controlRev
 await requireStatus(await api("/presentation",{method:"PUT",payload:{stage:1,view:"theory",slide:0,controlRevision:controlBase+100},token}),409,"old-module slide must not overwrite current module");
 const afterLateControl=await api("/state");assert.equal(afterLateControl.data.stage,6);assert.equal(afterLateControl.data.presentation.slide,51);
 await requireStatus(await api("/state",{method:"PUT",payload:{stage:0},token}),200,"restore test orientation stage");
+await requireStatus(await api("/orientation",{method:"PUT",payload:{screen:"guide"},token}),200,"orientation participant guide");
+const guideState=await api("/state");
+await requireStatus(guideState,200,"guide visible in LCD state");
+assert.equal(guideState.data.participantGuide,true,"guide must be visible in LCD");
+assert.equal(guideState.data.orientation,false,"registration screen must turn off when guide is shown");
+assert.equal(guideState.data.count,70,"guide must not create any participants");
 await requireStatus(await api("/orientation",{method:"PUT",payload:{screen:"registration"},token}),200,"restore test registration slide");
+const restoredRegistration=await api("/state");assert.equal(restoredRegistration.data.orientation,true);assert.equal(restoredRegistration.data.participantGuide,false);
 
 const timings=iterations.slice().sort((a,b)=>a-b);
 const percentile=p=>Number(timings[Math.min(timings.length-1,Math.ceil(p*timings.length)-1)].toFixed(0));
 const elapsed=Math.round(performance.now()-ab);
-const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","atomic trainer-LCD stages 01-06","late stage and old-module slides rejected","registration slide restore"]};
+const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","atomic trainer-LCD stages 01-06","late stage and old-module slides rejected","guide display without new participants","registration slide restore"]};
 console.log("LOAD TEST RESULT",JSON.stringify(report,null,2));
