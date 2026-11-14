@@ -1458,7 +1458,7 @@ function lcdPage(){
  const link=location.origin+"/lensa-muda/peserta";
  const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
- if(state.spotlight&&!state.welcome)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+ if(state.spotlight&&!state.welcome&&!(stage===0&&state.orientation))return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  if(stage===0&&state.orientation&&!state.welcome){
    return `<div class="page lcd-page"><div class="lcd-mode lcd-orientation-mode">${orientationRegistrationSlide()}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  }
