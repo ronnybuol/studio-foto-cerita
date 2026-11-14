@@ -1410,11 +1410,11 @@ function lcdPage(){
  const link=location.origin+"/lensa-muda/peserta";
  const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
- if(state.spotlight)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+ if(state.spotlight&&!state.welcome)return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  if(state.welcome){
   return `<div class="page lcd-page"><section class="lcd-mode lcd-welcome-mode">
    <div class="lcd-welcome-photo"></div><div class="lcd-welcome-darken"></div>
-   <div class="lcd-welcome-top"><img src="/lensa-muda/assets/brand/kamisama.svg" alt="Kamisama Fotografia"><img src="/lensa-muda/assets/brand/zonautara.svg" alt="Zonautara.com"></div>
+   <div class="lcd-welcome-top"><img src="/lensa-muda/assets/brand/kamisama.png" alt="Kamisama Fotografia"><img src="/lensa-muda/assets/brand/zonautara.png" alt="Zonautara.com"></div>
    <div class="lcd-welcome-body"><span class="kicker">LENSA MUDA 2026 · MEREKAM JEJAK DAN WARISAN BUDAYA SULAWESI UTARA</span>
     <h1>Selamat Datang di<br><em>Kelas Belajar Fotografi</em></h1>
     <p>Kelas Belajar Zonautara.com bersama Kamisama Fotografia menghadirkan pelatihan fotografi untuk peserta Program Lensa Muda.</p>
