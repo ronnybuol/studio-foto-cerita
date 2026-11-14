@@ -170,7 +170,7 @@ async function performStateSync(){
     state.controlRevision=data.controlRevision||0;
     const previousStage=state.serverStage;
     state.online=true;state.hasClassState=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
-    state.spotlight=data.spotlight||null;state.timer=data.timer||{...EMPTY_HUNTING_TIMER};state.timerClockOffset=Number.isFinite(data.serverNow)?data.serverNow-Date.now():0;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.participantGuide=!!data.participantGuide;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
+    state.spotlight=data.spotlight||null;state.timer=data.timer||{phase:null,status:"idle",endsAt:null,remainingMs:0};state.timerClockOffset=Number.isFinite(data.serverNow)?data.serverNow-Date.now():0;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.participantGuide=!!data.participantGuide;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
