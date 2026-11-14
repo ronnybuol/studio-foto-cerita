@@ -1752,3 +1752,11 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .caption-trainer-preview .caption-example-facts>div{padding:5px}
 .caption-trainer-preview .caption-example-facts span{font-size:11px}
 @media(max-width:950px){.caption-example-theory{grid-template-columns:1fr}.caption-example-theory .caption-slide-photo img{max-height:28vh}.caption-example-text{max-height:none;overflow:visible}}
+
+/* Modul 06 photos: documentary originals / restrained tonal grades, no crop */
+.ethics-slide-photo img{object-fit:contain}
+.ethics-upload-panel{margin:16px 0}
+.ethics-upload-panel h3{margin:5px 0;font-size:clamp(17px,1.6vw,25px)}
+.ethics-upload-panel .ethics-upload-tools{margin:12px 0;padding:12px;border:1px solid #9cb0c155;border-radius:10px}
+.ethics-upload-tools summary{cursor:pointer;font-weight:700}
+.ethics-upload-tools input[type=file]{display:block;margin:13px 0;max-width:100%}
