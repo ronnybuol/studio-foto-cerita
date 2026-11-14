@@ -1073,11 +1073,10 @@ function bindLessons(){
    }finally{if(save.isConnected)save.disabled=false}
   };
  }
+ if(state.active==="story")$("[data-portfolio-page]").forEach(button=>button.onclick=()=>{
+   state.localPortfolioPage=Number(button.dataset.portfolioPage);render();
+ });
  if(state.active==="story"&&$("#save-story")){
-  $("[data-portfolio-page]").forEach(button=>button.onclick=()=>{
-    state.localPortfolioPage=Number(button.dataset.portfolioPage);
-    render();
-  });
   const current=()=>state.work.story||{};
   const user=state.user;
   if(huntingSlotsFor(user)===null&&state.online){
@@ -1103,7 +1102,8 @@ function bindLessons(){
   };
  }
  if(state.active==="caption"){
-  void hydrateHuntingImages(state.user);
+  const owner=state.user;
+  void fetchHuntingSlots(owner).then(()=>hydrateHuntingImages(owner)).catch(()=>{});
   const form=$("#caption-form");
   if(form){
    function currentDraft(){
@@ -1408,7 +1408,7 @@ function renderDashboard(){
 function bindDashboard(){
  const portfolioPanel=$("#natgeo-trainer-panel");
  if(portfolioPanel){
-  portfolioPanel.querySelectorAll("[data-portfolio-project]").forEach(button=>button.onclick=async()=>{
+  $("[data-portfolio-project]").forEach(button=>button.onclick=async()=>{
    if(state.trainerRole!=="trainer"||!state.online)return;
    const page=Number(button.dataset.portfolioProject),status=$("#natgeo-project-status");
    button.disabled=true;
@@ -1420,7 +1420,7 @@ function bindDashboard(){
     const result=await request("/api/portfolio/presentation",{method:"PUT",payload:{page},auth:true});
     state.portfolioPage=result.portfolioPage;
     if(status)status.textContent=page?"✓ Spread "+page+" ditampilkan di LCD.":"✓ Tampilan portofolio ditutup; LCD kembali ke materi.";
-    portfolioPanel.querySelectorAll("[data-portfolio-project]").forEach(btn=>btn.classList.toggle("primary",Number(btn.dataset.portfolioProject)===page));
+    $("[data-portfolio-project]").forEach(btn=>btn.classList.toggle("primary",Number(btn.dataset.portfolioProject)===page));
    }catch(error){if(status)status.textContent="Gagal menampilkan portofolio: "+error.message;toast(error.message)}
    finally{button.disabled=false}
   });
