@@ -140,7 +140,7 @@ for(let stage=1;stage<=6;stage++){
 }
 await requireStatus(await api("/state",{method:"PUT",payload:{stage:1,controlRevision:controlBase+5},token}),409,"late old stage must be rejected");
 await requireStatus(await api("/presentation",{method:"PUT",payload:{stage:1,view:"theory",slide:0,controlRevision:controlBase+100},token}),409,"old-module slide must not overwrite current module");
-const afterLateControl=await api("/state");assert.equal(afterLateControl.data.stage,6);assert.equal(afterLateControl.data.presentation.slide,51);
+const afterLateControl=await api("/state");assert.equal(afterLateControl.data.stage,6);assert.equal(afterLateControl.data.presentation.slide,ETHICS_START);
 await requireStatus(await api("/state",{method:"PUT",payload:{stage:0},token}),200,"restore test orientation stage");
 await requireStatus(await api("/orientation",{method:"PUT",payload:{screen:"guide"},token}),200,"orientation participant guide");
 const guideState=await api("/state");
