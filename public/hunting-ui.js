@@ -18,7 +18,7 @@ export function huntingPanelHTML(){
  <p class="small-note">Foto baru aman di server setelah status <strong>Tersimpan di server</strong>. Jika koneksi terputus, salinan antrean dijaga di browser ini; jangan hapus data browser atau foto asli.</p>
  </section>`;
 }
-export function bindHuntingUI({getUser,getOnline,onNotice=()=>{}}){
+export function bindHuntingUI({getUser,getOnline,getSelected=()=>null,onSelect=()=>{},onNotice=()=>{}}){
  const panel=document.querySelector("#hunting-upload-panel");
  if(!panel||!getUser()?.id)return;
  if(ownerId!==getUser().id){
@@ -52,12 +52,25 @@ export function bindHuntingUI({getUser,getOnline,onNotice=()=>{}}){
    gallery.innerHTML=Array.from({length:12},(_,i)=>{
       const slot=i+1,match=photos.find(p=>p.slot===slot),waiting=pending.find(p=>p.slot===slot);
       const label=match?"Tersimpan di server":waiting?"Menunggu unggah":"Slot kosong";
-      return `<div class="hunting-photo-card"><div class="hunting-photo-frame" id="hunting-photo-${slot}">
+      const chosen=match&&getSelected()===slot;
+      return `<div class="hunting-photo-card ${chosen?"hunting-photo-chosen":""}"><div class="hunting-photo-frame" id="hunting-photo-${slot}">
        <span>${match||waiting?"Memuat foto…":"+"}</span></div>
        <b>Foto ${slot}</b><small>${escapeHtml(label)}</small>
-       ${match?`<small>${(match.bytes/1024).toFixed(0)} KB</small>`:""}
+       ${match?`<small>${(match.bytes/1024).toFixed(0)} KB</small><button type="button" class="btn small ${chosen?"primary":"subtle"}" data-hunting-choose="${slot}" aria-pressed="${chosen?"true":"false"}">${chosen?"✓ Foto pilihan":"Pilih untuk EDFAT"}</button>`:""}
        </div>`;
    }).join("");
+   gallery.querySelectorAll("[data-hunting-choose]").forEach(button=>button.onclick=()=>{
+     const slot=Number(button.dataset.huntingChoose);
+     if(!photos.some(photo=>photo.slot===slot))return;
+     onSelect(slot);
+     gallery.querySelectorAll("[data-hunting-choose]").forEach(btn=>{
+       const selected=Number(btn.dataset.huntingChoose)===slot;
+       btn.setAttribute("aria-pressed",String(selected));
+       btn.textContent=selected?"✓ Foto pilihan":"Pilih untuk EDFAT";
+       btn.classList.toggle("primary",selected);btn.classList.toggle("subtle",!selected);
+       btn.closest(".hunting-photo-card")?.classList.toggle("hunting-photo-chosen",selected);
+     });
+   });
    for(const item of pending){
      if(confirmed.has(item.slot))continue;
      const node=document.querySelector("#hunting-photo-"+item.slot);
