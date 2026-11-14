@@ -1,9 +1,11 @@
-# Aset pembuka Hong Bit
+# Aset resmi sampul Kelas Belajar Fotografi
 
-Berkas gambar untuk halaman sambutan dan LCD:
-- hong-bit.webp — foto asli karya Ronny Adolof Buol (2016), optimasi ukuran tanpa manipulasi isi.
-- lensa-muda.png — logo asli Lensa Muda.
-- zonautara.png — logo asli Zonautara.com.
-- peserta-qr.svg — QR lokal yang mengarah ke https://kelasbelajar.org/lensa-muda/peserta.
+Kolaborasi **Kelas Belajar Zonautara.com × Kamisama Fotografia** untuk peserta **Program Lensa Muda 2026**.
 
-Keempat berkas disiapkan dalam arsip aset terpisah. Unggah ke folder ini sebelum menggabungkan cabang ke main. Foto asli dan logo tidak boleh diganti ilustrasi generatif.
+Aset produksi:
+- `hong-bit.webp` — foto jurnalistik asli karya Ronny Adolof Buol, Kalimantan 2016. Resolusi 1280 × 853 piksel. Dikompresi tanpa mengubah objek.
+- `kamisama.png` — logo Kamisama Fotografia asli dari penyelenggara.
+- `zonautara.png` — logo Zonautara.com asli.
+- `peserta-qr.svg` — QR lokal menuju https://kelasbelajar.org/lensa-muda/peserta.
+
+Logo Lensa Muda tidak digunakan sebagai identitas di header atau LCD. Nama Lensa Muda dipertahankan sebagai nama program.
