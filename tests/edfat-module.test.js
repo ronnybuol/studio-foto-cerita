@@ -15,8 +15,15 @@ test("Modul 03 memiliki tujuh slide teori dan lima kasus EDFAT dari foto dokumen
   assert.ok(slide.points.length>=3);
   assert.ok(edfatLabel(i));
   const html=edfatVisual(i);
-  assert.match(html,/sangihe-2017-[0-9]{4}\.webp/);
-  assert.match(html,/Ronny Adolof Buol/);
+  if(i===EDFAT_END){
+   assert.match(html,/edfat-hunting-brief/);
+   assert.match(html,/25 MENIT/);
+   assert.match(html,/15 MENIT/);
+   assert.match(html,/1 KARYA/);
+  }else{
+   assert.match(html,/sangihe-2017-[0-9]{4}\.webp/);
+   assert.match(html,/Ronny Adolof Buol/);
+  }
  }
  for(const c of EDFAT_CASES){
   assert.ok(EDFAT_OPTIONS.includes(c.recommended));

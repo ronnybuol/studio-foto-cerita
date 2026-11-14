@@ -1592,3 +1592,12 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
  .lcd-hunting-timer .hunting-timer-time{font-size:37px}
  .lcd-hunting-timer .hunting-timer-eyebrow{font-size:10px}
 }
+
+/* Modul 03 slide 07: instruksi hunting terbaca di LCD dan ponsel. */
+.edfat-hunting-brief{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,1.4vw,22px);width:100%;align-content:stretch}
+.edfat-hunting-step{display:flex;flex-direction:column;gap:clamp(6px,1vw,14px);padding:clamp(14px,2vw,32px);border:1px solid #8b9dad55;border-radius:18px;background:linear-gradient(155deg,#193044,#101b29);color:#f6f8fc;min-width:0}
+.edfat-hunting-step .edfat-hunting-number{font-size:clamp(14px,1.6vw,25px);color:#ebc57e;font-weight:800;letter-spacing:.1em}
+.edfat-hunting-step strong{font-size:clamp(16px,1.9vw,29px);line-height:1.15}
+.edfat-hunting-step b{font-size:clamp(25px,3vw,49px);line-height:1;color:#ffce72}
+.edfat-hunting-step p{font-size:clamp(13px,1.2vw,21px);line-height:1.4;margin:0;color:#dce5ef}
+@media(max-width:680px){.edfat-hunting-brief{grid-template-columns:1fr}.edfat-hunting-step{gap:7px;padding:15px}.edfat-hunting-step b{font-size:29px}.edfat-hunting-step strong{font-size:17px}.edfat-hunting-step p{font-size:14px}}
