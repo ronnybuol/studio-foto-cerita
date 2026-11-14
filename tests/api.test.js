@@ -411,3 +411,25 @@ test("komposisi A/B tersimpan di server dan trainer menyorot satu ulasan di LCD"
  await call(env,"/api/spotlight","PUT",{participantId:null,module:null},trainer.token);
  assert.equal((await call(env,"/api/state")).data.spotlight,null);
 });
+test("shared timer honors phase durations, pause, extend and expiry without affecting photos",async()=>{
+ const {normalizeHuntingTimer,applyHuntingTimerAction,remainingHuntingMs}=await import("../src/hunting-timer.js");
+ const now=1700000000000;
+ const idle=normalizeHuntingTimer(null);
+ assert.equal(idle.status,"idle");
+ const hunting=applyHuntingTimerAction(idle,{action:"start",phase:"hunting"},now);
+ assert.equal(remainingHuntingMs(hunting,now),1500000);
+ assert.equal(remainingHuntingMs(hunting,now+1500001),0);
+ assert.throws(()=>applyHuntingTimerAction(hunting,{action:"start",phase:"upload"},now));
+ const extended=applyHuntingTimerAction(hunting,{action:"extend",minutes:5},now+60000);
+ assert.equal(remainingHuntingMs(extended,now+60000),1740000);
+ const paused=applyHuntingTimerAction(extended,{action:"pause"},now+120000);
+ assert.equal(paused.status,"paused");
+ assert.equal(remainingHuntingMs(paused,now+250000),1680000);
+ const resumed=applyHuntingTimerAction(paused,{action:"resume"},now+250000);
+ assert.equal(remainingHuntingMs(resumed,now+250000),1680000);
+ const finished=applyHuntingTimerAction(resumed,{action:"finish"},now+250000);
+ assert.equal(finished.status,"finished");
+ const upload=applyHuntingTimerAction(finished,{action:"start",phase:"upload"},now+260000);
+ assert.equal(remainingHuntingMs(upload,now+260000),900000);
+ assert.throws(()=>applyHuntingTimerAction(upload,{action:"extend",minutes:6},now));
+});
