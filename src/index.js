@@ -681,6 +681,17 @@ async function handleApi(req,env){
         if(data.selected.some(id=>!owned.has(id)))return failure("Sembilan foto harus berasal dari galeri hunting milikmu dan tersimpan di server",409);
       }else if(data.mode!==undefined) return failure("Mode Meja Editor tidak valid",400);
     }
+    if(key==="caption"){
+      // New submissions must build on the nine-photo hunting story saved in Module 04.
+      if(data.storyMode!=="hunting")return failure("Selesaikan Meja Editor Modul 04 terlebih dahulu",409);
+      if(typeof data.captionText!=="string"||data.captionText.trim().split(/\\s+/u).length<50
+       ||data.captionText.length>11000)return failure("Tulis narasi minimal 50 kata dan maksimum 11.000 karakter",400);
+      if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes"))
+        return failure("Periksa tiga butir editorial sebelum menyimpan",400);
+      if(["who","what","when","where","why","how","verification"].some(k=>data[k]!==undefined&&
+         (typeof data[k]!=="string"||data[k].length>1800)))
+        return failure("Catatan fakta tidak valid",400);
+    }
     if(key==="caption"&&data.storyMode==="hunting"){
       if(!Array.isArray(data.storySelected)||data.storySelected.length!==9||new Set(data.storySelected).size!==9)
         return failure("Caption harus mengikuti sembilan foto pilihan di Modul 04",400);
