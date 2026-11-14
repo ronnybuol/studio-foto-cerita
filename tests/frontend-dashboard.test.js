@@ -97,7 +97,7 @@ test("tampilan peserta berfokus pada materi, navigasi ringkas, identitas Zonauta
  assert.ok(source.includes('document.body.dataset.appMode=mode'));
  assert.ok(css.includes('body[data-app-mode="peserta"] .top-links'));
  assert.ok(css.includes('@media print'));
- assert.ok(html.includes("Dikembangkan oleh"));
+ assert.ok(html.includes("brand-logo-lensa"));
  assert.ok(html.includes("Ronny Adolof Buol"));
- assert.ok(html.includes("./assets/zonautara-mark.svg"));
+ assert.ok(html.includes("brand-logo-zonautara"));
 });
