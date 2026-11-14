@@ -1736,3 +1736,19 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .caption-spotlight .caption-spotlight-text{white-space:pre-wrap;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere;min-height:0;flex:1;font-size:clamp(14px,1.33vw,22px);line-height:1.5;padding:clamp(12px,1.2vw,20px);border-radius:10px;scrollbar-width:auto}
 .caption-spotlight .caption-spotlight-question{font-size:clamp(12px,1vw,16px);flex:none;line-height:1.3}
 @media(max-width:900px){.caption-spotlight{height:auto;min-height:0;overflow:visible}.caption-spotlight-main{grid-template-columns:1fr;overflow:visible;display:flex;flex-direction:column}.caption-spotlight .caption-spotlight-photos{height:55vw;max-height:450px;min-height:280px;flex:none}.caption-spotlight-narrative{min-height:180px}.caption-spotlight .caption-spotlight-text{max-height:40vh;overflow-y:auto}.caption-spotlight-top{align-items:start}}
+
+/* Modul 05 / Slide 06: display the complete example caption without nested scrolling. */
+.caption-example-theory{grid-template-columns:minmax(0,.27fr) minmax(0,.73fr);align-items:start;gap:clamp(10px,1.15vw,20px)}
+.caption-example-theory .caption-slide-photo img{max-height:min(49vh,460px)}
+.caption-example-content{gap:clamp(5px,.6vw,10px);overflow:visible}
+.caption-example-head h3{font-size:clamp(19px,1.7vw,29px);margin:2px 0 5px}
+.caption-example-text{font-size:clamp(13px,1.05vw,17px);line-height:1.43;max-height:none;overflow:visible;white-space:pre-line;margin:4px 0}
+.caption-example-facts{gap:5px}
+.caption-example-facts>div{padding:5px 8px}
+.caption-example-facts b{font-size:11px}
+.caption-example-facts span{font-size:clamp(11px,.78vw,13px);line-height:1.3}
+.caption-trainer-preview .caption-example-text{max-height:none;overflow:visible;font-size:clamp(12px,.92vw,15px);line-height:1.38}
+.caption-trainer-preview:has(.caption-example-content){grid-template-columns:minmax(0,.20fr) minmax(0,.80fr)}
+.caption-trainer-preview .caption-example-facts>div{padding:5px}
+.caption-trainer-preview .caption-example-facts span{font-size:11px}
+@media(max-width:950px){.caption-example-theory{grid-template-columns:1fr}.caption-example-theory .caption-slide-photo img{max-height:28vh}.caption-example-text{max-height:none;overflow:visible}}
