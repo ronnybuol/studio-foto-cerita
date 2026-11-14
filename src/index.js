@@ -558,7 +558,7 @@ async function handleApi(req,env){
     if(data.stage!==undefined&&(!Number.isInteger(data.stage)||data.stage<0||data.stage>6))return failure("Tahap tidak valid",400);
     if(data.stage>0&&data.view==="theory"&&(data.slide<STAGE_FIRST_SLIDES[data.stage]||data.slide>STAGE_LAST_SLIDES[data.stage]))return failure("Slide ini bukan bagian tahap aktif. Segarkan dashboard trainer.",409);
     try{
-      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
+      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.portfolioPage',0,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
         .bind(data.view,data.slide,data.controlRevision??null,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null,data.stage??null,data.stage??null).run();
       if(written.meta?.changes===0)return failure("Tahap atau kendali kelas sudah berubah. Segarkan status sebelum memilih slide lagi.",409);
     }catch(error){
