@@ -1,0 +1,41 @@
+name: Verify composition LCD photo and live review release
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-composition-live-fix.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live HTML JS CSS without modifying class data
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,time,sys,json
+          base="https://kelasbelajar.org/lensa-muda/"
+          for n in range(1,7):
+            try:
+              def fetch(path):
+                q=urllib.request.Request(base+path,headers={"User-Agent":"Mozilla/5.0","Cache-Control":"no-cache"})
+                with urllib.request.urlopen(q,timeout=25) as r:return r.status,r.read()
+              h,html=fetch("?verify-comp-fix="+str(n))
+              j,js=fetch("app.js?verify-comp-fix="+str(n))
+              c,css=fetch("styles.css?verify-comp-fix="+str(n))
+              a,api=fetch("api/state?verify-comp-fix="+str(n))
+              tests={
+               "html":b"20261115-composition-fullphoto-live-v11" in html,
+               "js":b"async function refreshCompositionResponses(force=false)" in js and b"await refreshCompositionResponses()" in js and b"compositionPanel.onclick=event" in js,
+               "css":b".lcd-composition-lab .comp-demo-pair .comp-compare-image img" in css and b".comp-spotlight .comp-compare-image img" in css and b"object-fit:contain" in css,
+               "http":all(x==200 for x in (h,j,c,a))
+              }
+              state=json.loads(api)
+              print("ATTEMPT",n,tests,"CURRENT_STAGE",state.get("stage"),flush=True)
+              if all(tests.values()):
+                print("PASS: LCD whole-photo CSS and trainer live-answer JS in Cloudflare production",flush=True)
+                sys.exit(0)
+            except Exception as e: print("ERROR",n,repr(e),flush=True)
+            time.sleep(12)
+          sys.exit("FAIL: production did not yet serve both fixes")
+          PY
