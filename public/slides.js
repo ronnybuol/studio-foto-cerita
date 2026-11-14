@@ -1,7 +1,7 @@
 // Delapan slide teori dasar fotografi (±15–20 menit) untuk pelajar.
 // Seluruh gambar pada modul ini adalah ilustrasi simulasi, bukan foto jurnalistik.
 export const THEORY_SLIDES = [
- {eyebrow:"01 / MEMBACA FOTO",title:"Apa yang membuat foto bercerita?",
+ {eyebrow:"01 / MEMBACA FOTO",title:"Apa yang membuat foto terasa bercerita?",
   lead:"Foto yang menarik mata belum tentu menjelaskan apa yang terjadi.",
   points:["Perhatikan manusia dan tindakannya.","Cari petunjuk tempat, suasana, serta waktu.","Jangan mengira-ngira hal yang tidak terlihat."],
   prompt:"Apa yang kamu ketahui? Apa yang masih harus ditanyakan?",
