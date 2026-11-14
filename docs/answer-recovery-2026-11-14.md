@@ -18,10 +18,10 @@ Pesan UI membedakan hasil diterima server, tersimpan lokal/pending, draf, sesi b
 
 - Baseline sebelum perubahan: 55 tes lulus, `npm run check` lulus.
 - Sebelas tes baru antrean: gagal PUT + reload, enam modul, draf tidak auto-kirim, klik Simpan saat request berjalan, edit draf saat pengiriman, pergantian akun, kelas terkunci/tahap tertutup, error autentikasi, respons tanpa pengakuan server, storage gagal, migrasi legacy.
-- Tiga tes integrasi fungsi asli app.js: Save + restore tidak menimpa hasil pending, 401 mempertahankan salinan akun untuk login ulang, respons profil lambat tidak menimpa edit atau akun lain.
+- Empat tes integrasi fungsi asli app.js: Save + restore tidak menimpa hasil pending, 401 mempertahankan salinan akun untuk login ulang, respons profil lambat tidak menimpa edit atau akun lain, dan hasil final kamera/komposisi yang berasal dari draf tidak membawa penanda draf ke server.
 - Browser lokal menjalankan frontend asli + handler Worker asli melalui jembatan HTTP Node, dengan SQLite sekali pakai di memori. Ini bukan runtime Cloudflare/D1.
 - Browser: akun uji lokal membuat caption B (69 kata), PUT sengaja dibalas 500, database tetap memuat caption A. Reload mempertahankan B beserta checkbox dan status belum diterima server. Setelah simulasi gagal dinonaktifkan, reload memicu retry; SQLite menyimpan B dan status UI menyatakan sudah diterima server. Tidak ada akun atau data uji dimasukkan ke produksi.
-- Hasil akhir lokal: 69 tes lulus; pemeriksaan sintaks bawaan dan seluruh file JavaScript harus lulus sebelum commit.
+- Hasil akhir lokal: 70 tes lulus; pemeriksaan sintaks bawaan dan seluruh file JavaScript harus lulus sebelum commit.
 
 ## Batas dan pekerjaan berikutnya
 

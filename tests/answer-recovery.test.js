@@ -23,6 +23,14 @@ test("real app Save + restore preserve the failed final result instead of old se
  assert.equal(c.state.work.caption.captionText,"new B");
  assert.deepEqual(c.answerSync.pendingKeys(),["caption"]);
 });
+test("saving a migrated camera/composition draft removes its draft marker from the submitted snapshot",async()=>{
+ const c=setup();
+ const camera={a:2,s:3,i:1,_draft:true};
+ await c.saveAnswer("kamera",camera);
+ assert.equal(c.state.work.kamera._draft,undefined);
+ assert.equal(camera._draft,true);
+ assert.deepEqual(c.answerSync.pendingKeys(),["kamera"]);
+});
 test("401 retains account-scoped work for login again instead of deleting pending answers",async()=>{
  const c=setup();await c.saveAnswer("caption",{captionText:"new B",completedAt:"now"});
  c.request=async()=>{throw Object.assign(Error("expired"),{status:401})};

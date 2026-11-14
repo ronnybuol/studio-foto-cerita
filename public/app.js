@@ -798,6 +798,7 @@ function ethicsPage(){
 }
 async function saveAnswer(key,payload){
  const owner=state.user?.id;
+ payload={...payload};delete payload._draft;
  state.work[key]=payload;
  workStorageSafe=answerSync.queue(key,payload,state.work);
  paintAnswerStatus();
