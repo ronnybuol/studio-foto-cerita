@@ -9,6 +9,7 @@ import {createAnswerSync} from "./answer-sync.js";
 import {timerParticipantHTML,timerLCDHTML,timerTrainerHTML,paintSharedHuntingTimer,EMPTY_HUNTING_TIMER} from "./hunting-timer-ui.js";
 import {huntingPanelHTML,bindHuntingUI} from "./hunting-ui.js";
 import {huntingSlotsFor,fetchHuntingSlots,hydrateHuntingImages,clearHuntingSlotCache} from "./story-hunting-ui.js";
+import {portfolioViewerHTML,portfolioTrainerHTML} from "./portfolio.js";
 import {requestJSON,singleFlight,localDemo,validClassSnapshot} from "./connection.js";
 import {createTrainerControl} from "./trainer-sync.js";
 const $ = (s, root=document) => root.querySelector(s);
@@ -66,7 +67,7 @@ let state = {
   demoCamera:{a:1,s:3,i:1},
   demoComposition:{grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"},
   presentation:{view:"theory",slide:0},
-  spotlight:null,timer:{...EMPTY_HUNTING_TIMER},timerClockOffset:0,
+  spotlight:null,portfolioPage:0,localPortfolioPage:1,timer:{...EMPTY_HUNTING_TIMER},timerClockOffset:0,
   user:readJSON(STORAGE_USER,null),work:readJSON(STORAGE_WORK,{}),
   trainerToken:sessionStorage.getItem("lm26-trainer")||"",
   trainerRole:sessionStorage.getItem("lm26-role")||"trainer",
@@ -144,7 +145,7 @@ function setTrainerControlsBusy(busy){
  }
 }
 const trainerControl=createTrainerControl({getRevision:()=>state.controlRevision,onBusy:setTrainerControlsBusy});
-const PROJECTION_PATHS=new Set(["/api/state","/api/presentation","/api/welcome","/api/orientation","/api/spotlight","/api/hunting/timer"]);
+const PROJECTION_PATHS=new Set(["/api/state","/api/presentation","/api/welcome","/api/orientation","/api/spotlight","/api/hunting/timer","/api/portfolio/presentation"]);
 const runStateSync=singleFlight(performStateSync);
 async function request(path,{method="GET",payload,auth=false,participantToken}={}){
  const projection=auth&&method==="PUT"&&PROJECTION_PATHS.has(path);
@@ -171,7 +172,7 @@ async function performStateSync(){
     state.controlRevision=data.controlRevision||0;
     const previousStage=state.serverStage;
     state.online=true;state.hasClassState=true;state.serverStage=data.stage;state.count=data.count||0;state.locked=!!data.locked;
-    state.spotlight=data.spotlight||null;state.timer=data.timer||{phase:null,status:"idle",endsAt:null,remainingMs:0};state.timerClockOffset=Number.isFinite(data.serverNow)?data.serverNow-Date.now():0;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.participantGuide=!!data.participantGuide;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
+    state.spotlight=data.spotlight||null;state.portfolioPage=Number.isInteger(data.portfolioPage)?data.portfolioPage:0;state.timer=data.timer||{phase:null,status:"idle",endsAt:null,remainingMs:0};state.timerClockOffset=Number.isFinite(data.serverNow)?data.serverNow-Date.now():0;state.welcome=!!data.welcome;state.orientation=data.orientation===true;state.participantGuide=!!data.participantGuide;state.roster=!!data.roster;state.rosterPage=Number.isInteger(data.rosterPage)?data.rosterPage:0;state.rosterNames=Array.isArray(data.rosterNames)?data.rosterNames:[];
     // Tahap baru tidak memindahkan peserta yang sedang praktik.
     if(data.composition&&["grid","frame","position","distance","angle","preview"].every(k=>Object.hasOwn(data.composition,k)))state.demoComposition=data.composition;
     if(data.camera&&["a","s","i"].every(k=>Number.isInteger(data.camera[k])&&data.camera[k]>=0&&data.camera[k]<=6))state.demoCamera=data.camera;
@@ -816,15 +817,15 @@ function storyTheoryContent(index,variant="lcd"){
  ${storySlideVisual(index)}</div>`;
 }
 function storyParticipantSlide(i=state.presentation.slide){
- return `${titleBlock("story")}<section class="card story-learner-theory">
+ return `${titleBlock("story")}<section class="card story-learner-theory">${i===STORY_START?portfolioViewerHTML(state.localPortfolioPage,"participant"):""}
  <p class="small-note">Diskusikan pilihan editorial bersama trainer. Setelah presentasi, kamu akan memilih sembilan bingkai sendiri.</p>
  ${storyTheoryContent(i,"participant")}</section>`;
 }
 function storyTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=STORY_START&&state.presentation.slide<=STORY_END?state.presentation.slide:STORY_START;
  const x=storySlide(i),theory=state.presentation.view==="theory";
- return `<section class="card story-trainer-card"><div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 4</span>
- <h2>Sembilan Bingkai</h2><p class="small-note">Enam slide mengedit cerita, dilanjutkan latihan 9 dari 12 foto dokumentasi.</p></div>
+ return `${portfolioTrainerHTML(state.portfolioPage,isMentor)}<section class="card story-trainer-card"><div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 4</span>
+ <h2>Sembilan Bingkai</h2><p class="small-note">Lima spread National Geographic sebagai inspirasi, enam slide teori, lalu menyusun 9 dari maksimal 12 foto hunting.</p></div>
  <span class="pill ${data.stage>=4?"green":"gray"}">${data.stage>=4?"● MODUL 04 SIAP":"BUKA TAHAP 04"}</span></div>
  ${theory?`<div class="story-trainer-preview"><div class="story-trainer-notes"><span class="eyebrow">SLIDE ${storyLabel(i)} / 06</span><h3>${escapeHtml(x.title)}</h3>
  <div class="trainer-theory-note"><b>CATATAN TRAINER</b><p>${escapeHtml(x.note)}</p></div></div>${storySlideVisual(i)}</div>
@@ -834,7 +835,7 @@ function storyTrainerPanel(data,isMentor){
  <div class="actions"><button class="btn primary" data-story-mode="simulator" ${isMentor?"disabled":""}>Buka meja editor peserta →</button></div>`:
  `<div class="trainer-theory-compact"><div><strong>Meja editor peserta sedang terbuka</strong><p class="small-note">Peserta memilih, mengurutkan sembilan foto, memberi judul dan alasan editorial.</p></div>
  <button class="btn subtle" data-story-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
- <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan foto yang tidak dipilih. Kandidat 12 adalah detail alternatif dari foto 5, bukan foto peristiwa lain.</p></div>`}
+ <div class="story-trainer-tip"><b>DISKUSI</b><p>Mintalah peserta menjelaskan tiga foto yang tidak dipilih. Tidak wajib memilih sembilan foto paling indah; cari sembilan informasi yang saling melengkapi.</p></div>`}
  </section>`;
 }
 function captionTheoryContent(index,variant="lcd"){
@@ -1073,6 +1074,10 @@ function bindLessons(){
   };
  }
  if(state.active==="story"&&$("#save-story")){
+  $("[data-portfolio-page]").forEach(button=>button.onclick=()=>{
+    state.localPortfolioPage=Number(button.dataset.portfolioPage);
+    render();
+  });
   const current=()=>state.work.story||{};
   const user=state.user;
   if(huntingSlotsFor(user)===null&&state.online){
@@ -1245,6 +1250,7 @@ async function fetchDashboard(){
  if(state.dashboard.composition)state.demoComposition=state.dashboard.composition;
  if(state.dashboard.presentation)state.presentation=state.dashboard.presentation;
  state.spotlight=state.dashboard.spotlight||null;
+ state.portfolioPage=Number.isInteger(state.dashboard.portfolioPage)?state.dashboard.portfolioPage:0;
  if(state.dashboard.timer){state.timer=state.dashboard.timer;state.timerClockOffset=Number.isFinite(state.dashboard.serverNow)?state.dashboard.serverNow-Date.now():0}
 }
 function trainerCameraPanel(data,isMentor){
@@ -1400,6 +1406,59 @@ function renderDashboard(){
 <section id="participant-print-sheet" class="participant-print-sheet"><h1>Daftar Peserta Lensa Muda</h1><p>Studio Foto Cerita · 16 November 2026 · Kelas Belajar Zonautara.com</p><table><thead><tr><th>No.</th><th>Nama</th><th>Username</th><th>Sekolah</th><th>Kelas</th><th>Progres</th></tr></thead><tbody>${(data.participants||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.username||"—")}</td><td>${escapeHtml(p.school)}</td><td>${escapeHtml(p.className)}</td><td>${Number(p.done)||0}/6</td></tr>`).join("")}</tbody></table><p class="small-note">Dokumen internal, username merupakan akses akun peserta tanpa password.</p></section></div>`;
 }
 function bindDashboard(){
+ const portfolioPanel=$("#natgeo-trainer-panel");
+ if(portfolioPanel){
+  portfolioPanel.querySelectorAll("[data-portfolio-project]").forEach(button=>button.onclick=async()=>{
+   if(state.trainerRole!=="trainer"||!state.online)return;
+   const page=Number(button.dataset.portfolioProject),status=$("#natgeo-project-status");
+   button.disabled=true;
+   try{
+    if(page){
+     const check=await request("/api/portfolio/status");
+     if(!check.spreads?.[page-1])throw Error("Spread "+page+" belum diunggah ke server.");
+    }
+    const result=await request("/api/portfolio/presentation",{method:"PUT",payload:{page},auth:true});
+    state.portfolioPage=result.portfolioPage;
+    if(status)status.textContent=page?"✓ Spread "+page+" ditampilkan di LCD.":"✓ Tampilan portofolio ditutup; LCD kembali ke materi.";
+    portfolioPanel.querySelectorAll("[data-portfolio-project]").forEach(btn=>btn.classList.toggle("primary",Number(btn.dataset.portfolioProject)===page));
+   }catch(error){if(status)status.textContent="Gagal menampilkan portofolio: "+error.message;toast(error.message)}
+   finally{button.disabled=false}
+  });
+  async function showPortfolioAvailability(){
+   const target=$("#natgeo-upload-availability");
+   if(!target)return;
+   try{
+    const result=await request("/api/portfolio/status");
+    target.textContent="Berkas asli tersedia: "+(result.spreads||[]).map((ok,i)=>ok?"✓ "+(i+1):"– "+(i+1)).join(" · ");
+   }catch(error){target.textContent="Status portofolio belum dapat diperiksa: "+error.message}
+  }
+  void showPortfolioAvailability();
+  const input=$("#natgeo-upload-input");
+  if(input)input.onchange=async()=>{
+   const files=[...input.files];input.value="";
+   const status=$("#natgeo-upload-status");
+   if(!files.length)return;
+   if(files.length!==5){if(status)status.textContent="Pilih kelima file JPG sekaligus agar urutan 1–5 lengkap.";return}
+   const sorted=files.map(file=>({file,n:Number(file.name.match(/\(([1-5])\)/)?.[1]||0)})).sort((a,b)=>a.n-b.n);
+   if(sorted.some((item,i)=>item.n!==i+1)||sorted.some(item=>!item.file.type.startsWith("image/jpeg"))){
+    if(status)status.textContent="Nama file harus mengandung (1), (2), (3), (4), (5) dan berformat JPG.";return;
+   }
+   input.disabled=true;
+   for(const {file,n} of sorted){
+    if(status)status.textContent="Mengunggah spread "+n+" dari 5: "+file.name;
+    try{
+     const response=await fetch(PUBLIC_BASE+"/api/portfolio/spread/"+n,{
+      method:"PUT",headers:{Authorization:"Bearer "+state.trainerToken,"Content-Type":"image/jpeg"},body:file,cache:"no-store"});
+     if(!response.ok){
+      let reason;try{reason=(await response.json()).error}catch{}
+      throw Error(reason||"Gagal mengunggah spread "+n);
+     }
+    }catch(error){if(status)status.textContent="Unggah terhenti pada spread "+n+": "+error.message;input.disabled=false;void showPortfolioAvailability();return}
+   }
+   if(status)status.textContent="✓ Lima spread asli tersimpan di server. Gunakan tombol 01–05 untuk menampilkan di LCD.";
+   input.disabled=false;void showPortfolioAvailability();
+  };
+ }
  const timerControl=$("#shared-timer-control");
  if(timerControl)timerControl.onclick=async event=>{
   const button=event.target.closest("[data-hunting-timer]");
@@ -1871,6 +1930,10 @@ function lcdPage(){
  const link=location.origin+"/lensa-muda/peserta";
  const qr="/lensa-muda/assets/brand/peserta-qr.svg";
  const footer=lcdFooter(stage,count,link,qr);
+ if(stage===4&&state.portfolioPage>0&&state.portfolioPage<=5){
+  return `<div class="page lcd-page"><div class="lcd-mode lcd-natgeo-mode">${portfolioViewerHTML(state.portfolioPage,"lcd")}</div>
+  <div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
+ }
  if(state.spotlight&&!state.welcome&&!(stage===0&&(state.orientation||state.participantGuide||state.roster)))return `<div class="page lcd-page"><div class="lcd-mode lcd-spotlight-mode">${lcdSpotlightContent(state.spotlight)}${footer}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  if(stage===0&&state.roster&&!state.welcome){
    return `<div class="page lcd-page"><div class="lcd-mode lcd-orientation-mode">${orientationRosterSlide(count,state.rosterPage,state.rosterNames)}</div><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
@@ -1993,10 +2056,11 @@ async function refreshLCD(){
  const prevComposition=JSON.stringify(state.demoComposition);
  const prevPresentation=JSON.stringify(state.presentation);
  const prevSpotlight=JSON.stringify(state.spotlight);
+ const prevPortfolioPage=state.portfolioPage;
  try{
    await syncState();
    const nextStage=state.demoMode&&!state.online?state.demoStage:state.serverStage;
-   if(prevStage!==nextStage||prevWelcome!==state.welcome||prevOrientation!==state.orientation||prevParticipantGuide!==state.participantGuide||prevRoster!==state.roster||prevRosterPage!==state.rosterPage||prevRosterNames!==JSON.stringify(state.rosterNames)||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||!$(".lcd-mode")){
+   if(prevStage!==nextStage||prevWelcome!==state.welcome||prevOrientation!==state.orientation||prevParticipantGuide!==state.participantGuide||prevRoster!==state.roster||prevRosterPage!==state.rosterPage||prevRosterNames!==JSON.stringify(state.rosterNames)||prevPresentation!==JSON.stringify(state.presentation)||prevSpotlight!==JSON.stringify(state.spotlight)||prevPortfolioPage!==state.portfolioPage||!$(".lcd-mode")){
      renderLCD();
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
