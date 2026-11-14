@@ -234,3 +234,20 @@ Enam slide baru (51–56) menutup rangkaian dengan kepercayaan publik, keaslian 
 Peserta menanggapi empat skenario yang sudah ada, sekarang disertai alasan sendiri. Nilai keputusan 0–4 tetap tersedia sebagai sarana refleksi, bukan ukuran tunggal etika. Untuk tantangan akhir peserta menyusun rencana: tema, calon tokoh/sumber, izin dan batasan, ragam foto/EDFAT, hal yang perlu diverifikasi, dan cara menjaga keselamatan serta martabat. Terdapat tiga pernyataan komitmen. Draf tersimpan di perangkat; pengiriman jawaban menggunakan key D1 `etika` yang sudah ada tanpa migrasi. Tampilan detail trainer dan Sorotan Karya di LCD memperlihatkan rencana peserta sehingga dapat dibahas bersama dan ditutup kembali ke slide terakhir.
 
 **Skenario uji akhir:** pilih tahap 06 di trainer, pindahkan semua slide di LCD lalu buka tantangan akhir. Di HP peserta pilih empat respons, tulis alasan dan rencana, pindah ke Baca materi lalu kembali Latihan saya: semua draf tetap ada. Simpan hasil, periksa progres trainer, sorot hasil ke LCD, dan akhiri sorotan. Setelahnya lakukan audit perjalanan Modul 01–06 secara menyeluruh. Tidak ada perubahan D1/R2/route produksi.
+
+
+## Uji beban 70 peserta virtual (aman, tanpa menyentuh produksi)
+
+Repositori ini mempunyai pengujian end-to-end HTTP yang berjalan otomatis lewat GitHub Actions pada pull request: `Isolated 70-participant classroom load test`. Pengujian memakai Worker Wrangler lokal dan **D1 lokal sementara**, bukan D1 produksi.
+
+Skenario `scripts/load-test-local.mjs`:
+- 70 akun fiktif dikirim **bersamaan** ke endpoint pendaftaran asli;
+- semua respons pendaftaran harus HTTP 201, dengan ID dan token unik;
+- `/api/state` harus melaporkan 70 peserta;
+- username ganda harus ditolak HTTP 409 tanpa menambah counter;
+- login kembali tidak boleh menambah jumlah peserta;
+- daftar LCD 48 + 22 nama harus sesuai dan dapat kembali ke tampilan pendaftaran.
+
+Tes hanya menerima alamat `localhost` atau `127.0.0.1`, sehingga tidak dapat diarahkan secara tidak sengaja ke `kelasbelajar.org`. Tidak perlu mengundang peserta asli ataupun menciptakan identitas peserta yang sebenarnya.
+
+Pengujian awal pada 14 November 2026 memperoleh 70/70 pendaftaran berhasil tanpa kegagalan; HTTP p50 sekitar 209 ms dan p95 sekitar 212 ms pada runner lokal. **Angka ini bukan pengukuran Cloudflare produksi, jaringan seluler peserta, ataupun proyektor di lokasi acara.** Uji lapangan perangkat dan Wi-Fi tetap diperlukan.
