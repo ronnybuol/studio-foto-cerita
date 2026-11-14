@@ -1,0 +1,51 @@
+name: Isolated 70-participant classroom load test
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/load-test-local.mjs
+      - .github/workflows/isolated-classroom-load.yml
+permissions:
+  contents: read
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install local dependencies (no Cloudflare login)
+        run: npm install --no-audit --no-fund
+      - name: Create disposable local D1 and local test PINs
+        shell: bash
+        run: |
+          cat > .dev.vars <<'EOF'
+          TRAINER_PIN=local-trainer-12345
+          MENTOR_PIN=local-mentor-12345
+          SESSION_SECRET=local-load-test-only-secret-for-virtual-users-123456
+          EOF
+          npx wrangler d1 execute lensa-muda-db --local --file=schema.sql
+      - name: Launch isolated local Worker and run 70 simultaneous signups
+        shell: bash
+        run: |
+          set -e
+          npx wrangler dev --local --ip 127.0.0.1 --port 8787 > /tmp/studio-local-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          available=0
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8787/lensa-muda/api/state > /dev/null 2>&1; then available=1; break; fi
+            sleep 2
+          done
+          if [ "$available" -ne 1 ]; then
+            echo "Local Worker did not start"
+            tail -n 120 /tmp/studio-local-worker.log
+            exit 1
+          fi
+          if ! node scripts/load-test-local.mjs; then
+            echo "Worker log after test failure:"
+            tail -n 140 /tmp/studio-local-worker.log
+            exit 1
+          fi
