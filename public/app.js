@@ -144,9 +144,9 @@ function renderModule(){const key=state.active,mode=learnerMode(key),theory=mode
 }}
 function welcomePage(){
 return `<div class="welcome-page"><section class="welcome-hero"><div class="welcome-portrait" role="img" aria-label="Hong Bit, perempuan Dayak berkuping panjang, foto Ronny Adolof Buol, Kalimantan 2016"></div><div class="welcome-shade"></div><div class="welcome-copy">
-<span class="welcome-eyebrow">LENSA MUDA 2026 · KELAS BELAJAR FOTOGRAFI</span>
+<span class="welcome-eyebrow">KELAS BELAJAR ZONAUTARA × KAMISAMA · LENSA MUDA 2026</span>
 <h1>Selamat Datang di<br>Platform Kelas Belajar <em>Fotografi</em></h1><div class="welcome-rule"></div>
-<p class="welcome-intro">Dikembangkan oleh <strong>Zonautara.com</strong> untuk Program <strong>Lensa Muda</strong></p>
+<p class="welcome-intro"><strong>Kelas Belajar Zonautara.com</strong> bekerja sama dengan <strong>Kamisama Fotografia</strong> menghadirkan pelatihan bagi peserta <strong>Lensa Muda</strong>.</p>
 <p class="welcome-description">Pelajari fotografi, foto cerita, komposisi, penulisan caption, dan etika memotret melalui pengalaman belajar yang interaktif.</p>
 <div class="welcome-actions"><a class="btn primary" href="/lensa-muda/peserta">Masuk sebagai Peserta →</a><a class="btn welcome-trainer-button" href="/lensa-muda/trainer">Masuk sebagai Trainer →</a></div>
 <p class="welcome-credit">Hong Bit, perempuan Dayak berkuping panjang. Foto: Ronny Adolof Buol, ekspedisi Kalimantan, 2016. <a href="https://vik.kompas.com/perempuan-dayak/" target="_blank" rel="noopener noreferrer">Baca kisah di Kompas.com</a></p></div></section></div>`;
@@ -1414,10 +1414,10 @@ function lcdPage(){
  if(state.welcome){
   return `<div class="page lcd-page"><section class="lcd-mode lcd-welcome-mode">
    <div class="lcd-welcome-photo"></div><div class="lcd-welcome-darken"></div>
-   <div class="lcd-welcome-top"><img src="/lensa-muda/assets/brand/lensa-muda.png" alt="Lensa Muda"><img src="/lensa-muda/assets/brand/zonautara.png" alt="Zonautara.com"></div>
+   <div class="lcd-welcome-top"><img src="/lensa-muda/assets/brand/kamisama.svg" alt="Kamisama Fotografia"><img src="/lensa-muda/assets/brand/zonautara.svg" alt="Zonautara.com"></div>
    <div class="lcd-welcome-body"><span class="kicker">LENSA MUDA 2026 · MEREKAM JEJAK DAN WARISAN BUDAYA SULAWESI UTARA</span>
     <h1>Selamat Datang di<br><em>Kelas Belajar Fotografi</em></h1>
-    <p>Platform pembelajaran interaktif yang dikembangkan Zonautara.com untuk Program Lensa Muda.</p>
+    <p>Kelas Belajar Zonautara.com bersama Kamisama Fotografia menghadirkan pelatihan fotografi untuk peserta Program Lensa Muda.</p>
     <div class="lcd-welcome-trainer"><span>TRAINER</span><strong>Ronny Adolof Buol</strong><small>Fotografer · Pemred Zonautara.com · Pendiri Kelasbelajar.org</small></div>
    </div>
    <div class="lcd-welcome-join"><div><span>SCAN UNTUK MENDAFTAR</span><strong>kelasbelajar.org/lensa-muda/peserta</strong><small>Gunakan kamera HP untuk membuka formulir peserta</small><small class="lcd-welcome-count">${count} peserta terdaftar</small></div><div class="lcd-welcome-qr"><img src="${qr}" alt="QR pendaftaran peserta Lensa Muda"></div></div>
@@ -1540,7 +1540,7 @@ async function refreshLCD(){
  }finally{lcdPolling=false}
 }
 async function render(){
- document.title=`Studio Foto Cerita — Lensa Muda 2026`;
+ document.title=`Kelas Belajar Fotografi — Zonautara × Kamisama | Lensa Muda 2026`;
  const mode=pageMode();document.body.dataset.appMode=mode;if(mode==="trainer")await renderTrainer();else if(mode==="lcd")renderLCD();else if(mode==="welcome")$("#root").innerHTML=welcomePage();else renderParticipant();
 }
 window.addEventListener("hashchange",render);
