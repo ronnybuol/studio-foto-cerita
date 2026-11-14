@@ -22,7 +22,11 @@ test("brand tetap di header dengan aset resmi",()=>{
 test("trainer dapat menampilkan LCD pembuka tanpa menghapus progres",()=>{
  assert.match(app,/trainer-show-welcome/);
  assert.match(app,/\/api\/welcome/);
- assert.match(app,/lcd-welcome-mode/);
+ assert.match(app,/welcome-projector/);
+ assert.match(app,/welcomePage\(true,count\)/);
+ assert.match(app,/welcomePage\(false\)/);
+ assert.match(app,/welcome-class-join/);
+ assert.match(app,/welcome-join-qr/);
  assert.match(app,/Ronny Adolof Buol/);
  assert.match(worker,/path==="\/api\/welcome"/);
  assert.match(worker,/json_set\(camera_json,'\$\.welcome'/);
@@ -37,4 +41,14 @@ test("foto Hong Bit asli dan kedua logo tersedia lokal, bukan thumbnail",()=>{
  }
  const qr=readFileSync(new URL("../public/assets/brand/peserta-qr.svg",import.meta.url),"utf8");
  assert.match(qr,/<svg/);
+});
+
+test("beranda dan LCD menggunakan hero Hong Bit yang sama, hanya aksi yang berbeda",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.match(app,/function welcomePage\(lcd=false,count=0\)/);
+ assert.match(app,/const action=lcd/);
+ assert.match(css,/\.welcome-shared-hero/);
+ assert.match(css,/\.welcome-projector \.welcome-shared-hero/);
+ assert.match(css,/\.welcome-shared-hero \.welcome-portrait/);
+ assert.match(html,/app\.js\?v=20261114-shared-welcome-v3/);
 });

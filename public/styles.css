@@ -1061,3 +1061,70 @@ body[data-app-mode="welcome"] .site-foot,body[data-app-mode="lcd"] .site-foot{di
 
 /* Berkas foto portfolio asli dan logo resmi menjadi satu-satunya brand pada sampul. */
 .welcome-portrait,.lcd-welcome-photo{background-image:url("/lensa-muda/assets/brand/hong-bit.webp")}
+
+/* 2026-11-14: SATU DESAIN editorial Hong Bit untuk beranda dan LCD. */
+body[data-app-mode="welcome"],body[data-app-mode="lcd"]{background:#090a0c}
+body[data-app-mode="welcome"] .app,body[data-app-mode="lcd"] .app{background:#090a0c}
+body[data-app-mode="welcome"] .connection,body[data-app-mode="lcd"] .connection{display:none}
+body[data-app-mode="welcome"] .masthead,body[data-app-mode="lcd"] .masthead{background:#0e1014;color:white;border-bottom:1px solid #34373c}
+body[data-app-mode="welcome"] .top-links a,body[data-app-mode="lcd"] .top-links a{color:#fff}
+body[data-app-mode="welcome"] #root,body[data-app-mode="lcd"] #root{max-width:none;width:100%;padding:0;margin:0;background:#090a0c}
+body[data-app-mode="welcome"] .date-pill,body[data-app-mode="lcd"] .date-pill{color:#fff}
+.welcome-page{width:100%;background:#090a0c;color:white;min-height:calc(100svh - 80px)}
+.welcome-shared-hero{position:relative;width:100%;min-height:calc(100svh - 80px);display:grid;grid-template-columns:minmax(0,44%) minmax(0,56%);align-items:center;overflow:hidden;background:#090a0c}
+.welcome-shared-hero .welcome-portrait{position:absolute;inset:0 auto 0 0;width:48%;height:100%;background:url("/lensa-muda/assets/brand/hong-bit.webp") 75% center/cover no-repeat;z-index:0}
+.welcome-shared-hero .welcome-shade{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,#090a0c08 32%,#090a0c 49%,#090a0c 100%);z-index:0}
+.welcome-shared-hero .welcome-copy{grid-column:2;z-index:1;position:relative;margin:0;padding:clamp(32px,4vh,55px) clamp(28px,4.8vw,90px) 70px clamp(10px,1.5vw,28px);width:100%;max-width:1100px}
+.welcome-shared-hero .welcome-eyebrow{display:block;font-size:clamp(12px,.93vw,17px);font-weight:800;letter-spacing:.12em;line-height:1.55;color:#ff7d32}
+.welcome-shared-hero .welcome-copy h1{font-size:clamp(42px,4.3vw,83px);line-height:1.06;letter-spacing:-.046em;font-weight:900;margin:22px 0 20px;color:#fff}
+.welcome-shared-hero .welcome-copy h1 em{color:#fa762c;font-style:normal}
+.welcome-shared-hero .welcome-intro{color:#e5e6e9;font-size:clamp(17px,1.43vw,25px);font-style:normal;line-height:1.5;font-weight:400;max-width:830px}
+.welcome-class-actions{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin-top:35px}
+.welcome-class-actions .btn{padding:17px 24px;font-weight:800;font-size:clamp(15px,1.12vw,19px);text-decoration:none}
+.welcome-class-actions .welcome-trainer-button{color:#fff;background:transparent;border:2px solid #d2d2d6}
+.welcome-shared-hero .welcome-credit{position:absolute;z-index:2;bottom:20px;left:clamp(20px,2.4vw,45px);max-width:42%;border-left:3px solid #ff7d32;padding-left:12px;color:#e5e5e6;font-size:clamp(11px,.87vw,15px);font-style:italic;line-height:1.45;margin:0}
+.welcome-projector-brand{display:none}
+.welcome-class-trainer{border-left:5px solid #fb7a34;margin-top:27px;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.welcome-label{color:#ff823a;letter-spacing:.1em;font-size:clamp(13px,1vw,17px);font-weight:900}
+.welcome-class-trainer strong{font-size:clamp(26px,2.65vw,47px);line-height:1.18;color:#fff}
+.welcome-class-trainer small{font-size:clamp(13px,1.09vw,19px);line-height:1.4;color:#e7e7e9}
+.welcome-class-join{display:grid;grid-template-columns:minmax(0,1fr) clamp(180px,18vw,310px);align-items:center;gap:clamp(14px,2.4vw,35px);margin-top:clamp(22px,3.7vh,50px)}
+.welcome-join-copy{display:flex;flex-direction:column;gap:8px;min-width:0}
+.welcome-join-copy strong{font-size:clamp(17px,1.75vw,31px);line-height:1.25;color:#fff;overflow-wrap:anywhere}
+.welcome-join-copy small{color:#e2e2e5;font-size:clamp(12px,1vw,17px)}
+.welcome-join-qr{background:#fff;padding:12px;border-radius:12px;box-shadow:0 12px 40px #0008}
+.welcome-join-qr img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain}
+.welcome-projector .welcome-shared-hero{min-height:calc(100svh - 80px)}
+.welcome-projector .welcome-copy{padding-bottom:55px}
+.welcome-projector .welcome-copy h1{font-size:clamp(40px,4.05vw,78px);margin:16px 0}
+.welcome-projector .welcome-intro{font-size:clamp(16px,1.31vw,24px)}
+.welcome-projector .welcome-credit{bottom:18px}
+body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
+#root:fullscreen .welcome-projector .welcome-shared-hero{min-height:100vh}
+#root:fullscreen .welcome-projector-brand{display:flex;position:absolute;top:18px;right:clamp(25px,4vw,70px);z-index:5;align-items:center;gap:15px}
+#root:fullscreen .welcome-projector-brand img{max-width:150px;max-height:60px;object-fit:contain;background:#fff;border-radius:6px;padding:3px}
+#root:fullscreen .welcome-projector-brand img:first-child{background:#16181b}
+@media (max-width:1000px){
+ .welcome-shared-hero{grid-template-columns:42% 58%}
+ .welcome-shared-hero .welcome-portrait{width:48%}
+ .welcome-shared-hero .welcome-copy{padding-right:24px}
+ .welcome-class-join{grid-template-columns:minmax(0,1fr) 180px}
+}
+@media (max-width:720px){
+ .welcome-shared-hero{display:flex;min-height:100svh;align-items:flex-end}
+ .welcome-shared-hero .welcome-portrait{width:100%;height:53%;inset:0 0 auto 0;background-position:75% 35%}
+ .welcome-shared-hero .welcome-shade{background:linear-gradient(180deg,transparent 0%,#090a0c 52%,#090a0c 100%)}
+ .welcome-shared-hero .welcome-copy{width:100%;max-width:none;padding:43vh 22px 110px}
+ .welcome-shared-hero .welcome-copy h1{font-size:clamp(35px,7.4vw,58px)}
+ .welcome-shared-hero .welcome-credit{bottom:20px;max-width:90%;font-size:11px}
+ .welcome-projector .welcome-shared-hero{min-height:100svh}
+ .welcome-projector .welcome-copy{padding-top:30vh;padding-bottom:115px}
+ .welcome-class-join{grid-template-columns:1fr 150px;gap:12px}
+ .welcome-join-qr{padding:7px}
+}
+@media (max-width:430px){
+ .welcome-class-join{grid-template-columns:1fr;justify-items:start}
+ .welcome-join-qr{width:180px}
+ .welcome-class-actions .btn{width:100%;text-align:center}
+ .welcome-projector .welcome-copy{padding-top:24vh}
+}
