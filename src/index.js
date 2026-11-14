@@ -684,7 +684,7 @@ async function handleApi(req,env){
     if(key==="caption"){
       // New submissions must build on the nine-photo hunting story saved in Module 04.
       if(data.storyMode!=="hunting")return failure("Selesaikan Meja Editor Modul 04 terlebih dahulu",409);
-      if(typeof data.captionText!=="string"||data.captionText.trim().split(/\\s+/u).length<50
+      if(typeof data.captionText!=="string"||data.captionText.trim().split(/\s+/u).length<50
        ||data.captionText.length>11000)return failure("Tulis narasi minimal 50 kata dan maksimum 11.000 karakter",400);
       if(["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes"))
         return failure("Periksa tiga butir editorial sebelum menyimpan",400);
