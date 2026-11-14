@@ -1104,7 +1104,7 @@ function bindLessons(){
    state.work.story={...current(),mode:"hunting",selected,_draft:true};
    saveWork();renderParticipant();
   };
-  $("[data-pick]").forEach(btn=>btn.onclick=()=>{
+  $$("[data-pick]").forEach(btn=>btn.onclick=()=>{
    const id=Number(btn.dataset.pick);
    const result=addStoryHuntingPhoto(current(),id,huntingSlotsFor(user));
    if(result.error){toast(result.error);const feedback=$("#story-status");if(feedback)feedback.textContent=result.error;return}
