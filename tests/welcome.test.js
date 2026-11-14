@@ -50,5 +50,20 @@ test("beranda dan LCD menggunakan hero Hong Bit yang sama, hanya aksi yang berbe
  assert.match(css,/\.welcome-shared-hero/);
  assert.match(css,/\.welcome-projector \.welcome-shared-hero/);
  assert.match(css,/\.welcome-shared-hero \.welcome-portrait/);
- assert.match(html,/app\.js\?v=20261114-shared-welcome-v3/);
+ assert.match(html,/app\.js\?v=20261114-orientation-v4/);
+});
+
+test("orientasi 00 menampilkan formulir peserta yang sama dengan pendaftaran HP",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.match(app,/function orientationRegistrationSlide\(/);
+ assert.match(app,/\$\{signupPage\(\)\}/);
+ assert.match(app,/orientation-phone-screen" inert/);
+ assert.match(app,/trainer-show-registration/);
+ assert.match(app,/stage===0&&state\.orientation/);
+ assert.match(app,/prevOrientation!==state\.orientation/);
+ assert.match(css,/\.lcd-orientation-registration/);
+ assert.match(css,/\.orientation-instructions/);
+ assert.match(worker,/path==="\/api\/orientation"/);
+ assert.match(worker,/await stageState\(env\)!==0/);
+ assert.match(worker,/orientation:camera\.orientation==="registration"/);
 });
