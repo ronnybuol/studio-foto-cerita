@@ -198,7 +198,7 @@ async function performStateSync(){
     return false;
   }
 }
-function paintClassTimer(){paintSharedHuntingTimer(state.serverStage===3?state.timer:EMPTY_HUNTING_TIMER,state.timerClockOffset)}
+function paintClassTimer(){if(typeof paintSharedHuntingTimer!=="function")return;paintSharedHuntingTimer(state.serverStage===3?state.timer:EMPTY_HUNTING_TIMER,state.timerClockOffset)}
 function pageMode(){const hash=location.hash.replace(/^#\//,"").split("/")[0];if(["trainer","lcd","peserta"].includes(hash))return hash;const path=location.pathname.replace(/\/+$/,"").split("/").pop();return ["trainer","lcd","peserta"].includes(path)?path:"welcome"}
 const LEARNER_RANGES={kamera:[0,MAX_PRESENTATION_SLIDE],komposisi:[COMPOSITION_START,COMPOSITION_END],edfat:[EDFAT_START,EDFAT_END],story:[STORY_START,STORY_END],caption:[CAPTION_START,CAPTION_END],etika:[ETHICS_START,ETHICS_END]};
 function learnerKey(){return "lm26-learner-view-"+(state.user?.id||"demo")}
