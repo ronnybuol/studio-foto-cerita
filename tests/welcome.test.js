@@ -50,7 +50,7 @@ test("beranda dan LCD menggunakan hero Hong Bit yang sama, hanya aksi yang berbe
  assert.match(css,/\.welcome-shared-hero/);
  assert.match(css,/\.welcome-projector \.welcome-shared-hero/);
  assert.match(css,/\.welcome-shared-hero \.welcome-portrait/);
- assert.match(html,/app\.js\?v=20261115-hunting-r2-foundation-v12/);
+ assert.match(html,/app\.js\?v=20261115-shared-hunting-timer-v13/);
 });
 
 test("orientasi 00 menampilkan formulir peserta yang sama dengan pendaftaran HP",()=>{
