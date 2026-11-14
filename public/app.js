@@ -1510,7 +1510,7 @@ function bindDashboard(){
   const pair=scene.querySelector(".comp-compare-photos");
   if(pair)pair.outerHTML=compositionChallengePhotos(challenge,{grid:!!state.demoComposition.grid});
   const note=scene.querySelector(".small-note");if(note)note.textContent=challenge.guidance;
-  $("[data-comp-challenge]").forEach(btn=>btn.setAttribute("aria-pressed",String(Number(btn.dataset.compChallenge)===compositionChallengeIndex(state.demoComposition))));
+  $$("[data-comp-challenge]").forEach(btn=>btn.setAttribute("aria-pressed",String(Number(btn.dataset.compChallenge)===compositionChallengeIndex(state.demoComposition))));
   const grid=$("#trainer-comp-grid");if(grid)grid.setAttribute("aria-pressed",String(!!state.demoComposition.grid));
  }
  $$("[data-comp-challenge]").forEach(btn=>btn.onclick=()=>{
@@ -1542,8 +1542,8 @@ function bindDashboard(){
   $$("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
  }
  bindSpotlight();
- $("[data-comp-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.compSpotlightId,"komposisi",Number(btn.dataset.compSpotlightIndex)));
- $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-comp-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.compSpotlightId,"komposisi",Number(btn.dataset.compSpotlightIndex)));
+ $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
