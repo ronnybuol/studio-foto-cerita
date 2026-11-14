@@ -42,3 +42,21 @@ test("UI membedakan berkas lokal yang mengantre dan unggahan yang dikonfirmasi s
  assert.match(uploader,/if\(response\.status!==201\)/); // R2 ack required before queue deletion
  assert.match(uploader,/await deleteQueue\(owner,item\.slot\)/);
 });
+
+test("timer hadir sebagai kontrol trainer dan status hanya-baca di HP serta LCD",async()=>{
+ const fs=await import("node:fs");
+ const app=fs.readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ const ui=fs.readFileSync(new URL("../public/hunting-timer-ui.js",import.meta.url),"utf8");
+ const worker=fs.readFileSync(new URL("../src/index.js",import.meta.url),"utf8");
+ assert.match(app,/timerTrainerHTML\(isMentor\)/);
+ assert.match(app,/timerParticipantHTML\(\)/);
+ assert.match(app,/timerLCDHTML\(\)/);
+ assert.match(app,/setInterval\(\(\)=>paintClassTimer\(\),1000\)/);
+ assert.match(app,/PROJECTION_PATHS=new Set\(\[[^\]]*"\/api\/hunting\/timer"/);
+ assert.match(worker,/path==="\/api\/hunting\/timer"/);
+ assert.match(worker,/if\(user\.role!=="trainer"\)/);
+ assert.match(ui,/data-hunting-timer="extend"/);
+ assert.match(ui,/data-hunting-timer="pause"/);
+ assert.match(ui,/data-hunting-timer="resume"/);
+ assert.match(ui,/data-role-disabled/);
+});
