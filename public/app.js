@@ -772,6 +772,13 @@ function edfatTrainerPanel(data,isMentor){
  <div class="edfat-trainer-mission"><span class="eyebrow">TANTANGAN UNTUK DISKUSI KELAS</span>
  <p>Apakah satu foto bisa mengandung lebih dari satu unsur EDFAT? Mintalah peserta menjelaskan informasi apa yang terlihat.</p></div>`}
  <p class="small-note">LCD dan peserta mengikuti mode trainer. Misi peserta dikerjakan sendiri pada perangkat masing-masing.</p>
+ <section class="edfat-trainer-submissions"><h3>Foto pilihan peserta · ${(data.participants||[]).filter(p=>p.answers?.edfat?.mode==="hunting").length} karya</h3>
+ <p class="small-note">Buka detail peserta untuk melihat pratinjau foto, atau langsung sorot analisis yang tersimpan di LCD.</p>
+ <div class="edfat-submission-grid">${(data.participants||[]).filter(p=>p.answers?.edfat?.mode==="hunting").map(p=>`
+ <div class="edfat-submission"><b>${escapeHtml(p.name)}</b><span>Foto ${Number(p.answers.edfat.photoSlot)||"—"} · ${escapeHtml(p.answers.edfat.dominant||"—")}</span>
+ <p>${escapeHtml(p.answers.edfat.reason||"Belum ada alasan")}</p>
+ <div class="actions"><button class="btn small subtle" data-inspect="${escapeHtml(p.id)}">Lihat foto &amp; analisis</button>
+ <button class="btn small primary" data-spotlight-id="${escapeHtml(p.id)}" data-spotlight-module="edfat" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div></div>`).join("")||`<p class="small-note">Belum ada peserta yang menyimpan foto pilihan EDFAT.</p>`}</div></section>
  </section>`;
 }
 function edfatPage(){
