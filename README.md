@@ -225,3 +225,12 @@ Modul 05 melanjutkan **Sembilan Bingkai** tanpa menyusun ulang foto atau mengara
 Mode **Latihan saya / Baca materi / Ikuti trainer** tetap berlaku. Trainer boleh membuka slide lain tanpa memindahkan peserta dari editor. Sorotan karya peserta dari dashboard bekerja dengan jawaban yang sudah tersimpan, tidak menampilkan draf yang belum dikirim. Tidak ada migrasi D1, perubahan binding R2, atau pembuatan foto baru.
 
 **Uji:** trainer pilih tahap 05, LCD menampilkan slide pertama, pindahkan semua enam slide dan buka laboratorium; peserta pilih sembilan bingkai di Modul 04, kembali ke Caption Lab, pastikan urutan foto benar. Tulis sebagian caption, klik Baca materi lalu kembali ke Latihan saya dan periksa draf. Isi 5W+1H dan daftar pemeriksaan, simpan, segarkan dashboard, tampilkan hasil caption di LCD, lalu hentikan sorotan untuk kembali ke presentasi terakhir.
+
+
+## Modul 06 – Etika & Tantangan (penutup)
+
+Enam slide baru (51–56) menutup rangkaian dengan kepercayaan publik, keaslian momen, penghormatan kepada subjek dan komunitas, penyuntingan serta verifikasi, keputusan etis, dan rancangan foto cerita budaya. Materi contoh memakai foto Sangihe 2017 yang sudah tersedia di repositori. Trainer mengendalikan teori dan layar LCD; peserta tetap dapat memilih Latihan saya, Baca materi, atau Ikuti trainer tanpa kehilangan draf.
+
+Peserta menanggapi empat skenario yang sudah ada, sekarang disertai alasan sendiri. Nilai keputusan 0–4 tetap tersedia sebagai sarana refleksi, bukan ukuran tunggal etika. Untuk tantangan akhir peserta menyusun rencana: tema, calon tokoh/sumber, izin dan batasan, ragam foto/EDFAT, hal yang perlu diverifikasi, dan cara menjaga keselamatan serta martabat. Terdapat tiga pernyataan komitmen. Draf tersimpan di perangkat; pengiriman jawaban menggunakan key D1 `etika` yang sudah ada tanpa migrasi. Tampilan detail trainer dan Sorotan Karya di LCD memperlihatkan rencana peserta sehingga dapat dibahas bersama dan ditutup kembali ke slide terakhir.
+
+**Skenario uji akhir:** pilih tahap 06 di trainer, pindahkan semua slide di LCD lalu buka tantangan akhir. Di HP peserta pilih empat respons, tulis alasan dan rencana, pindah ke Baca materi lalu kembali Latihan saya: semua draf tetap ada. Simpan hasil, periksa progres trainer, sorot hasil ke LCD, dan akhiri sorotan. Setelahnya lakukan audit perjalanan Modul 01–06 secara menyeluruh. Tidak ada perubahan D1/R2/route produksi.

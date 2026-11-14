@@ -33,8 +33,8 @@ test("Trainer, LCD, peserta, draf, dan sorotan Caption Lab tetap terhubung",()=>
  ])assert.ok(app.includes(text),"Fitur caption hilang: "+text);
  assert.ok(app.includes('stage===5?captionTrainerPanel(data,isMentor)'));
  assert.ok(app.includes('stage===5&&state.presentation.view==="theory"'));
- assert.ok(api.includes('data.slide>50'));
+ assert.ok(api.includes('data.slide>56'));
  assert.ok(css.includes('.caption-photo-strip'));
  assert.ok(css.includes('.caption-theory-layout'));
- assert.ok(html.includes('app.js?v=20261114-captionlab'));
+ assert.ok(html.includes('app.js?v=20261114-ethics'));
 });
