@@ -28,7 +28,7 @@ test("Tantangan akhir menghubungkan trainer, LCD, peserta, jawaban, dan sorotan 
  ])assert.ok(app.includes(anchor),"Fitur hilang: "+anchor);
  assert.ok(api.includes('data.slide>57'));
  assert.ok(api.includes('value.slide<=57'));
- assert.ok(html.includes('app.js?v=20261115-caption-lab-final-v1'));
+ assert.ok(html.includes('app.js?v=20261115-caption-nine-photo-v2'));
  assert.ok(css.includes('.ethics-final-question'));
  assert.ok(css.includes('.ethics-theory-layout'));
 });
