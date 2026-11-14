@@ -582,6 +582,24 @@ function compositionParticipantPage(i=state.presentation.slide){
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Setelah teori, trainer membuka latihan mandiri.</p>
  ${compositionSlideContent(i,"participant")}</div>`;
 }
+
+function compositionTrainerResponsePanel(data,isMentor){
+ const people=(data.participants||[]),answered=people.filter(p=>p.answers?.komposisi?.challenges);
+ return `<section class="card comp-response-panel" id="comp-response-panel">
+  <div class="comp-response-header"><div><span class="eyebrow">RESPONS PESERTA · MODUL 02</span><h3>Pilihan kelas dan alasan fotografer</h3><p class="small-note">Hanya jawaban yang sudah dikirim ke server. Tekan Perbarui untuk membaca jawaban terbaru, tanpa mengubah layar LCD.</p></div><button class="btn subtle" id="refresh-comp-answers">↻ Perbarui jawaban</button></div>
+  <div class="comp-response-summary">${COMPOSITION_CHALLENGES.map((item,i)=>{
+   const results=answered.map(p=>p.answers.komposisi.challenges[item.id]).filter(a=>["A","B"].includes(a?.choice)&&String(a.reason||"").trim().length>=15);
+   const a=results.filter(x=>x.choice==="A").length,b=results.filter(x=>x.choice==="B").length;
+   return `<div class="comp-response-score"><b>${i+1}. ${escapeHtml(item.title)}</b><span>${results.length} jawaban · A: ${a} · B: ${b}</span></div>`;
+  }).join("")}</div>
+  <div class="comp-response-list">${COMPOSITION_CHALLENGES.map((item,i)=>{
+   const rows=answered.map(p=>({p,a:p.answers.komposisi.challenges[item.id]})).filter(x=>["A","B"].includes(x.a?.choice)&&String(x.a.reason||"").trim().length>=15);
+   return `<details class="comp-response-group" ${i===compositionChallengeIndex(state.demoComposition)?"open":""}><summary>${i+1}. ${escapeHtml(item.title)} · ${rows.length} ulasan</summary>
+    ${rows.length?rows.map(({p,a})=>`<div class="comp-response-entry"><div><strong>${escapeHtml(p.name)}</strong><span>Foto ${escapeHtml(a.choice)}</span><p>${escapeHtml(a.reason)}</p></div><button type="button" class="btn small primary" data-comp-spotlight-id="${escapeHtml(p.id)}" data-comp-spotlight-index="${i}" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div>`).join(""):`<p class="small-note">Belum ada ulasan untuk tantangan ini.</p>`}
+   </details>`;
+  }).join("")}</div>
+ </section>`;
+}
 function compositionTrainerPanel(data,isMentor){
  const active=data.stage===2,enabled=!isMentor;
  const i=state.presentation.slide>=COMPOSITION_START&&state.presentation.slide<=COMPOSITION_END?state.presentation.slide:COMPOSITION_START;
@@ -594,7 +612,7 @@ function compositionTrainerPanel(data,isMentor){
  <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
  <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${compositionLabel(COMPOSITION_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
- `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>${compositionTrainerDemoPanel(data,isMentor)}`}
+ `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta membandingkan empat pasangan foto, memilih A atau B, dan menyimpan alasan.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>${compositionTrainerDemoPanel(data,isMentor)}${compositionTrainerResponsePanel(data,isMentor)}`}
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
 }
 
@@ -1199,6 +1217,7 @@ function answerDetails(key,v){
    if(!ok)return `<p class="small-note">Data kamera tidak lengkap.</p>`;
    return `<div class="response-pills"><span>BUKAAN <b>f/${APERTURE[v.a]}</b></span><span>RANA <b>${SHUTTERS[v.s].l}s</b></span><span>ISO <b>${ISOS[v.i]}</b></span><span>EV <b>${exposureText(v)}</b></span></div>`;
  }
+ if(key==="komposisi"&&v.challenges)return `<div class="edfat-answer-review">${COMPOSITION_CHALLENGES.map((item,i)=>`<p><b>${i+1}. ${escapeHtml(item.title)} · Foto ${escapeHtml(v.challenges[item.id]?.choice||"Belum dipilih")}</b><br>${escapeHtml(v.challenges[item.id]?.reason||"Belum ada alasan")}</p>`).join("")}</div>`;
  if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
  if(key==="edfat")return Array.isArray(EDFAT_CASES)&&v.answers
  ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
@@ -1473,34 +1492,31 @@ function bindDashboard(){
   savingComposition=false;
  }
  function refreshTrainerDemo(){
-  const scene=$("#trainerCompositionDemo"),caption=$("#trainerCompositionDemo-caption");
-  if(!scene)return;
-  const example=compositionExample(state.demoComposition);
-  scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
-  const image=scene.querySelector("img");
-  if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
-  if(caption)caption.textContent=example.caption;
-  $$("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
-  for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
+  const scene=$("#trainerCompositionDemo");if(!scene)return;
+  const challenge=COMPOSITION_CHALLENGES[compositionChallengeIndex(state.demoComposition)];
+  scene.querySelector(".eyebrow").textContent="TANTANGAN "+(compositionChallengeIndex(state.demoComposition)+1)+" / 4";
+  scene.querySelector("h3").textContent=challenge.title;
+  scene.querySelector("p").textContent=challenge.question;
+  const pair=scene.querySelector(".comp-compare-photos");
+  if(pair)pair.outerHTML=compositionChallengePhotos(challenge,{grid:!!state.demoComposition.grid});
+  const note=scene.querySelector(".small-note");if(note)note.textContent=challenge.guidance;
+  $("[data-comp-challenge]").forEach(btn=>btn.setAttribute("aria-pressed",String(Number(btn.dataset.compChallenge)===compositionChallengeIndex(state.demoComposition))));
+  const grid=$("#trainer-comp-grid");if(grid)grid.setAttribute("aria-pressed",String(!!state.demoComposition.grid));
  }
- $$("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
-  const key=btn.dataset.demoComp;
-  state.demoComposition[key]=!state.demoComposition[key];
-  if(key==="frame")state.demoComposition.preview="frame";
+ $$("[data-comp-challenge]").forEach(btn=>btn.onclick=()=>{
+  state.demoComposition.preview=["distance","frame","position","angle"][Number(btn.dataset.compChallenge)];
   refreshTrainerDemo();saveCompositionDemo();
  });
- for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
-  state.demoComposition[key]=btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)];
-  state.demoComposition.preview=key;refreshTrainerDemo();saveCompositionDemo();
- });
- const resetDemo=$("#reset-demo-composition");
- if(resetDemo)resetDemo.onclick=()=>{state.demoComposition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"};refreshTrainerDemo();saveCompositionDemo()};
+ const trainerCompGrid=$("#trainer-comp-grid");
+ if(trainerCompGrid)trainerCompGrid.onclick=()=>{state.demoComposition.grid=!state.demoComposition.grid;refreshTrainerDemo();saveCompositionDemo()};
+ const refreshCompAnswers=$("#refresh-comp-answers");
+ if(refreshCompAnswers)refreshCompAnswers.onclick=async()=>{refreshCompAnswers.disabled=true;try{await fetchDashboard();render();toast("Jawaban peserta terbaru ditampilkan")}catch(e){refreshCompAnswers.disabled=false;toast("Gagal memuat jawaban: "+e.message)}};
 
- async function changeSpotlight(participantId,module){
+ async function changeSpotlight(participantId,module,challengeIndex){
   if(isMentor)return;
   if(!state.online){toast("Koneksi kelas diperlukan untuk sorotan LCD");return}
   try{
-   const result=await request("/api/spotlight",{method:"PUT",payload:{participantId,module},auth:true});
+   const result=await request("/api/spotlight",{method:"PUT",payload:{participantId,module,...(module==="komposisi"?{challengeIndex:challengeIndex??0}:{})},auth:true});
    state.spotlight=result.spotlight||null;state.dashboard.spotlight=state.spotlight;
    const banner=$("#trainer-spotlight-status");
    if(banner){
@@ -1516,7 +1532,8 @@ function bindDashboard(){
   $$("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
  }
  bindSpotlight();
- $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
+ $("[data-comp-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.compSpotlightId,"komposisi",Number(btn.dataset.compSpotlightIndex)));
+ $("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
    const answers=p.answers||{};
