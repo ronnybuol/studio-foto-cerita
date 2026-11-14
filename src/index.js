@@ -124,7 +124,7 @@ async function liveSpotlight(env,snapshotCamera){
   if(!result)return null;
   let answer;try{answer=JSON.parse(result.payload)}catch{return null}
   if(!answer||typeof answer!=="object"||Array.isArray(answer))return null;
-  return {participantId:selected.participantId,module:selected.module,name:result.name,answer};
+  return {participantId:selected.participantId,module:selected.module,name:result.name,answer,challengeIndex:Number.isInteger(selected.challengeIndex)?selected.challengeIndex:0};
 }
 async function sessionSnapshot(env,lockReady=true){
  let row;
@@ -360,7 +360,13 @@ async function handleApi(req,env){
        "SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.id=? AND p.session_id=? AND a.stage=?"
      ).bind(data.participantId,SESSION_ID,data.module).first();
      if(!record)return failure("Peserta belum menyimpan hasil modul tersebut",404);
-     if(!await writeProjection(env,data,"json_set(camera_json,'$.spotlight',json(?))",[JSON.stringify({participantId:data.participantId,module:data.module})]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
+     if(data.module==="komposisi"&&(!Number.isInteger(data.challengeIndex)||data.challengeIndex<0||data.challengeIndex>3))return failure("Tantangan komposisi tidak valid",400);
+     if(data.module==="komposisi"){
+       let answer;try{answer=JSON.parse(record.payload)}catch{}
+       const ids=["sepertiga","framing","jarak","subjek"];
+       if(!answer?.challenges?.[ids[data.challengeIndex]]?.choice)return failure("Peserta belum menjawab tantangan ini",404);
+     }
+     if(!await writeProjection(env,data,"json_set(camera_json,'$.spotlight',json(?))",[JSON.stringify({participantId:data.participantId,module:data.module,...(data.module==="komposisi"?{challengeIndex:data.challengeIndex}:{})})]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
      return output({ok:true,spotlight:await liveSpotlight(env),controlRevision:data.controlRevision});
    }
   if(method==="PUT"&&path==="/api/presentation"){
@@ -464,6 +470,16 @@ async function handleApi(req,env){
       if(!Array.isArray(data.selected)||data.selected.length!==9||new Set(data.selected).size!==9||data.selected.some(n=>!Number.isInteger(n)||n<1||n>12))return failure("Pilih 9 foto latihan yang berbeda");
     }
     if(key==="caption"&&typeof data.captionText!=="string")return failure("Caption harus berupa teks");
+    if(key==="komposisi"&&Object.hasOwn(data,"challenges")){
+      if(!data.challenges||typeof data.challenges!=="object"||Array.isArray(data.challenges))return failure("Jawaban komposisi tidak valid");
+      const ids=["sepertiga","framing","jarak","subjek"];
+      if(Object.keys(data.challenges).some(id=>!ids.includes(id)))return failure("Tantangan komposisi tidak dikenal");
+      for(const answer of Object.values(data.challenges)){
+        if(!answer||typeof answer!=="object"||!["A","B"].includes(answer.choice)
+          ||typeof answer.reason!=="string"||answer.reason.trim().length<15||answer.reason.length>1400)
+          return failure("Setiap jawaban komposisi harus memiliki pilihan A/B dan alasan minimal 15 karakter");
+      }
+    }
     const payload=JSON.stringify(data);
     if(payload.length>16000)return failure("Jawaban terlalu panjang");
     const saved=await env.DB.prepare(`INSERT INTO answers(participant_id,stage,payload,updated_at)
