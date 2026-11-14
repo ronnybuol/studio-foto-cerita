@@ -302,6 +302,46 @@ function orientationRegistrationSlide(){
     </div>
   </section>`;
 }
+function orientationParticipantGuideSlide(){
+ // Tampilan contoh mengikuti struktur antarmuka peserta setelah berhasil masuk.
+ // Noninteraktif: tidak memakai data akun asli atau mengirim jawaban.
+ const tip=(n,title,copy)=>`<div class="orientation-guide-tip"><span class="orientation-guide-number">${n}</span><div><strong>${title}</strong><p>${copy}</p></div></div>`;
+ return `<section class="lcd-orientation-guide" aria-label="Pengenalan tampilan aplikasi peserta">
+  <header class="orientation-guide-heading">
+   <span class="orientation-eyebrow">TAHAP 00 · ORIENTASI · SEBELUM MEMULAI</span>
+   <h1>Sebelum mulai, mari pahami tampilan aplikasi<br><em>di device anda sebagai Peserta</em></h1>
+   <p>Ikuti arahan trainer, coba sendiri dari HP, dan perhatikan status jawabanmu.</p>
+  </header>
+  <div class="orientation-guide-body">
+   <div class="orientation-guide-callouts left">
+    ${tip("01","Pilih materi","Lihat modul yang sudah dibuka trainer. Tahap berikutnya belum bisa dipilih.")}
+    ${tip("02","Ikuti trainer","Ikuti slide di LCD, atau pilih Baca materi untuk meninjau sendiri.")}
+    ${tip("03","Latihan saya","Kerjakan tugas di HP. Latihanmu tidak mengubah layar LCD kelas.")}
+   </div>
+   <div class="orientation-guide-phone-wrap">
+    <div class="orientation-guide-phone" aria-label="Contoh tampilan peserta ketika Modul 01 sudah dibuka">
+     <div class="orientation-phone-status"><span>9:41</span><span>●●● ▰</span></div>
+     <div class="orientation-phone-address"><span>🔒</span> kelasbelajar.org/lensa-muda/peserta</div>
+     <div class="orientation-guide-phone-screen" inert>
+      <span class="orientation-guide-preview-label">ILUSTRASI LAYAR PESERTA · MODUL 01</span>
+      <div class="orientation-guide-preview-nav"><div><small>Materi pembelajaran</small><strong>01 · Laboratorium Kamera ⌄</strong></div><div class="orientation-guide-account">Peserta Lensa Muda <b>Akun ▾</b></div></div>
+      <div class="orientation-guide-sync">● Terhubung ke kelas langsung</div>
+      <div class="orientation-guide-study"><b>Mengikuti presentasi kelas</b><div class="orientation-guide-modes"><span>Latihan saya</span><span>Baca materi</span><span>Ikuti trainer</span></div></div>
+      <div class="orientation-guide-lesson"><span class="eyebrow">MODUL 01 / 06</span><h2>Bermain dengan cahaya</h2><p>Geser bukaan, shutter dan ISO; amati fotonya.</p><img src="${cameraPhotoUrl("base")}" alt="Foto ilustrasi latihan Laboratorium Kamera"><div class="orientation-guide-controls"><span>Bukaan <b>f/2.8</b></span><span>Rana <b>1/125</b></span><span>ISO <b>200</b></span></div><div class="orientation-guide-save">Simpan eksperimen ✓</div></div>
+      <div class="orientation-guide-save-status">✓ Hasil terakhir tersimpan</div>
+     </div>
+     <div class="orientation-phone-home"></div>
+    </div>
+   </div>
+   <div class="orientation-guide-callouts right">
+    ${tip("04","Menu akun","Ketuk nama untuk memeriksa akun. Simpan username agar bisa masuk kembali.")}
+    ${tip("05","Tekan Simpan","Setelah berlatih, tekan Simpan. Jawaban yang baru diketik belum tentu terkirim.")}
+    ${tip("06","Periksa status","Pastikan hasil tersimpan. Jika offline, jangan hapus data browser; sambungkan lagi.")}
+   </div>
+  </div>
+  <footer class="orientation-guide-bottom"><strong>Jika tahap berikut belum terbuka, tunggu arahan trainer.</strong><span>Cukup browser HP · tanpa instal aplikasi</span></footer>
+ </section>`;
+}
 function orientationRosterSlide(count,page,names){
  const totalPages=Math.max(1,Math.ceil(count/48));
  return `<section class="lcd-orientation-roster">
