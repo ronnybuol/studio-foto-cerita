@@ -14,9 +14,9 @@ test("beranda berbeda dari layar peserta dan trainer",()=>{
  assert.match(app,/showParticipantAuth\("signup"\)/);
 });
 test("brand tetap di header dengan aset resmi",()=>{
- assert.match(html,/brand-logo-lensa/);
+ assert.match(html,/brand-logo-kamisama/);
  assert.match(html,/brand-logo-zonautara/);
- assert.match(html,/\/lensa-muda\/assets\/brand\/lensa-muda.png/);
+ assert.match(html,/\/lensa-muda\/assets\/brand\/kamisama.png/);
  assert.match(html,/\/lensa-muda\/assets\/brand\/zonautara.png/);
 });
 test("trainer dapat menampilkan LCD pembuka tanpa menghapus progres",()=>{
