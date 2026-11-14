@@ -1098,13 +1098,13 @@ function bindDashboard(){
  $$("[data-present-mode]").forEach(button=>button.onclick=()=>{
    choosePresentation({view:button.dataset.presentMode,slide:state.presentation.slide});
  });
- $("[data-ethics-step]").forEach(btn=>btn.onclick=()=>{
+ $$("[data-ethics-step]").forEach(btn=>btn.onclick=()=>{
    const next=state.presentation.slide+Number(btn.dataset.ethicsStep);
    if(next>=ETHICS_START&&next<=ETHICS_END)choosePresentation({view:"theory",slide:next});
  });
- $("[data-ethics-slide]").forEach(btn=>btn.onclick=()=>choosePresentation({view:"theory",slide:Number(btn.dataset.ethicsSlide)}));
- $("[data-ethics-mode]").forEach(btn=>btn.onclick=()=>choosePresentation({view:btn.dataset.ethicsMode,slide:state.presentation.slide>=ETHICS_START&&state.presentation.slide<=ETHICS_END?state.presentation.slide:ETHICS_START}));
- $("[data-caption-step]").forEach(button=>button.onclick=()=>{
+ $$("[data-ethics-slide]").forEach(btn=>btn.onclick=()=>choosePresentation({view:"theory",slide:Number(btn.dataset.ethicsSlide)}));
+ $$("[data-ethics-mode]").forEach(btn=>btn.onclick=()=>choosePresentation({view:btn.dataset.ethicsMode,slide:state.presentation.slide>=ETHICS_START&&state.presentation.slide<=ETHICS_END?state.presentation.slide:ETHICS_START}));
+ $$("[data-caption-step]").forEach(button=>button.onclick=()=>{
     const next=state.presentation.slide+Number(button.dataset.captionStep);
     if(next>=CAPTION_START&&next<=CAPTION_END)choosePresentation({view:"theory",slide:next});
  });
