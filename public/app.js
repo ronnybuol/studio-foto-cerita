@@ -1420,7 +1420,7 @@ function lcdPage(){
     <p>Platform pembelajaran interaktif yang dikembangkan Zonautara.com untuk Program Lensa Muda.</p>
     <div class="lcd-welcome-trainer"><span>TRAINER</span><strong>Ronny Adolof Buol</strong><small>Fotografer · Pemred Zonautara.com · Pendiri Kelasbelajar.org</small></div>
    </div>
-   <div class="lcd-welcome-join"><div><span>SCAN UNTUK MENDAFTAR</span><strong>kelasbelajar.org/lensa-muda/peserta</strong><small>Gunakan kamera HP untuk membuka formulir peserta</small><small>${count} peserta terdaftar</small></div><div class="lcd-welcome-qr"><img src="${qr}" alt="QR pendaftaran peserta Lensa Muda"></div></div>
+   <div class="lcd-welcome-join"><div><span>SCAN UNTUK MENDAFTAR</span><strong>kelasbelajar.org/lensa-muda/peserta</strong><small>Gunakan kamera HP untuk membuka formulir peserta</small><small class="lcd-welcome-count">${count} peserta terdaftar</small></div><div class="lcd-welcome-qr"><img src="${qr}" alt="QR pendaftaran peserta Lensa Muda"></div></div>
    <div class="lcd-welcome-credit">Hong Bit, perempuan Dayak berkuping panjang · Foto: Ronny Adolof Buol, Kalimantan, 2016</div>
   </section><div class="actions lcd-toolbar"><button class="btn" id="lcd-refresh">↻ Segarkan</button><button class="btn primary" id="lcd-fullscreen">⛶ Layar penuh</button></div></div>`;
  }
@@ -1533,7 +1533,8 @@ async function refreshLCD(){
    }else{
      if(prevCamera!==JSON.stringify(state.demoCamera))paintLcdCamera();
       if(prevComposition!==JSON.stringify(state.demoComposition))paintLcdComposition();
-     const count=$(".lcd-participants");
+     const welcomeCount=$(".lcd-welcome-count");if(welcomeCount)welcomeCount.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar`;
+      const count=$(".lcd-participants");
      if(count)count.textContent=`${state.online?state.count:state.user?1:0} peserta terdaftar · 16 November 2026`;
    }
  }finally{lcdPolling=false}
