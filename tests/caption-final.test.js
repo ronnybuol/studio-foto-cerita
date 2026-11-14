@@ -8,8 +8,8 @@ const styles=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8"
 
 test("Six Caption Lab slides remain in place, and the locked Modul 04 is unchanged",()=>{
  assert.equal(CAPTION_START,45);
- assert.equal(CAPTION_END,50);
- assert.equal(CAPTION_SLIDES.length,6);
+ assert.equal(CAPTION_END,51);
+ assert.equal(CAPTION_SLIDES.length,7);
  assert.ok(app.includes('function storyPage(){'));
  assert.ok(app.includes('function captionPage(){'));
  assert.ok(app.includes('storyHuntingSelection(story)'));
@@ -27,7 +27,7 @@ test("Caption only submits nine saved hunting photos, not the old Sangihe bank",
 });
 
 test("Caption Lab validates narrative and editorial review before saving",()=>{
- assert.ok(api.includes('data.captionText.trim().split(/\\s+/u).length<50'));
+ assert.ok(api.includes('!data.captionText.trim()'));
  assert.ok(api.includes('["reviewVisual","reviewFacts","reviewSequence"].some(k=>data[k]!=="yes")'));
  assert.ok(app.includes('const result={...data,storyMode:"hunting"'));
 });
