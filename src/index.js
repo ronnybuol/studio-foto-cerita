@@ -1,4 +1,5 @@
 import {ensureHuntingSchema,huntingAccess,huntingKey,validWebP,slotFromPath,MAX_HUNTING_BYTES} from "./hunting-photos.js";
+import {normalizeHuntingTimer,applyHuntingTimerAction} from "./hunting-timer.js";
 const SESSION_ID = "lensa-muda-2026";
 const PUBLIC_BASE = "/lensa-muda";
 const ANSWER_KEYS = new Map([["kamera",1],["komposisi",2],["edfat",3],["story",4],["caption",5],["etika",6]]);
@@ -139,7 +140,7 @@ async function sessionSnapshot(env,lockReady=true){
  if(!validCamera(camera))camera={...DEFAULT_CAMERA};
  return {stage:row.active_stage,locked:lockReady?Number(row.is_locked)===1:true,camera,
   composition:compositionFromCamera(JSON.stringify(camera)),presentation:presentationFromCamera(camera),
-  controlRevision:Number.isSafeInteger(camera.controlRevision)?camera.controlRevision:0};
+  controlRevision:Number.isSafeInteger(camera.controlRevision)?camera.controlRevision:0,timer:normalizeHuntingTimer(camera.huntingTimer)};
 }
 async function writeProjection(env,data,expression,bindings=[],condition="",conditionBindings=[]){
  const revision=data.controlRevision??null;
@@ -287,9 +288,9 @@ async function handleApi(req,env){
   }
   if(method==="GET"&&path==="/api/state"){
     const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
-    const {stage,camera,composition,presentation,controlRevision}=snapshot;
+    const {stage,camera,composition,presentation,controlRevision,timer}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",participantGuide:camera.orientation==="guide",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -359,9 +360,9 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    const {stage,camera,composition,presentation,controlRevision}=snapshot;
+    const {stage,camera,composition,presentation,controlRevision,timer}=snapshot;
     const spotlight=await liveSpotlight(env,camera);
-    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},presentation,count:map.size,participants:[...map.values()],role:user.role});
+    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,timer,serverNow:Date.now(),camera:{a:camera.a,s:camera.s,i:camera.i},presentation,count:map.size,participants:[...map.values()],role:user.role});
   }
   if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
     const admin=await access(req,env);
@@ -492,6 +493,22 @@ async function handleApi(req,env){
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(!await writeProjection(env,data,"json_set(camera_json,'$.welcome',json(?),'$.orientation',null)",[data.active?"true":"false"]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
     return output({ok:true,welcome:data.active,controlRevision:data.controlRevision});
+  }
+  if(method==="PUT"&&path==="/api/hunting/timer"){
+    const user=await access(req,env);
+    if(!user)return failure("Autentikasi trainer diperlukan",401);
+    if(user.role!=="trainer")return failure("Hanya trainer boleh mengendalikan timer",403);
+    if(await stageState(env)!==3)return failure("Timer hunting hanya tersedia pada Modul 03",409);
+    const data=await bodyJson(req);
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    const snapshot=await sessionSnapshot(env,lockReady);
+    if(data.controlRevision!==undefined&&data.controlRevision<snapshot.controlRevision)return failure("Kendali kelas telah berubah. Segarkan dan ulangi.",409);
+    let next;
+    try{next=applyHuntingTimerAction(snapshot.timer,data,Date.now())}
+    catch(error){return failure(error.message,400)}
+    const written=await writeProjection(env,data,"json_set(camera_json,'$.huntingTimer',json(?))",[JSON.stringify(next)]," AND active_stage=3");
+    if(!written)return failure("Timer atau tahap telah berubah. Coba lagi.",409);
+    return output({ok:true,timer:next,serverNow:Date.now(),controlRevision:data.controlRevision??snapshot.controlRevision});
   }
   if(method==="PUT"&&path==="/api/state"){
     const user=await access(req,env);
