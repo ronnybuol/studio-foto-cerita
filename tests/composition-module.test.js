@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readFileSync,statSync} from "node:fs";
+import {COMPOSITION_CHALLENGES,compositionChallengeImage} from "../public/composition-lab.js";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual,compositionImageUrl} from "../public/composition.js";
 
 test("Bab 2 punya 11 slide foto dokumentasi unik dari Sangihe",()=>{
@@ -26,7 +27,7 @@ test("trainer, LCD, dan peserta mengenali tahap komposisi tanpa mengubah teori k
  assert.ok(source.includes('data-comp-mode'));
  assert.ok(source.includes('stage===2 && state.presentation.view==="theory"'));
  assert.ok(source.includes('stage===1?0:stage===2?COMPOSITION_START:stage===3?EDFAT_START:stage===4?STORY_START:stage===5?CAPTION_START:ETHICS_START'));
- assert.ok(source.includes('state.composition.reason'));
+ assert.ok(source.includes('compositionChallengeTab'));
  assert.ok(source.includes('saveAnswer("komposisi"'));
  assert.ok(backend.includes('data.slide>56'));
 });
@@ -42,26 +43,47 @@ test("setiap slide memakai foto asli Sangihe yang dipilih, bukan foto Modul 01",
  }
 });
 
-test("laboratorium peserta mengganti contoh foto nyata saat kontrol dipilih",()=>{
- const source=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
- assert.ok(source.includes("function compositionExample(c)"));
- assert.ok(source.includes('id="comp-example-image"'));
- assert.ok(source.includes('state.composition.preview=attr'));
- assert.ok(source.includes('state.composition.preview="frame"'));
- assert.ok(source.includes('sc.classList.toggle("comp-grid-on"'));
+
+test("empat tantangan memakai foto A/B tetap dan foto WebP yang benar",()=>{
+ assert.deepEqual(COMPOSITION_CHALLENGES.map(c=>c.id),["sepertiga","framing","jarak","subjek"]);
+ assert.deepEqual(COMPOSITION_CHALLENGES.map(c=>[c.a.image,c.b.image]),[["8798","5625"],["8824","5794"],["5711","5712"],["8980","8851"]]);
+ for(const challenge of COMPOSITION_CHALLENGES){
+  assert.ok(challenge.question.length>30);
+  assert.ok(challenge.guidance.length>20);
+  for(const photo of [challenge.a,challenge.b]){
+   const url=compositionChallengeImage(photo.image);
+   assert.equal(url,"/lensa-muda/assets/composition/sangihe-2017-"+photo.image+".webp");
+   const file=new URL("../public/assets/composition/sangihe-2017-"+photo.image+".webp",import.meta.url);
+   assert.ok(statSync(file).size>20000,photo.image);
+  }
+ }
 });
-
-
-test("tombol peserta memakai semua pilihan; teks terang LCD tak bocor ke kartu putih; demo trainer dan LCD sinkron",()=>{
- const source=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
- const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
- assert.ok(source.includes('state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach'));
- assert.ok(source.includes('function compositionDemoControls('));
- assert.ok(source.includes('function compositionTrainerDemoPanel('));
- assert.ok(source.includes('"/api/demo-composition"'));
- assert.ok(source.includes('function paintLcdComposition('));
- assert.ok(source.includes('prevComposition!==JSON.stringify(state.demoComposition)'));
- assert.ok(source.includes('compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")'));
- assert.ok(css.includes('.composition-participant-theory .composition-slide-copy .theory-lead'));
- assert.ok(css.includes('color:#27313d!important'));
+test("latihan mandiri memiliki pilihan A/B, draf lokal, simpan ke server dan catatan sinkron",()=>{
+ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ assert.match(app,/function compositionPage\(\)/);
+ assert.match(app,/function bindCompositionChallenge\(\)/);
+ assert.match(app,/data-comp-vote="A"/);
+ assert.match(app,/data-comp-vote="B"/);
+ assert.match(app,/data-comp-tab/);
+ assert.match(app,/state\.work\.komposisi=/);
+ assert.match(app,/saveWork\(\)/);
+ assert.match(app,/saveAnswer\("komposisi",payload\)/);
+ assert.match(app,/answerSaveMessage\(result\)/);
+ assert.doesNotMatch(app,/function compositionExample\(c\)/);
+});
+test("trainer-LCD mempunyai empat tantangan, ringkasan respons dan sorotan per ulasan",()=>{
+ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ const backend=readFileSync(new URL("../src/index.js",import.meta.url),"utf8");
+ assert.match(app,/function compositionTrainerDemoPanel\(/);
+ assert.match(app,/function compositionTrainerResponsePanel\(/);
+ assert.match(app,/data-comp-challenge/);
+ assert.match(app,/data-comp-spotlight-id/);
+ assert.match(app,/data-comp-spotlight-index/);
+ assert.match(app,/function paintLcdComposition\(/);
+ assert.match(app,/compositionDemoPreview\(state\.demoComposition,"lcdCompositionDemo"\)/);
+ assert.match(app,/prevComposition!==JSON\.stringify\(state\.demoComposition\)/);
+ assert.match(app,/function lcdSpotlightContent\(/);
+ assert.match(backend,/data\.challengeIndex/);
+ assert.match(backend,/key==="komposisi"&&Object\.hasOwn\(data,"challenges"\)/);
+ assert.match(backend,/challengeIndex:Number\.isInteger/);
 });

@@ -1,5 +1,6 @@
 import {THEORY_SLIDES,theoryVisual,cameraPhotoUrl,PHOTO_DETAILS,PRESENTATION_ORDER,MAX_PRESENTATION_SLIDE,photoDetail,presentationLabel} from "./slides.js";
 import {COMPOSITION_START,COMPOSITION_END,COMPOSITION_SLIDES,compositionSlide,compositionLabel,compositionVisual} from "./composition.js";
+import {COMPOSITION_CHALLENGES,compositionChallengeImage} from "./composition-lab.js";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount} from "./caption.js";
@@ -581,6 +582,24 @@ function compositionParticipantPage(i=state.presentation.slide){
  <p class="small-note">Amati foto dan diskusikan pertanyaannya. Setelah teori, trainer membuka latihan mandiri.</p>
  ${compositionSlideContent(i,"participant")}</div>`;
 }
+
+function compositionTrainerResponsePanel(data,isMentor){
+ const people=(data.participants||[]),answered=people.filter(p=>p.answers?.komposisi?.challenges);
+ return `<section class="card comp-response-panel" id="comp-response-panel">
+  <div class="comp-response-header"><div><span class="eyebrow">RESPONS PESERTA · MODUL 02</span><h3>Pilihan kelas dan alasan fotografer</h3><p class="small-note">Hanya jawaban yang sudah dikirim ke server. Tekan Perbarui untuk membaca jawaban terbaru, tanpa mengubah layar LCD.</p></div><button class="btn subtle" id="refresh-comp-answers">↻ Perbarui jawaban</button></div>
+  <div class="comp-response-summary">${COMPOSITION_CHALLENGES.map((item,i)=>{
+   const results=answered.map(p=>p.answers.komposisi.challenges[item.id]).filter(a=>["A","B"].includes(a?.choice)&&String(a.reason||"").trim().length>=15);
+   const a=results.filter(x=>x.choice==="A").length,b=results.filter(x=>x.choice==="B").length;
+   return `<div class="comp-response-score"><b>${i+1}. ${escapeHtml(item.title)}</b><span>${results.length} jawaban · A: ${a} · B: ${b}</span></div>`;
+  }).join("")}</div>
+  <div class="comp-response-list">${COMPOSITION_CHALLENGES.map((item,i)=>{
+   const rows=answered.map(p=>({p,a:p.answers.komposisi.challenges[item.id]})).filter(x=>["A","B"].includes(x.a?.choice)&&String(x.a.reason||"").trim().length>=15);
+   return `<details class="comp-response-group" ${i===compositionChallengeIndex(state.demoComposition)?"open":""}><summary>${i+1}. ${escapeHtml(item.title)} · ${rows.length} ulasan</summary>
+    ${rows.length?rows.map(({p,a})=>`<div class="comp-response-entry"><div><strong>${escapeHtml(p.name)}</strong><span>Foto ${escapeHtml(a.choice)}</span><p>${escapeHtml(a.reason)}</p></div><button type="button" class="btn small primary" data-comp-spotlight-id="${escapeHtml(p.id)}" data-comp-spotlight-index="${i}" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div>`).join(""):`<p class="small-note">Belum ada ulasan untuk tantangan ini.</p>`}
+   </details>`;
+  }).join("")}</div>
+ </section>`;
+}
 function compositionTrainerPanel(data,isMentor){
  const active=data.stage===2,enabled=!isMentor;
  const i=state.presentation.slide>=COMPOSITION_START&&state.presentation.slide<=COMPOSITION_END?state.presentation.slide:COMPOSITION_START;
@@ -593,69 +612,104 @@ function compositionTrainerPanel(data,isMentor){
  <div class="trainer-slide-nav"><button class="btn subtle" data-comp-slide-step="-1" ${i===COMPOSITION_START||!enabled?"disabled":""}>← Sebelumnya</button><strong>Slide ${compositionLabel(i)} / ${COMPOSITION_SLIDES.length}</strong><button class="btn primary" data-comp-slide-step="1" ${i===COMPOSITION_END||!enabled?"disabled":""}>Berikutnya →</button></div>
  <div class="theory-step-picker">${COMPOSITION_SLIDES.map((x,j)=>`<button class="theory-dot" data-comp-slide="${COMPOSITION_START+j}" aria-pressed="${i===COMPOSITION_START+j}" ${!enabled?"disabled":""} title="${escapeHtml(x.title)}">${compositionLabel(COMPOSITION_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-comp-mode="simulator" ${!enabled?"disabled":""}>Buka latihan komposisi peserta →</button></div>`:
- `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta memilih framing, jarak, dan sudut; lalu menjelaskan alasannya.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>${compositionTrainerDemoPanel(data,isMentor)}`}
+ `<div class="trainer-theory-compact"><div><strong>Latihan peserta sedang terbuka</strong><p class="small-note">Peserta membandingkan empat pasangan foto, memilih A atau B, dan menyimpan alasan.</p></div><button class="btn subtle" data-comp-mode="theory" ${!enabled?"disabled":""}>← Kembali ke slide</button></div>${compositionTrainerDemoPanel(data,isMentor)}${compositionTrainerResponsePanel(data,isMentor)}`}
  <p id="composition-status" class="small-note">${active?"LCD dan peserta mengikuti mode ini.":"Buka tahap 02 untuk menampilkan di LCD."}</p></section>`;
 }
-function compositionExample(c){
- const selected=c.preview||"distance";
- const maps={
-  position:{left:["8798","Tokoh di kiri: ruang bercerita"],center:["8851","Pemain lebih dominan di tengah"],right:["8980","Tokoh di samping materi ajar"]},
-  distance:{wide:["9053","Foto lebar: ruang dan kegiatan"],medium:["9010","Foto sedang: hubungan peserta dan instruktur"],close:["8878","Foto dekat: bentuk instrumen bambu"]},
-  angle:{eye:["9053","Tinjauan ruang dari posisi biasa"],low:["8868","Sudut dengan foreground besar"],high:["8878","Sudut lebih tinggi mengamati pola alat"]},
-  frame:{"true":["8824","Bingkai alami dari alat musik"],"false":["9053","Tanpa bingkai foreground yang dominan"]}
- };
- const value=selected==="frame"?String(!!c.frame):String(c[selected]||"wide");
- const [photo,caption]=maps[selected]?.[value]||maps.distance.wide;
- return {photo,caption};
+
+function compositionChallengeIndex(c){
+ const keys=["distance","frame","position","angle"];
+ return Math.max(0,keys.indexOf(c?.preview));
+}
+function compositionChallengePhotos(challenge,{grid=false,forLCD=false}={}){
+ const card=(photo,label)=>`<figure class="comp-compare-card">
+  <div class="comp-compare-image ${grid&&challenge.grid?"comp-grid-on":""}">
+   <img src="${compositionChallengeImage(photo.image)}" alt="${escapeHtml(photo.title)} · Dokumentasi musik bambu Sangihe" loading="eager" decoding="async">
+   <div class="comp-rule-grid" aria-hidden="true"></div>
+  </div>
+  <figcaption><strong>FOTO ${label} · ${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.detail)}</span></figcaption>
+ </figure>`;
+ return `<div class="comp-compare-photos ${forLCD?"comp-compare-projection":""}">${card(challenge.a,"A")}${card(challenge.b,"B")}</div>`;
 }
 function compositionDemoPreview(c,id){
- const example=compositionExample(c);
- return `<div class="composition-live-scene"><div class="comp-visual ${c.grid?"comp-grid-on":""}" id="${id}">
- <figure><div class="comp-photo-stage"><img src="/lensa-muda/assets/composition/sangihe-2017-${example.photo}.webp" alt="Foto dokumentasi Sangihe: ${escapeHtml(example.caption)}"><div class="comp-rule-grid"></div></div>
- <figcaption>Musik bambu Sangihe, September 2017 · Foto: Ronny Adolof Buol</figcaption></figure></div>
- <strong class="comp-example-caption" id="${id}-caption">${escapeHtml(example.caption)}</strong></div>`;
+ const challenge=COMPOSITION_CHALLENGES[compositionChallengeIndex(c)];
+ return `<div class="composition-live-scene comp-demo-pair" id="${id}">
+  <span class="eyebrow">TANTANGAN ${compositionChallengeIndex(c)+1} / 4</span>
+  <h3>${escapeHtml(challenge.title)}</h3>
+  <p>${escapeHtml(challenge.question)}</p>
+  ${compositionChallengePhotos(challenge,{grid:!!c.grid})}
+  <p class="small-note">${escapeHtml(challenge.guidance)}</p>
+ </div>`;
 }
 function compositionDemoControls(c,disabled){
  return `<div class="composition-demo-controls">
- <div class="composition-setting"><strong>Garis dan framing</strong><div class="choice-set">
- <button class="choice" data-demo-comp="grid" aria-pressed="${c.grid}" ${disabled?"disabled":""}>▦ Garis sepertiga</button>
- <button class="choice" data-demo-comp="frame" aria-pressed="${c.frame}" ${disabled?"disabled":""}>▣ Framing</button></div></div>
- ${[["position","Letak subjek",[["left","Kiri"],["center","Tengah"],["right","Kanan"]]],["distance","Jarak pengambilan",[["wide","Lebar"],["medium","Sedang"],["close","Dekat"]]],["angle","Sudut pandang",[["eye","Setinggi mata"],["low","Rendah"],["high","Tinggi"]]]].map(([key,label,choices])=>`<div class="composition-setting"><strong>${label}</strong><div class="choice-set">${choices.map(([value,title])=>`<button class="choice" data-demo-${key}="${value}" aria-pressed="${c[key]===value}" ${disabled?"disabled":""}>${title}</button>`).join("")}</div></div>`).join("")}
- <button class="btn subtle" id="reset-demo-composition" ${disabled?"disabled":""}>↺ Atur ulang demonstrasi</button></div>`;
+  <strong>Ganti tantangan di LCD</strong>
+  <div class="comp-compare-challenge-buttons">${COMPOSITION_CHALLENGES.map((x,i)=>`<button class="choice" data-comp-challenge="${i}" aria-pressed="${compositionChallengeIndex(c)===i}" ${disabled?"disabled":""}>${String(i+1).padStart(2,"0")} · ${escapeHtml(x.title)}</button>`).join("")}</div>
+  <button class="choice" id="trainer-comp-grid" aria-pressed="${!!c.grid}" ${disabled?"disabled":""}>▦ Tampilkan garis sepertiga</button>
+  <p class="small-note">Pilihan trainer mengatur LCD saja, bukan mengubah jawaban di HP peserta.</p>
+ </div>`;
 }
 function compositionTrainerDemoPanel(data,isMentor){
  const c=state.demoComposition;
- return `<section class="composition-trainer-demo" aria-label="Demonstrasi komposisi langsung">
- <div class="composition-demo-heading"><h3>Demonstrasi komposisi langsung</h3><p class="small-note">Klik tombol untuk mengubah contoh pada LCD. Latihan pribadi peserta tetap mandiri.</p></div>
- <div class="composition-demo-layout">${compositionDemoPreview(c,"trainerCompositionDemo")}${compositionDemoControls(c,isMentor)}</div>
- <p class="small-note" id="composition-demo-status">Perubahan sinkron melalui koneksi kelas.</p></section>`;
+ return `<section class="composition-trainer-demo" aria-label="Empat tantangan komposisi">
+   <div class="composition-demo-heading"><h3>Empat tantangan perbandingan foto</h3><p class="small-note">Pilih tantangan untuk LCD, lalu minta peserta memilih A/B di HP dan menyimpan alasannya.</p></div>
+   <div class="composition-demo-layout">${compositionDemoPreview(c,"trainerCompositionDemo")}${compositionDemoControls(c,isMentor)}</div>
+   <p class="small-note" id="composition-demo-status">Perubahan pilihan tantangan disinkronkan ke LCD.</p>
+  </section>`;
 }
 function compositionPage(){
- const c=state.composition;
- return `${titleBlock("komposisi")}<div class="card composition-lab-card">
- <div class="composition-lab-intro"><span class="eyebrow">LABORATORIUM KOMPOSISI</span><h2>Bandingkan foto. Jelaskan pilihanmu.</h2><p>Ketuk pengaturan untuk melihat contoh dokumentasi yang berbeda dari kegiatan musik bambu di Sangihe. Bukan satu foto yang diubah menjadi adegan lain: setiap pilihan menampilkan foto asli yang membantu memahami tekniknya.</p></div>
- <div class="composition-lab-layout"><div class="composition-lab-image"><div class="comp-visual ${c.grid?"comp-grid-on":""}" id="compositionScene"><figure><div class="comp-photo-stage"><img id="comp-example-image" src="/lensa-muda/assets/composition/sangihe-2017-${compositionExample(c).photo}.webp" alt="Contoh foto dokumentasi musik bambu Sangihe" decoding="async"><div class="comp-rule-grid"></div></div><figcaption>Musik bambu Sangihe, September 2017 · Foto: Ronny Adolof Buol</figcaption></figure></div><p class="comp-example-caption" id="comp-example-caption">${compositionExample(c).caption}</p><p class="small-note">Kumpulan foto asli dari satu rangkaian kegiatan. Pengaturan menampilkan contoh teknik, bukan merekayasa subjek di foto.</p></div>
- <div class="composition-lab-controls">
- <div class="composition-setting"><strong>01 · Garis dan bingkai</strong><div class="choice-set"><button class="choice" data-comp="grid" aria-pressed="${c.grid}">▦ Garis sepertiga</button><button class="choice" data-comp="frame" aria-pressed="${c.frame}">▣ Framing</button></div></div>
- <div class="composition-setting"><strong>02 · Letak subjek</strong><div class="choice-set">${["left","center","right"].map((p,i)=>`<button class="choice" data-position="${p}" aria-pressed="${c.position===p}">${["Kiri","Tengah","Kanan"][i]}</button>`).join("")}</div></div>
- <div class="composition-setting"><strong>03 · Jarak pengambilan</strong><div class="choice-set">${[["wide","Lebar"],["medium","Sedang"],["close","Dekat"]].map(([v,t])=>`<button class="choice" data-distance="${v}" aria-pressed="${c.distance===v}">${t}</button>`).join("")}</div></div>
- <div class="composition-setting"><strong>04 · Sudut pandang</strong><div class="choice-set">${[["eye","Setinggi mata"],["low","Rendah"],["high","Tinggi"]].map(([v,t])=>`<button class="choice" data-angle="${v}" aria-pressed="${c.angle===v}">${t}</button>`).join("")}</div></div>
- </div></div>
- <div class="composition-reflection"><label for="comp-reason">Mengapa komposisi itu dipilih?</label><textarea id="comp-reason" rows="3" placeholder="Informasi apa yang ingin kamu perlihatkan: tokoh, tempat, alat kerja, atau detail?">${escapeHtml(c.reason||"")}</textarea><small>Minimal 15 karakter. Jelaskan informasi yang diperlihatkan.</small></div>
- <div class="actions"><button class="btn subtle" id="reset-comp">↺ Atur ulang</button><button class="btn primary" id="save-comp">Simpan keputusan komposisi ✓</button></div></div>
- <div class="grid two composition-context"><div class="card"><h3>Informasi dalam bingkai</h3><p class="small-note">Lebar memperlihatkan tempat. Dekat menyoroti proses. Jangan hilangkan konteks penting.</p></div><div class="card"><h3>Hormati budaya</h3><p class="small-note">Berpindah posisi boleh, tetapi jangan mengganggu ritual atau mengatur ulang kejadian demi foto.</p></div></div>`;
+ const draft=state.work.komposisi?.challenges||{};
+ const selected=COMPOSITION_CHALLENGES[Math.max(0,Math.min(3,state.compositionChallengeTab||0))];
+ const answer=draft[selected.id]||{};
+ const completed=COMPOSITION_CHALLENGES.filter(x=>["A","B"].includes(draft[x.id]?.choice)&&String(draft[x.id]?.reason||"").trim().length>=15).length;
+ return `${titleBlock("komposisi")}<section class="card comp-compare-lab">
+  <span class="eyebrow">LABORATORIUM KOMPOSISI · PILIH DAN JELASKAN</span>
+  <h2>Empat keputusan. Empat alasan.</h2>
+  <p>Bandingkan dua foto dokumentasi asli Sangihe. Tidak ada jawaban sekadar benar atau salah: pilih foto yang paling cocok dengan tugasnya dan jelaskan alasan berdasarkan yang terlihat. Jawabanmu tidak mengubah layar LCD.</p>
+  <nav class="comp-compare-tabs" aria-label="Pilih tantangan">${COMPOSITION_CHALLENGES.map((x,i)=>`<button class="choice" data-comp-tab="${i}" aria-pressed="${selected===x}">${i+1}. ${escapeHtml(x.title)}${draft[x.id]?.choice?" ✓":""}</button>`).join("")}</nav>
+  <div class="comp-compare-heading"><span>TANTANGAN ${COMPOSITION_CHALLENGES.indexOf(selected)+1} / 4</span><h3>${escapeHtml(selected.topic)}</h3><p>${escapeHtml(selected.question)}</p></div>
+  ${compositionChallengePhotos(selected,{grid:state.compositionGrid===true})}
+  ${selected.grid?`<button class="btn subtle small" id="participant-comp-grid" aria-pressed="${state.compositionGrid===true}">▦ ${state.compositionGrid?"Sembunyikan":"Tampilkan"} garis sepertiga pada kedua foto</button>`:""}
+  <div class="comp-compare-decision"><strong>Foto mana yang kamu pilih?</strong>
+    <div class="choice-set">
+      <button class="choice" data-comp-vote="A" aria-pressed="${answer.choice==="A"}">Foto A</button>
+      <button class="choice" data-comp-vote="B" aria-pressed="${answer.choice==="B"}">Foto B</button>
+    </div>
+    <label for="composition-reason">Mengapa foto itu lebih tepat?</label>
+    <textarea id="composition-reason" rows="4" maxlength="1400" placeholder="Jelaskan informasi yang terlihat dan yang hilang dibanding foto lain…">${escapeHtml(answer.reason||"")}</textarea>
+    <small>Minimal 15 karakter. Setiap perubahan disimpan sebagai draf di HP. Tekan Simpan untuk mengirim ke server.</small>
+  </div>
+  <div class="comp-compare-bottom"><strong id="comp-completed">${completed} dari 4 tantangan terisi</strong><div class="actions"><button class="btn primary" id="save-comp">Simpan jawaban ${escapeHtml(selected.title)} ✓</button><button class="btn subtle" id="comp-next" ${state.compositionChallengeTab===3?"disabled":""}>Tantangan berikutnya →</button></div></div>
+  <p id="comp-save-feedback" class="small-note" role="status" aria-live="polite">Simpan setiap tantangan; status sinkronisasi dapat dilihat di bagian atas layar.</p>
+ </section>`;
 }
-function updateComposition(){
- const sc=$("#compositionScene");if(!sc)return;
- sc.classList.toggle("comp-grid-on",!!state.composition.grid);
- const example=compositionExample(state.composition);
- const image=$("#comp-example-image"),caption=$("#comp-example-caption");
- if(image){
-  const url="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
-  if(!image.src.endsWith(url))image.src=url;
-  image.alt="Dokumentasi Sangihe, "+example.caption;
- }
- if(caption)caption.textContent=example.caption;
+function bindCompositionChallenge(){
+ const current=()=>COMPOSITION_CHALLENGES[Math.max(0,Math.min(3,state.compositionChallengeTab||0))];
+ const draft=()=>state.work.komposisi?.challenges||{};
+ const persist=(patch)=>{
+  const item=current(),existing=draft()[item.id]||{};
+  state.work.komposisi={...(state.work.komposisi||{}),challenges:{...draft(),[item.id]:{...existing,...patch}},_draft:true};
+  saveWork();
+ };
+ $$("[data-comp-tab]").forEach(button=>button.onclick=()=>{
+  state.compositionChallengeTab=Number(button.dataset.compTab);renderParticipant();
+ });
+ const next=$("#comp-next");if(next)next.onclick=()=>{state.compositionChallengeTab=Math.min(3,(state.compositionChallengeTab||0)+1);renderParticipant()};
+ $$("[data-comp-vote]").forEach(button=>button.onclick=()=>{
+  persist({choice:button.dataset.compVote});
+  $$("[data-comp-vote]").forEach(b=>b.setAttribute("aria-pressed",String(b===button)));
+ });
+ const reason=$("#composition-reason");if(reason)reason.oninput=()=>persist({reason:reason.value});
+ const grid=$("#participant-comp-grid");if(grid)grid.onclick=()=>{state.compositionGrid=!state.compositionGrid;$(".comp-compare-photos")?.querySelectorAll(".comp-compare-image").forEach(x=>x.classList.toggle("comp-grid-on",state.compositionGrid));grid.setAttribute("aria-pressed",String(state.compositionGrid));grid.textContent=state.compositionGrid?"▦ Sembunyikan garis sepertiga":"▦ Tampilkan garis sepertiga"};
+ $("#save-comp").onclick=async()=>{
+  const item=current(),answer=draft()[item.id]||{};
+  if(!["A","B"].includes(answer.choice)||String(answer.reason||"").trim().length<15){toast("Pilih Foto A/B dan tuliskan alasan minimal 15 karakter");return}
+  const payload={...(state.work.komposisi||{}),challenges:{...draft()}};
+  const result=await saveAnswer("komposisi",payload);
+  const feedback=$("#comp-save-feedback");if(feedback)feedback.textContent=answerSaveMessage(result);
+  const completed=COMPOSITION_CHALLENGES.filter(c=>["A","B"].includes(draft()[c.id]?.choice)&&String(draft()[c.id]?.reason||"").trim().length>=15).length;
+  const counter=$("#comp-completed");if(counter)counter.textContent=completed+" dari 4 tantangan terisi";
+  $$("[data-comp-tab]").forEach((b,i)=>{const a=draft()[COMPOSITION_CHALLENGES[i].id];b.textContent=(i+1)+". "+COMPOSITION_CHALLENGES[i].title+(a?.choice?" ✓":"")});
+ };
 }
 function edfatSlideHTML(index,variant="lcd"){
  const data=edfatSlide(index);
@@ -939,16 +993,7 @@ function bindLessons(){
   $("#save-camera").onclick=()=>saveAnswer("kamera",{...state.camera,at:new Date().toISOString()});
   updateCamera();
  }
- if(state.active==="komposisi"&&$("#compositionScene")){
-  $$("[data-comp]").forEach(btn=>btn.onclick=()=>{const key=btn.dataset.comp;state.composition[key]=!state.composition[key];if(key==="frame")state.composition.preview="frame";btn.setAttribute("aria-pressed",String(state.composition[key]));updateComposition()});
-  for(const attr of ["position","distance","angle"]){
-   $$("[data-"+attr+"]").forEach(btn=>btn.onclick=()=>{state.composition[attr]=btn.dataset[attr];state.composition.preview=attr;$$("[data-"+attr+"]").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));updateComposition()});
-  }
-  const reason=$("#comp-reason");if(reason)reason.oninput=()=>{state.composition.reason=reason.value};
-  $("#reset-comp").onclick=()=>{state.composition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",reason:"",preview:"distance"};goModule("komposisi")};
-  $("#save-comp").onclick=()=>{const reason=(state.composition.reason||"").trim();if(reason.length<15){toast("Tuliskan alasan minimal 15 karakter");return}saveAnswer("komposisi",{...state.composition,reason})};
-  updateComposition();
- }
+ if(state.active==="komposisi"&&$("#save-comp"))bindCompositionChallenge();
  if(state.active==="edfat"&&$("#save-edfat")){
   const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
   $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
@@ -1172,6 +1217,7 @@ function answerDetails(key,v){
    if(!ok)return `<p class="small-note">Data kamera tidak lengkap.</p>`;
    return `<div class="response-pills"><span>BUKAAN <b>f/${APERTURE[v.a]}</b></span><span>RANA <b>${SHUTTERS[v.s].l}s</b></span><span>ISO <b>${ISOS[v.i]}</b></span><span>EV <b>${exposureText(v)}</b></span></div>`;
  }
+ if(key==="komposisi"&&v.challenges)return `<div class="edfat-answer-review">${COMPOSITION_CHALLENGES.map((item,i)=>`<p><b>${i+1}. ${escapeHtml(item.title)} · Foto ${escapeHtml(v.challenges[item.id]?.choice||"Belum dipilih")}</b><br>${escapeHtml(v.challenges[item.id]?.reason||"Belum ada alasan")}</p>`).join("")}</div>`;
  if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
  if(key==="edfat")return Array.isArray(EDFAT_CASES)&&v.answers
  ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
@@ -1194,6 +1240,16 @@ if(key==="caption"){
 const SPOTLIGHT_MODULES=["story","edfat","komposisi","kamera","caption","etika"];
 function lcdSpotlightContent(spot){
  const a=spot.answer||{},label=escapeHtml(STAGES.find(x=>x.key===spot.module)?.name||spot.module),name=escapeHtml(spot.name);
+ if(spot.module==="komposisi"&&a.challenges){
+   const challenge=COMPOSITION_CHALLENGES[Math.max(0,Math.min(3,Number.isInteger(spot.challengeIndex)?spot.challengeIndex:0))];
+   const selected=a.challenges[challenge.id]||{};
+   return `<div class="comp-spotlight">
+    <div class="comp-spotlight-top"><span class="kicker">SOROTAN ULASAN PESERTA · KOMPOSISI</span><h1>${name}</h1><h2>${escapeHtml(challenge.title)} · Pilihan Foto ${escapeHtml(selected.choice||"—")}</h2></div>
+    ${compositionChallengePhotos(challenge,{grid:false,forLCD:true})}
+    <section class="comp-spotlight-reason"><strong>ALASAN PESERTA</strong><p>${escapeHtml(selected.reason||"Belum ada alasan.")}</p></section>
+    <p class="spotlight-prompt">${escapeHtml(challenge.question)}</p>
+   </div>`;
+ }
  if(spot.module==="story"){
   const ids=Array.isArray(a.selected)?a.selected.slice(0,9):[];
   return `<div class="spotlight-layout">
@@ -1446,34 +1502,31 @@ function bindDashboard(){
   savingComposition=false;
  }
  function refreshTrainerDemo(){
-  const scene=$("#trainerCompositionDemo"),caption=$("#trainerCompositionDemo-caption");
-  if(!scene)return;
-  const example=compositionExample(state.demoComposition);
-  scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
-  const image=scene.querySelector("img");
-  if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp"))image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";
-  if(caption)caption.textContent=example.caption;
-  $$("[data-demo-comp]").forEach(btn=>btn.setAttribute("aria-pressed",String(!!state.demoComposition[btn.dataset.demoComp])));
-  for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)]===state.demoComposition[key])));
+  const scene=$("#trainerCompositionDemo");if(!scene)return;
+  const challenge=COMPOSITION_CHALLENGES[compositionChallengeIndex(state.demoComposition)];
+  scene.querySelector(".eyebrow").textContent="TANTANGAN "+(compositionChallengeIndex(state.demoComposition)+1)+" / 4";
+  scene.querySelector("h3").textContent=challenge.title;
+  scene.querySelector("p").textContent=challenge.question;
+  const pair=scene.querySelector(".comp-compare-photos");
+  if(pair)pair.outerHTML=compositionChallengePhotos(challenge,{grid:!!state.demoComposition.grid});
+  const note=scene.querySelector(".small-note");if(note)note.textContent=challenge.guidance;
+  $$("[data-comp-challenge]").forEach(btn=>btn.setAttribute("aria-pressed",String(Number(btn.dataset.compChallenge)===compositionChallengeIndex(state.demoComposition))));
+  const grid=$("#trainer-comp-grid");if(grid)grid.setAttribute("aria-pressed",String(!!state.demoComposition.grid));
  }
- $$("[data-demo-comp]").forEach(btn=>btn.onclick=()=>{
-  const key=btn.dataset.demoComp;
-  state.demoComposition[key]=!state.demoComposition[key];
-  if(key==="frame")state.demoComposition.preview="frame";
+ $$("[data-comp-challenge]").forEach(btn=>btn.onclick=()=>{
+  state.demoComposition.preview=["distance","frame","position","angle"][Number(btn.dataset.compChallenge)];
   refreshTrainerDemo();saveCompositionDemo();
  });
- for(const key of ["position","distance","angle"])$$("[data-demo-"+key+"]").forEach(btn=>btn.onclick=()=>{
-  state.demoComposition[key]=btn.dataset["demo"+key[0].toUpperCase()+key.slice(1)];
-  state.demoComposition.preview=key;refreshTrainerDemo();saveCompositionDemo();
- });
- const resetDemo=$("#reset-demo-composition");
- if(resetDemo)resetDemo.onclick=()=>{state.demoComposition={grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"};refreshTrainerDemo();saveCompositionDemo()};
+ const trainerCompGrid=$("#trainer-comp-grid");
+ if(trainerCompGrid)trainerCompGrid.onclick=()=>{state.demoComposition.grid=!state.demoComposition.grid;refreshTrainerDemo();saveCompositionDemo()};
+ const refreshCompAnswers=$("#refresh-comp-answers");
+ if(refreshCompAnswers)refreshCompAnswers.onclick=async()=>{refreshCompAnswers.disabled=true;try{await fetchDashboard();render();toast("Jawaban peserta terbaru ditampilkan")}catch(e){refreshCompAnswers.disabled=false;toast("Gagal memuat jawaban: "+e.message)}};
 
- async function changeSpotlight(participantId,module){
+ async function changeSpotlight(participantId,module,challengeIndex){
   if(isMentor)return;
   if(!state.online){toast("Koneksi kelas diperlukan untuk sorotan LCD");return}
   try{
-   const result=await request("/api/spotlight",{method:"PUT",payload:{participantId,module},auth:true});
+   const result=await request("/api/spotlight",{method:"PUT",payload:{participantId,module,...(module==="komposisi"?{challengeIndex:challengeIndex??0}:{})},auth:true});
    state.spotlight=result.spotlight||null;state.dashboard.spotlight=state.spotlight;
    const banner=$("#trainer-spotlight-status");
    if(banner){
@@ -1489,6 +1542,7 @@ function bindDashboard(){
   $$("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
  }
  bindSpotlight();
+ $$("[data-comp-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.compSpotlightId,"komposisi",Number(btn.dataset.compSpotlightIndex)));
  $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
@@ -1740,7 +1794,7 @@ function lcdPage(){
     ?`<div class="lcd-theory-intro"><span class="kicker">BAB 2 · BAHASA VISUAL</span><span class="theory-slide-indicator">SLIDE ${compositionLabel(state.presentation.slide)} / ${COMPOSITION_SLIDES.length}</span></div>${compositionSlideContent(state.presentation.slide,"lcd")}`
     :stage===2
     ?`<div class="lcd-composition-lab"><span class="kicker">TAHAP 02 · LABORATORIUM KOMPOSISI</span><h1>Ubah bingkai. <em>Jelaskan pilihan.</em></h1><p>Amati bagaimana foto budaya Sangihe memakai ruang, jarak, framing, dan sudut untuk menyampaikan informasi.</p>${compositionDemoPreview(state.demoComposition,"lcdCompositionDemo")}
-      <div class="theory-question"><span>LATIHAN MANDIRI</span><strong>Komposisi apa yang membuat pembaca memahami kegiatan ini?</strong></div></div>`
+      <div class="theory-question"><span>PILIHAN FOTO A / B</span><strong>Amati dua foto, pilih yang sesuai tujuan, lalu jelaskan alasan di HP kalian.</strong></div></div>`
     :stage===1 && state.presentation.view==="theory"
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 1 · MATERI TEORI FOTOGRAFI</span><span class="theory-slide-indicator">SLIDE ${presentationLabel(state.presentation.slide)} · ${PRESENTATION_ORDER.indexOf(state.presentation.slide)+1}/${PRESENTATION_ORDER.length}</span></div>${theorySlideContent(state.presentation.slide,"lcd")}`
    :stage===1
@@ -1783,12 +1837,14 @@ function paintLcdCamera(){
  paintCameraDials(c);
 }
 function paintLcdComposition(){
- const scene=$("#lcdCompositionDemo"),caption=$("#lcdCompositionDemo-caption");if(!scene)return;
- const example=compositionExample(state.demoComposition);
- scene.classList.toggle("comp-grid-on",!!state.demoComposition.grid);
- const image=scene.querySelector("img");
- if(image&&!image.src.endsWith("sangihe-2017-"+example.photo+".webp")){image.src="/lensa-muda/assets/composition/sangihe-2017-"+example.photo+".webp";image.alt=example.caption}
- if(caption)caption.textContent=example.caption;
+ const scene=$("#lcdCompositionDemo");if(!scene)return;
+ const challenge=COMPOSITION_CHALLENGES[compositionChallengeIndex(state.demoComposition)];
+ scene.querySelector(".eyebrow").textContent="TANTANGAN "+(compositionChallengeIndex(state.demoComposition)+1)+" / 4";
+ scene.querySelector("h3").textContent=challenge.title;
+ scene.querySelector("p").textContent=challenge.question;
+ const pair=scene.querySelector(".comp-compare-photos");
+ if(pair)pair.outerHTML=compositionChallengePhotos(challenge,{grid:!!state.demoComposition.grid,forLCD:true});
+ const note=scene.querySelector(".small-note");if(note)note.textContent=challenge.guidance;
 }
 function renderLCD(){
  $("#root").innerHTML=lcdPage();
