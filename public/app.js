@@ -191,7 +191,7 @@ function orientationRegistrationSlide(){
       <div class="orientation-phone" aria-label="Contoh layar pendaftaran peserta di HP">
         <div class="orientation-phone-status"><span>9:41</span><span>●●● ▰</span></div>
         <div class="orientation-phone-address"><span>🔒</span> kelasbelajar.org/lensa-muda/peserta</div>
-        <div class="orientation-phone-screen">${signupPage()}</div>
+        <div class="orientation-phone-screen" inert>${signupPage()}</div>
         <div class="orientation-phone-home"></div>
       </div>
     </div>
