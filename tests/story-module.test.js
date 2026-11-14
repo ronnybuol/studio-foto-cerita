@@ -34,8 +34,8 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(app.includes('data-story-step'));
  assert.ok(app.includes('data-story-mode'));
  assert.ok(app.includes('stage===4&&state.presentation.view==="theory"'));
- assert.ok(app.includes('saveAnswer("story",{selected:ids,title,reason'));
- assert.ok(app.includes('state.work.story={...current(),selected,_draft:true}'));
+ assert.ok(app.includes('saveAnswer("story",{mode:"hunting",selected:ids,title,reason'));
+ assert.ok(app.includes('state.work.story={...current(),mode:"hunting",selected,_draft:true}'));
  assert.ok(app.includes('data-pick'));
  assert.ok(app.includes('data-remove'));
  assert.ok(app.includes('data-move'));
@@ -43,6 +43,10 @@ test("Sembilan Bingkai memiliki alur trainer-LCD, penyimpanan urutan dan alasan 
  assert.ok(css.includes('.story-learner-theory .story-theory-lead'));
  assert.ok(api.includes('data.slide>56'));
  assert.ok(api.includes('data.selected.length!==9'));
+ assert.ok(api.includes('data.mode==="hunting"'));
+ assert.ok(app.includes('portfolioTrainerHTML('));
+ assert.ok(app.includes('huntingShot('));
+ assert.ok(app.includes('hydrateHuntingImages('));
 });
 
 test("Semua foto Modul 04 benar-benar ada di public/assets/composition",()=>{
