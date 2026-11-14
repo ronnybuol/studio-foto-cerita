@@ -1,3 +1,4 @@
+import {ensureHuntingSchema,huntingAccess,huntingKey,validWebP,slotFromPath,MAX_HUNTING_BYTES} from "./hunting-photos.js";
 const SESSION_ID = "lensa-muda-2026";
 const PUBLIC_BASE = "/lensa-muda";
 const ANSWER_KEYS = new Map([["kamera",1],["komposisi",2],["edfat",3],["story",4],["caption",5],["etika",6]]);
@@ -219,7 +220,8 @@ async function handleApi(req,env){
   const participantAction=(method==="POST"&&["/api/participants","/api/participant-login"].includes(path))||
     (method==="GET"&&path==="/api/me")||
     (method==="PATCH"&&path==="/api/me/username")||
-    (method==="PUT"&&path.startsWith("/api/answers/"));
+    (method==="PUT"&&path.startsWith("/api/answers/"))||
+    (method==="PUT"&&path.startsWith("/api/hunting/photos/"));
   if(!lockReady&&(participantAction||path==="/api/class-lock"))return failure("Status kunci kelas belum siap di D1. Hubungi trainer.",503);
   if(method==="PUT"&&path==="/api/class-lock"){
    const admin=await access(req,env);
@@ -233,6 +235,56 @@ async function handleApi(req,env){
   }
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
+
+  // Personal hunting gallery. Uploads are owned by the authenticated participant.
+  // Neither the public URL nor another participant can read the raw photo.
+  if(path==="/api/hunting/photos" || path.startsWith("/api/hunting/photos/")){
+    const p=await participant(req,env);
+    const stage=await stageState(env);
+    const denial=huntingAccess({stage,locked,participant:p,storage:env.PHOTO_BUCKET});
+    if(denial)return failure(denial.error,denial.status);
+    if(!lockReady)return failure("Kunci kelas belum siap",503);
+    await ensureHuntingSchema(env.DB);
+    if(path==="/api/hunting/photos"&&method==="GET"){
+      const rows=await env.DB.prepare(
+        "SELECT slot,bytes,width,height,uploaded_at AS uploadedAt FROM hunting_photos WHERE participant_id=? ORDER BY slot"
+      ).bind(p.id).all();
+      return output({photos:rows.results||[],limit:12});
+    }
+    const slot=slotFromPath(path);
+    if(slot===null)return failure("Nomor foto harus 1 sampai 12",400);
+    const key=huntingKey(SESSION_ID,p.id,slot);
+    if(method==="GET"){
+      const row=await env.DB.prepare("SELECT object_key FROM hunting_photos WHERE participant_id=? AND slot=?").bind(p.id,slot).first();
+      if(!row||row.object_key!==key)return failure("Foto belum diunggah",404);
+      const object=await env.PHOTO_BUCKET.get(key);
+      if(!object)return failure("Berkas foto belum tersedia",404);
+      return new Response(object.body,{headers:{"Content-Type":"image/webp","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
+    }
+    if(method==="PUT"){
+      if(req.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase()!=="image/webp")
+        return failure("Hanya foto WebP yang telah dioptimalkan yang diterima",415);
+      const length=Number(req.headers.get("Content-Length")||0);
+      if(length>MAX_HUNTING_BYTES)return failure("Foto terlalu besar. Maksimal 2 MB",413);
+      const width=Number(req.headers.get("X-Photo-Width"));
+      const height=Number(req.headers.get("X-Photo-Height"));
+      if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>4096||height>4096)
+        return failure("Dimensi foto tidak valid",400);
+      const previous=await env.DB.prepare("SELECT slot FROM hunting_photos WHERE participant_id=? AND slot=?").bind(p.id,slot).first();
+      if(previous)return failure("Slot sudah berisi foto. Pilih slot kosong.",409);
+      const bytes=new Uint8Array(await req.arrayBuffer());
+      if(bytes.length===0||bytes.length>MAX_HUNTING_BYTES)return failure("Foto harus berukuran 1 byte sampai 2 MB",413);
+      if(!validWebP(bytes))return failure("Isi berkas bukan WebP yang valid",415);
+      const uploadedAt=new Date().toISOString();
+      await env.PHOTO_BUCKET.put(key,bytes,{httpMetadata:{contentType:"image/webp"},customMetadata:{session:SESSION_ID,participantId:p.id,slot:String(slot)}});
+      const result=await env.DB.prepare(
+        "INSERT INTO hunting_photos(participant_id,slot,object_key,bytes,width,height,uploaded_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(participant_id,slot) DO NOTHING"
+      ).bind(p.id,slot,key,bytes.length,width,height,uploadedAt).run();
+      if(result.meta?.changes===0)return failure("Slot foto sudah digunakan. Segarkan galeri.",409);
+      return output({ok:true,photo:{slot,bytes:bytes.length,width,height,uploadedAt}},201);
+    }
+    return failure("Metode tidak didukung",405);
+  }
   if(method==="GET"&&path==="/api/state"){
     const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
     const {stage,camera,composition,presentation,controlRevision}=snapshot;

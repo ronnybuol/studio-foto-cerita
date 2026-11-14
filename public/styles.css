@@ -1541,3 +1541,21 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
  object-fit:contain;
  object-position:center;
 }
+
+/* Modul 03 — photo hunting upload gallery. Existing EDFAT slides stay unchanged. */
+.hunting-uploader{margin-block:20px;display:flex;flex-direction:column;gap:12px}
+.hunting-uploader>h2{font-size:clamp(24px,2.6vw,38px);margin:0}
+.hunting-uploader>p{margin:0;line-height:1.45;max-width:860px}
+.hunting-upload-actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.hunting-upload-actions label{cursor:pointer;display:inline-flex;align-items:center}
+.hunting-upload-actions input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.hunting-upload-actions input[type=file]:focus-visible+button{outline:3px solid #ffa466}
+#hunting-upload-status{color:#ffc094;font-weight:750;min-height:22px}
+.hunting-photo-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hunting-photo-card{display:flex;flex-direction:column;gap:5px;background:#1d2832;border:1px solid #52616e;border-radius:12px;padding:9px;min-width:0}
+.hunting-photo-card b{font-size:clamp(13px,1vw,17px);color:#fff}
+.hunting-photo-card small{font-size:clamp(11px,.9vw,14px);color:#c2d0db;line-height:1.25}
+.hunting-photo-frame{width:100%;aspect-ratio:4/3;border-radius:7px;overflow:hidden;display:grid;place-items:center;background:#10161e;color:#e6a073;font-size:28px}
+.hunting-photo-frame img{height:100%;width:100%;object-fit:contain;object-position:center}
+@media(max-width:900px){.hunting-photo-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.hunting-photo-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.hunting-upload-actions>*{width:100%;justify-content:center}}

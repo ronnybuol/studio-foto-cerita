@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check public/app.js && node --check public/slides.js && node --check src/index.js",
+    "check": "node --check public/app.js && node --check public/slides.js && node --check src/index.js && node --check src/hunting-photos.js && node --check public/photo-hunting.js && node --check public/hunting-ui.js",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "node --test"

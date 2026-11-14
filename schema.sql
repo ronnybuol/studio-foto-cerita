@@ -39,3 +39,16 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 
 INSERT OR IGNORE INTO sessions(id,title,event_date,active_stage)
 VALUES('lensa-muda-2026','Studio Foto Cerita — Lensa Muda','2026-11-16',0);
+
+-- Galeri foto hunting peserta. Tidak mengubah tabel jawaban atau data pelatihan lama.
+CREATE TABLE IF NOT EXISTS hunting_photos (
+ participant_id TEXT NOT NULL,
+ slot INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 12),
+ object_key TEXT NOT NULL,
+ bytes INTEGER NOT NULL,
+ width INTEGER NOT NULL,
+ height INTEGER NOT NULL,
+ uploaded_at TEXT NOT NULL,
+ PRIMARY KEY(participant_id,slot),
+ FOREIGN KEY(participant_id) REFERENCES participants(id) ON DELETE CASCADE
+);
