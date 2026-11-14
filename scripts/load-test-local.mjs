@@ -96,6 +96,29 @@ assert.equal(orientationState.data.orientation,true,"registration slide must rea
 // Login checks above rotate tokens; always use the latest token for each account.
 const currentTokens=new Map(registration.map(x=>[x.result.data.user.id,x.result.data.user.token]));
 for(const login of logins)currentTokens.set(login.data.user.id,login.data.user.token);
+// Exercise server-clock timer against a disposable local D1 without touching production.
+await requireStatus(await api("/hunting/timer",{method:"PUT",payload:{action:"start",phase:"hunting"},token}),409,"timer unavailable before stage 03");
+await requireStatus(await api("/state",{method:"PUT",payload:{stage:3},token}),200,"open EDFAT for timer");
+const started=await api("/hunting/timer",{method:"PUT",payload:{action:"start",phase:"hunting"},token});
+await requireStatus(started,200,"start 25-minute hunting timer");
+assert.equal(started.data.timer.phase,"hunting");
+assert.equal(started.data.timer.status,"running");
+const liveTimer=await api("/state");
+assert.equal(liveTimer.data.timer.phase,"hunting","LCD and participant state share timer");
+assert.ok(Math.abs(liveTimer.data.timer.endsAt-liveTimer.data.serverNow-25*60000)<5000,"timer uses server clock");
+await requireStatus(await api("/hunting/timer",{method:"PUT",payload:{action:"extend",minutes:5},token}),200,"add five minutes");
+const paused=await api("/hunting/timer",{method:"PUT",payload:{action:"pause"},token});
+await requireStatus(paused,200,"pause timer");
+assert.equal(paused.data.timer.status,"paused");
+assert.ok(paused.data.timer.remainingMs>29*60000,"extension preserved in pause");
+await requireStatus(await api("/hunting/timer",{method:"PUT",payload:{action:"resume"},token}),200,"resume timer");
+await requireStatus(await api("/hunting/timer",{method:"PUT",payload:{action:"finish"},token}),200,"finish hunting");
+const uploadPhase=await api("/hunting/timer",{method:"PUT",payload:{action:"start",phase:"upload"},token});
+await requireStatus(uploadPhase,200,"start separate upload phase");
+assert.equal(uploadPhase.data.timer.phase,"upload");
+assert.equal(uploadPhase.data.timer.remainingMs,15*60000);
+assert.equal((await api("/hunting/timer",{method:"PUT",payload:{action:"extend",minutes:100},token})).status,400);
+await requireStatus(await api("/hunting/timer",{method:"PUT",payload:{action:"finish"},token}),200,"finish upload");
 await requireStatus(await api("/state",{method:"PUT",payload:{stage:6},token}),200,"open answer modules");
 const savedAnswers=await Promise.all(registration.map(x=>api("/answers/kamera",{method:"PUT",token:currentTokens.get(x.result.data.user.id),payload:{a:1,s:3,i:1,_clientRevision:200}})));
 for(const answer of savedAnswers)await requireStatus(answer,200,"70 simultaneous answer submissions");
@@ -131,5 +154,5 @@ const restoredRegistration=await api("/state");assert.equal(restoredRegistration
 const timings=iterations.slice().sort((a,b)=>a-b);
 const percentile=p=>Number(timings[Math.min(timings.length-1,Math.ceil(p*timings.length)-1)].toFixed(0));
 const elapsed=Math.round(performance.now()-ab);
-const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","atomic trainer-LCD stages 01-06","late stage and old-module slides rejected","guide display without new participants","registration slide restore"]};
+const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","atomic trainer-LCD stages 01-06","late stage and old-module slides rejected","shared hunting countdown start/pause/resume/extend/finish","separate upload phase","guide display without new participants","registration slide restore"]};
 console.log("LOAD TEST RESULT",JSON.stringify(report,null,2));
