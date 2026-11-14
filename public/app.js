@@ -4,7 +4,7 @@ import {COMPOSITION_CHALLENGES,compositionChallengeImage} from "./composition-la
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "./edfat.js";
 import {STORY_START,STORY_END,STORY_SLIDES,STORY_BANK,storySlide,storyLabel,storySlideVisual,storyImage} from "./story.js";
 import {CAPTION_START,CAPTION_END,CAPTION_SLIDES,captionSlide,captionLabel,captionVisual,captionWordCount,captionExampleHTML} from "./caption.js";
-import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "./ethics.js";
+import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual,ethicsPhotoUploadPanel} from "./ethics.js";
 import {createAnswerSync} from "./answer-sync.js";
 import {timerParticipantHTML,timerLCDHTML,timerTrainerHTML,paintSharedHuntingTimer,EMPTY_HUNTING_TIMER} from "./hunting-timer-ui.js";
 import {huntingPanelHTML,bindHuntingUI} from "./hunting-ui.js";
@@ -964,7 +964,7 @@ function ethicsParticipantSlide(index){
 function ethicsTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=ETHICS_START&&state.presentation.slide<=ETHICS_END?state.presentation.slide:ETHICS_START;
  const x=ethicsSlide(i),theory=state.presentation.view==="theory";
- return `<section class="card ethics-trainer-card">
+ return `${ethicsPhotoUploadPanel(isMentor)}<section class="card ethics-trainer-card">
  <div class="trainer-demo-heading"><div><span class="eyebrow">PRESENTASI · BAB 6</span><h2>Etika & Tantangan</h2>
  <p class="small-note">Enam slide terakhir, empat skenario keputusan etis, dan rencana foto cerita peserta.</p></div>
  <span class="pill green">● MODUL 06 SIAP</span></div>
@@ -1576,6 +1576,53 @@ function bindDashboard(){
    }
    if(status)status.textContent="✓ Lima spread asli tersimpan di server. Gunakan tombol 01–05 untuk menampilkan di LCD.";
    input.disabled=false;void showPortfolioAvailability();
+  };
+ }
+ const ethicsPanel=$("#ethics-upload-panel");
+ if(ethicsPanel){
+  const availability=$("#ethics-photo-availability");
+  const refreshEthicsPhotoStatus=async()=>{
+   if(!availability||!availability.isConnected)return;
+   try{
+    const response=await request("/api/ethics/photos/status");
+    availability.textContent="Foto tersedia di server: "+response.photos.map((ok,i)=>
+      (ok?"✓":"—")+" "+String(i+1).padStart(2,"0")).join(" · ")+".";
+   }catch(error){availability.textContent="Status foto belum dapat diperiksa: "+error.message}
+  };
+  void refreshEthicsPhotoStatus();
+  const upload=$("#ethics-upload-input");
+  if(upload)upload.onchange=async()=>{
+   const files=[...upload.files];upload.value="";
+   const status=$("#ethics-upload-status");
+   if(!files.length)return;
+   if(files.length!==6){if(status)status.textContent="Pilih keenam foto sekaligus (slide 1 sampai 6).";return}
+   const sorted=files.map(file=>({file,n:Number(file.name.match(/^slide\s*([1-6])\s*-\s*modul\s*06\.webp$/i)?.[1]||0)}))
+     .sort((a,b)=>a.n-b.n);
+   if(sorted.some((item,i)=>item.n!==i+1||item.file.size>3*1024*1024)){
+    if(status)status.textContent="Pastikan enam file bernama slide 1 - modul 06.webp hingga slide 6 - modul 06.webp, masing-masing maksimal 3 MB.";return;
+   }
+   if(state.trainerRole!=="trainer"){if(status)status.textContent="Masuk sebagai trainer untuk mengunggah foto.";return}
+   upload.disabled=true;
+   try{
+    for(const {file,n} of sorted){
+     if(status)status.textContent="Mengunggah foto "+n+" dari 6…";
+     const controller=new AbortController();
+     const timeout=setTimeout(()=>controller.abort(),30000);
+     let response;
+     try{
+      response=await fetch(PUBLIC_BASE+"/api/ethics/slide-photo/"+n,{
+       method:"PUT",headers:{Authorization:"Bearer "+state.trainerToken,"Content-Type":"image/webp"},
+       body:file,cache:"no-store",signal:controller.signal});
+     }finally{clearTimeout(timeout)}
+     if(!response.ok){
+      const data=await response.json().catch(()=>({}));
+      throw Error(data.error||"Gagal mengunggah foto "+n);
+     }
+    }
+    if(status)status.textContent="✓ Enam foto berhasil disimpan. Segarkan dashboard dan LCD Modul 06 untuk melihat hasilnya.";
+    await refreshEthicsPhotoStatus();
+   }catch(error){if(status)status.textContent="Unggah berhenti: "+error.message+" (foto yang sudah berhasil tetap tersimpan).";await refreshEthicsPhotoStatus()}
+   finally{upload.disabled=false}
   };
  }
  const timerControl=$("#shared-timer-control");
