@@ -1301,7 +1301,7 @@ function answerDetails(key,v){
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
  const ids=Array.isArray(v.selected)?v.selected:[];
- return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${v.mode==="hunting"?"Foto hunting "+id:escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>${v.mode==="hunting"?`<div class="story-trainer-preview-photos">${ids.map((id,i)=>`<figure><div class="hunting-photo-preview" data-story-trainer-preview="${id}">Memuat foto ${i+1}…</div><figcaption>${i+1}. Foto hunting ${id}</figcaption></figure>`).join("")}</div>`:""}`;
+ return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${v.mode==="hunting"?"Foto hunting "+id:escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>${v.mode==="hunting"?`<div class="story-trainer-preview-photos">${ids.map((id,i)=>`<figure><div class="hunting-photo-preview" data-story-trainer-preview="${id}">Memuat foto ${i+1}…</div><figcaption>${i+1}. Foto hunting ${id}</figcaption></figure>`).join("")}</div>`:""}
  <div class="small-note"><b>Judul kerja:</b> ${escapeHtml(v.title||"Belum ditulis")}<p><b>Alasan urutan:</b> ${escapeHtml(v.reason||"Belum ditulis")}</p></div>`;
 }
 if(key==="caption"){
