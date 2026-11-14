@@ -1601,3 +1601,19 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .edfat-hunting-step b{font-size:clamp(25px,3vw,49px);line-height:1;color:#ffce72}
 .edfat-hunting-step p{font-size:clamp(13px,1.2vw,21px);line-height:1.4;margin:0;color:#dce5ef}
 @media(max-width:680px){.edfat-hunting-brief{grid-template-columns:1fr}.edfat-hunting-step{gap:7px;padding:15px}.edfat-hunting-step b{font-size:29px}.edfat-hunting-step strong{font-size:17px}.edfat-hunting-step p{font-size:14px}}
+
+/* EDFAT hunting photo selection and teacher spotlight */
+.hunting-photo-chosen{outline:3px solid #f5c66a;outline-offset:2px;border-radius:12px}
+.hunting-photo-card [data-hunting-choose]{width:100%;font-size:clamp(11px,2.5vw,14px);margin-top:7px;white-space:normal}
+#edfat-hunting-work{margin-top:18px}
+#edfat-hunting-work textarea{width:100%;resize:vertical;min-height:110px}
+.edfattrainer-photo{margin:12px 0;max-width:min(450px,100%);color:#ccd6e1}
+.edfattrainer-photo img{display:block;width:100%;height:auto;max-height:350px;object-fit:contain;border-radius:12px;background:#121b24}
+.edfat-hunting-spotlight{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(340px,1fr);gap:clamp(22px,3vw,52px);align-items:center;width:100%;height:100%;min-height:0}
+.edfat-hunting-spotlight-photo{display:flex;align-items:center;justify-content:center;min-height:0;height:min(72vh,740px);background:#111b25;border-radius:18px;overflow:hidden}
+.edfat-hunting-spotlight-photo img{width:100%;height:100%;object-fit:contain}
+.edfat-hunting-spotlight-copy{min-width:0;color:#fff}
+.edfat-hunting-spotlight-copy h1{font-size:clamp(27px,3.3vw,60px);margin:9px 0}
+.edfat-hunting-spotlight-copy h2{font-size:clamp(24px,2.6vw,46px);color:#ffd081}
+.edfat-hunting-spotlight-copy p{font-size:clamp(17px,1.65vw,29px);line-height:1.45;overflow-wrap:anywhere}
+@media(max-width:820px){.edfat-hunting-spotlight{grid-template-columns:1fr}.edfat-hunting-spotlight-photo{height:42vh}.edfat-hunting-spotlight-copy h1{font-size:26px}.edfat-hunting-spotlight-copy h2{font-size:23px}.edfat-hunting-spotlight-copy p{font-size:16px}}
