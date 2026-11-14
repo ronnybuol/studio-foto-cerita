@@ -1,0 +1,24 @@
+name: Verify live shared welcome
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-live-welcome.yml]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Cloudflare has current home and LCD code
+        run: |
+          python - <<'PY'
+          import urllib.request
+          root="https://kelasbelajar.org/lensa-muda/"
+          for path in ["","app.js?v=20261114-shared-welcome-v3","styles.css?v=20261114-shared-welcome-v3","assets/brand/hong-bit.webp","assets/brand/peserta-qr.svg"]:
+              url=root+path
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0"}),timeout=20) as r:
+                      data=r.read()
+                      print("CHECK",path or "/",r.status,len(data),r.headers.get("content-type"))
+                      if path=="": print("LIVE_VERSION",b"20261114-shared-welcome-v3" in data)
+                      if path.startswith("app.js"): print("SHARED_COMPONENT",b"welcomePage(true,count)" in data and b"welcomePage(false)" in data)
+              except Exception as e: print("ERROR",path,str(e))
+          PY
