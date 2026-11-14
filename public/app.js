@@ -1301,7 +1301,7 @@ function answerDetails(key,v){
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
  if(key==="story"){
  const ids=Array.isArray(v.selected)?v.selected:[];
- return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${v.mode==="hunting"?"Foto hunting "+id:escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>
+ return `<div class="response-story">${ids.map((id,i)=>`<span><b>${i+1}.</b> ${v.mode==="hunting"?"Foto hunting "+id:escapeHtml(STORY_BANK.find(x=>x.id===id)?.title||"Foto "+id)}</span>`).join("")}</div>${v.mode==="hunting"?`<div class="story-trainer-preview-photos">${ids.map((id,i)=>`<figure><div class="hunting-photo-preview" data-story-trainer-preview="${id}">Memuat foto ${i+1}…</div><figcaption>${i+1}. Foto hunting ${id}</figcaption></figure>`).join("")}</div>`:""}`;
  <div class="small-note"><b>Judul kerja:</b> ${escapeHtml(v.title||"Belum ditulis")}<p><b>Alasan urutan:</b> ${escapeHtml(v.reason||"Belum ditulis")}</p></div>`;
 }
 if(key==="caption"){
@@ -1715,6 +1715,24 @@ function bindDashboard(){
        :"Belum ada hasil tersimpan."
    }</div>`;
    bindSpotlight($("#inspect"));
+   const storyPreviews=$("[data-story-trainer-preview]",$("#inspect"));
+   if(storyPreviews.length&&state.trainerRole==="trainer"){
+    for(const node of storyPreviews){
+     const slot=Number(node.dataset.storyTrainerPreview);
+     if(!Number.isInteger(slot)||slot<1||slot>12)continue;
+     void (async()=>{
+      try{
+       const response=await fetch(PUBLIC_BASE+"/api/trainer/hunting/photo/"+encodeURIComponent(p.id)+"/"+slot,{
+        headers:{Authorization:"Bearer "+state.trainerToken},cache:"no-store"});
+       if(!response.ok)throw Error("Foto belum tersedia");
+       const url=URL.createObjectURL(await response.blob());
+       if(!node.isConnected){URL.revokeObjectURL(url);return}
+       const img=document.createElement("img");img.src=url;img.alt="Foto hunting "+slot+" karya "+p.name;
+       img.onload=()=>URL.revokeObjectURL(url);node.replaceChildren(img);
+      }catch{if(node.isConnected)node.textContent="Foto belum tersedia."}
+     })();
+    }
+   }
    const preview=$("#inspect [data-edfat-trainer-preview]");
    if(preview&&state.trainerRole==="trainer"){
     const slot=Number(preview.dataset.edfatTrainerPreview);
