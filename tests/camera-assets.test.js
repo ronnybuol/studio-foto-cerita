@@ -53,5 +53,5 @@ test("foto simulator LCD dan peserta tampil utuh tanpa cropping atau distorsi",(
  assert.match(after,/\.scene\.photo-camera-scene>\.photo-main,[\s\S]*?\.scene\.photo-camera-scene>\.photo-motion\s*\{\s*object-fit:contain;/);
  assert.match(after,/\.lcd-camera-photo \.scene\.photo-camera-scene\s*\{[\s\S]*?width:min\(100%,72vh\);[\s\S]*?max-height:none;[\s\S]*?aspect-ratio:3\/2;/);
  assert.match(after,/\.participant-camera-image \.scene\.photo-camera-scene\s*\{[\s\S]*?width:100%;[\s\S]*?height:auto;[\s\S]*?aspect-ratio:3\/2;/);
- assert.match(html,/styles\.css\?v=20261114-participant-guide-v8/);
+ assert.match(html,/styles\.css\?v=20261115-composition-ab-v9/);
 });
