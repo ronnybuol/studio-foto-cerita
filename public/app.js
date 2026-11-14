@@ -758,7 +758,7 @@ function edfatTrainerPanel(data,isMentor){
  const i=state.presentation.slide>=EDFAT_START&&state.presentation.slide<=EDFAT_END?state.presentation.slide:EDFAT_START;
  const slide=edfatSlide(i),theory=state.presentation.view==="theory";
  return `<section class="card edfat-trainer-card"><div class="trainer-demo-heading">
- <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 3</span><h2>Detektif EDFAT</h2><p class="small-note">Tujuh slide observasi, satu foto besar per slide, lalu lima misi foto individu.</p></div>
+ <div><span class="eyebrow">PRESENTASI INTERAKTIF · BAB 3</span><h2>Detektif EDFAT</h2><p class="small-note">Tujuh slide pembelajaran, lalu satu foto hunting pilihan peserta untuk dianalisis.</p></div>
  <span class="pill ${active?"green":"gray"}">${active?"● TAHAP 03 AKTIF":"BUKA TAHAP 03"}</span></div>
  ${theory?`<div class="edfat-trainer-preview">
  <div class="edfat-trainer-notes"><span class="eyebrow">SLIDE ${edfatLabel(i)}/07</span><h3>${escapeHtml(slide.title)}</h3>
@@ -767,31 +767,35 @@ function edfatTrainerPanel(data,isMentor){
  <div class="trainer-slide-nav"><button class="btn subtle" data-edfat-slide-step="-1" ${i===EDFAT_START||isMentor?"disabled":""}>← Sebelumnya</button><strong>Slide ${edfatLabel(i)} / 07</strong><button class="btn primary" data-edfat-slide-step="1" ${i===EDFAT_END||isMentor?"disabled":""}>Berikutnya →</button></div>
  <div class="edfat-slide-dots">${EDFAT_SLIDES.map((x,j)=>`<button class="theory-dot" data-edfat-slide="${EDFAT_START+j}" aria-pressed="${i===EDFAT_START+j}" ${isMentor?"disabled":""} title="${escapeHtml(x.title)}">${edfatLabel(EDFAT_START+j)}</button>`).join("")}</div>
  <div class="actions"><button class="btn primary" data-edfat-mode="simulator" ${isMentor?"disabled":""}>Buka Misi Detektif peserta →</button></div>`:
- `<div class="trainer-theory-compact"><div><strong>Misi Detektif sedang terbuka</strong><p class="small-note">Peserta menilai lima foto, memilih pendekatan dominan, dan menulis alasan. Jawaban terlihat pada manajemen peserta.</p></div>
+ `<div class="trainer-theory-compact"><div><strong>Misi Detektif sedang terbuka</strong><p class="small-note">Peserta memilih satu foto hunting sendiri, menentukan unsur EDFAT dominan, dan menjelaskan alasannya. Jawaban dapat ditinjau pada manajemen peserta.</p></div>
  <button class="btn subtle" data-edfat-mode="theory" ${isMentor?"disabled":""}>← Kembali ke slide</button></div>
  <div class="edfat-trainer-mission"><span class="eyebrow">TANTANGAN UNTUK DISKUSI KELAS</span>
  <p>Apakah satu foto bisa mengandung lebih dari satu unsur EDFAT? Mintalah peserta menjelaskan informasi apa yang terlihat.</p></div>`}
  <p class="small-note">LCD dan peserta mengikuti mode trainer. Misi peserta dikerjakan sendiri pada perangkat masing-masing.</p>
+ <section class="edfat-trainer-submissions"><h3>Foto pilihan peserta · ${(data.participants||[]).filter(p=>p.answers?.edfat?.mode==="hunting").length} karya</h3>
+ <p class="small-note">Buka detail peserta untuk melihat pratinjau foto, atau langsung sorot analisis yang tersimpan di LCD.</p>
+ <div class="edfat-submission-grid">${(data.participants||[]).filter(p=>p.answers?.edfat?.mode==="hunting").map(p=>`
+ <div class="edfat-submission"><b>${escapeHtml(p.name)}</b><span>Foto ${Number(p.answers.edfat.photoSlot)||"—"} · ${escapeHtml(p.answers.edfat.dominant||"—")}</span>
+ <p>${escapeHtml(p.answers.edfat.reason||"Belum ada alasan")}</p>
+ <div class="actions"><button class="btn small subtle" data-inspect="${escapeHtml(p.id)}">Lihat foto &amp; analisis</button>
+ <button class="btn small primary" data-spotlight-id="${escapeHtml(p.id)}" data-spotlight-module="edfat" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div></div>`).join("")||`<p class="small-note">Belum ada peserta yang menyimpan foto pilihan EDFAT.</p>`}</div></section>
  </section>`;
 }
 function edfatPage(){
- const saved=state.work.edfat||{},answers=saved.answers||{},reasons=saved.reasons||{};
- const cases=EDFAT_CASES.map((x,i)=>`<section class="edfat-case card" data-edfat-case="${x.id}">
- <div class="edfat-case-top"><span class="eyebrow">KASUS ${String(i+1).padStart(2,"0")} / ${EDFAT_CASES.length}</span><h3>${escapeHtml(x.question)}</h3></div>
- <figure class="edfat-figure"><div class="edfat-photo"><img src="${edfatPhoto(x.image)}" alt="Foto kasus ${i+1} dari dokumentasi musik bambu Sangihe" loading="lazy" decoding="async"></div>
- <figcaption>Foto: Ronny Adolof Buol · Sangihe, September 2017</figcaption></figure>
- <fieldset class="edfat-options"><legend>Pendekatan yang paling menonjol</legend>
- ${EDFAT_OPTIONS.map(option=>`<label class="edfat-option"><input type="radio" name="edfat-${x.id}" value="${option}" data-edfat-choice="${x.id}" ${answers[x.id]===option?"checked":""}><span>${option}</span></label>`).join("")}</fieldset>
- <label for="edfat-reason-${x.id}">Petunjuk apa pada foto yang mendukung pilihanmu?</label>
- <textarea id="edfat-reason-${x.id}" data-edfat-reason="${x.id}" rows="2" placeholder="Tuliskan apa yang benar-benar terlihat pada foto…">${escapeHtml(reasons[x.id]||"")}</textarea>
- </section>`).join("");
- return `${titleBlock("edfat")}<div class="card edfat-mission-intro"><span class="eyebrow">MISI DETEKTIF · 5 KASUS FOTO</span>
- <h2>Satu foto, banyak petunjuk.</h2><p>Amati setiap foto musik bambu Sangihe. Pilih pendekatan EDFAT yang paling menonjol, lalu jelaskan petunjuk visual yang mendukung jawabanmu.</p>
- <p class="small-note">EDFAT bukan label mutlak. Penilaian terutama pada alasan pengamatan, bukan sekadar pilihan istilah.</p></div>
+ const saved=state.work.edfat||{},chosen=Number(saved.photoSlot)||null;
+ return `${titleBlock("edfat")}<div class="card edfat-mission-intro"><span class="eyebrow">MISI DETEKTIF · KARYA HUNTING-MU</span>
+ <h2>Pilih satu foto. Temukan petunjuknya.</h2><p>Unggah maksimal 12 foto hunting sendiri. Ketuk <strong>Pilih untuk EDFAT</strong> pada satu foto yang sudah tersimpan di server. Kemudian tentukan pendekatan EDFAT yang paling menonjol dan tuliskan bukti visualnya.</p>
+ <p class="small-note">Satu foto dapat mengandung beberapa unsur EDFAT; pilih yang paling kuat lalu jelaskan apa yang benar-benar terlihat.</p></div>
  ${huntingPanelHTML()}
- <div class="edfat-case-list">${cases}</div>
- <div class="card edfat-submit"><p><strong>${Object.keys(answers).length} dari ${EDFAT_CASES.length} kasus dipilih.</strong> Alasan harus memuat minimal 12 karakter setiap kasus.</p>
- <div class="actions"><button id="save-edfat" class="btn primary">Simpan hasil penyelidikan ✓</button></div><p id="edfat-feedback" class="small-note" role="status" aria-live="polite"></p></div>`;
+ <section class="edfat-case card" id="edfat-hunting-work"><div class="edfat-case-top"><span class="eyebrow">ANALISIS FOTO PILIHAN</span>
+ <h3 id="edfat-selected-label">${chosen?"Foto "+chosen+" dipilih":"Belum memilih foto hunting"}</h3></div>
+ <fieldset class="edfat-options"><legend>Unsur EDFAT paling menonjol</legend>
+ ${EDFAT_OPTIONS.map(option=>`<label class="edfat-option"><input type="radio" name="edfat-dominant" value="${option}" data-edfat-dominant ${saved.dominant===option?"checked":""}><span>${option}</span></label>`).join("")}</fieldset>
+ <label for="edfat-hunting-reason">Apa yang benar-benar terlihat dalam foto sehingga kamu memilih unsur tersebut?</label>
+ <textarea id="edfat-hunting-reason" rows="4" maxlength="1400" placeholder="Contoh: Saya memilih Detail karena ...">${escapeHtml(saved.reason||"")}</textarea>
+ <p class="small-note">Alasan minimal 12 karakter. Tidak perlu menebak fakta yang tidak tampak dalam foto.</p></section>
+ <div class="card edfat-submit"><p><strong>Foto pilihan: ${chosen?"Foto "+chosen:"belum dipilih"}</strong></p>
+ <div class="actions"><button id="save-edfat" class="btn primary">Simpan analisis foto ✓</button></div><p id="edfat-feedback" class="small-note" role="status" aria-live="polite"></p></div>`;
 }
 function shotSvg(i){
 const palettes=[["#779da2","#e4c08f","#ae633e"],["#697c7d","#c9aa7c","#af6d38"],["#496e73","#e0bb8e","#cc6638"],["#8a9d92","#dcc6a3","#976a52"],["#485b5d","#d4ad77","#9c5132"],["#6d817c","#e2af7b","#b87948"]];
@@ -1023,21 +1027,34 @@ function bindLessons(){
   updateCamera();
  }
  if(state.active==="komposisi"&&$("#save-comp"))bindCompositionChallenge();
- if(state.active==="edfat"&&$("#hunting-upload-panel"))bindHuntingUI({getUser:()=>state.user,getOnline:()=>state.online&&!state.locked,onNotice:toast});
- if(state.active==="edfat"&&$("#save-edfat")){
-  const current={answers:{...(state.work.edfat?.answers||{})},reasons:{...(state.work.edfat?.reasons||{})}};
-  $$("[data-edfat-choice]").forEach(input=>input.onchange=()=>{
-   current.answers[input.dataset.edfatChoice]=input.value;
-   state.work.edfat={...current,_draft:true};saveWork();
-   const counter=$(".edfat-submit strong");if(counter)counter.textContent=Object.keys(current.answers).length+" dari "+EDFAT_CASES.length+" kasus dipilih.";
-  });
-  $$("[data-edfat-reason]").forEach(textarea=>textarea.oninput=()=>{current.reasons[textarea.dataset.edfatReason]=textarea.value;state.work.edfat={...current,_draft:true};saveWork()});
-  $("#save-edfat").onclick=async()=>{
-   const missing=EDFAT_CASES.find(x=>!EDFAT_OPTIONS.includes(current.answers[x.id])||(current.reasons[x.id]||"").trim().length<12);
-   if(missing){const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Lengkapi pilihan dan alasan minimal 12 karakter untuk setiap kasus.";toast("Lengkapi lima jawaban beserta alasannya");return}
+ if(state.active==="edfat"&&$("#hunting-upload-panel")){
+  const current={mode:"hunting",photoSlot:Number(state.work.edfat?.photoSlot)||null,
+    dominant:state.work.edfat?.dominant||"",reason:state.work.edfat?.reason||""};
+  const recordDraft=()=>{state.work.edfat={...current,_draft:true};saveWork()};
+  bindHuntingUI({getUser:()=>state.user,getOnline:()=>state.online&&!state.locked,
+   getSelected:()=>current.photoSlot,onSelect:slot=>{
+    current.photoSlot=slot;recordDraft();
+    const label=$("#edfat-selected-label");if(label)label.textContent="Foto "+slot+" dipilih";
+    const counter=$(".edfat-submit strong");if(counter)counter.textContent="Foto pilihan: Foto "+slot;
+    const feedback=$("#edfat-feedback");if(feedback)feedback.textContent="Foto dipilih. Tambahkan unsur EDFAT dan alasan, lalu simpan.";
+   },onNotice:toast});
+  $$("[data-edfat-dominant]").forEach(input=>input.onchange=()=>{current.dominant=input.value;recordDraft()});
+  const reason=$("#edfat-hunting-reason");
+  if(reason)reason.oninput=()=>{current.reason=reason.value;recordDraft()};
+  const save=$("#save-edfat");
+  if(save)save.onclick=async()=>{
    const feedback=$("#edfat-feedback");
-   const result=await saveAnswer("edfat",{...current,completedAt:new Date().toISOString()});
-   if(feedback?.isConnected)feedback.textContent=answerSaveMessage(result);
+   if(!Number.isInteger(current.photoSlot)||current.photoSlot<1||current.photoSlot>12){
+    if(feedback)feedback.textContent="Pilih satu foto yang sudah tersimpan di server.";return;
+   }
+   if(!EDFAT_OPTIONS.includes(current.dominant)||(current.reason||"").trim().length<12){
+    if(feedback)feedback.textContent="Pilih unsur EDFAT dan tulis alasan minimal 12 karakter.";return;
+   }
+   save.disabled=true;
+   try{
+    const result=await saveAnswer("edfat",{...current,reason:current.reason.trim(),completedAt:new Date().toISOString()});
+    if(feedback?.isConnected)feedback.textContent=answerSaveMessage(result);
+   }finally{if(save.isConnected)save.disabled=false}
   };
  }
  if(state.active==="story"&&$("#save-story")){
@@ -1250,6 +1267,7 @@ function answerDetails(key,v){
  }
  if(key==="komposisi"&&v.challenges)return `<div class="edfat-answer-review">${COMPOSITION_CHALLENGES.map((item,i)=>`<p><b>${i+1}. ${escapeHtml(item.title)} · Foto ${escapeHtml(v.challenges[item.id]?.choice||"Belum dipilih")}</b><br>${escapeHtml(v.challenges[item.id]?.reason||"Belum ada alasan")}</p>`).join("")}</div>`;
  if(key==="komposisi")return `<p class="small-note">Posisi: <b>${escapeHtml(v.position||"–")}</b> · Jarak: <b>${escapeHtml(v.distance||"wide")}</b> · Sudut: <b>${escapeHtml(v.angle||"eye")}</b> · Garis: <b>${v.grid?"Ya":"Tidak"}</b> · Framing: <b>${v.frame?"Ya":"Tidak"}</b></p><p class="small-note"><b>Alasan:</b> ${escapeHtml(v.reason||"Belum dicatat")}</p>`;
+ if(key==="edfat"&&v.mode==="hunting")return `<div class="edfat-answer-review"><p><b>Foto hunting ${Number(v.photoSlot)||"—"} · ${escapeHtml(v.dominant||"Belum dipilih")}</b><br>${escapeHtml(v.reason||"Belum ada alasan")}</p><div class="edfattrainer-photo" data-edfat-trainer-preview="${Number(v.photoSlot)||0}">Memuat pratinjau foto hunting…</div></div>`;
  if(key==="edfat")return Array.isArray(EDFAT_CASES)&&v.answers
  ?`<div class="edfat-answer-review">${EDFAT_CASES.map((x,i)=>`<p><b>${i+1}. ${escapeHtml(x.recommended)} — ${escapeHtml(v.answers[x.id]||"–")}</b><br>${escapeHtml(v.reasons?.[x.id]||"Belum ada alasan")}</p>`).join("")}</div>`
  :`<p class="small-note">Pilihan EDFAT lama: <b>${escapeHtml(v.answer||"–")}</b></p>`;
@@ -1313,6 +1331,11 @@ function lcdSpotlightContent(spot){
    ${[["subject","Tokoh / sumber"],["permission","Izin dan batasan"],["frames","Bingkai yang dicari"],["verify","Verifikasi fakta"],["safety","Martabat dan keselamatan"]].map(([key,label])=>`<div><b>${label}</b><p>${escapeHtml(a.plan?.[key]||"Belum dicatat")}</p></div>`).join("")}
    </div><p class="ethics-spotlight-prompt">Diskusi: Apa keputusan etis paling penting sebelum liputan ini dimulai?</p>
    </div>${ethicsVisual(ETHICS_END)}</div>`;
+ }
+ if(spot.module==="edfat"&&a.mode==="hunting"){
+  const slot=Number(a.photoSlot)||0;
+  const url="/lensa-muda/api/spotlight/photo?participant="+encodeURIComponent(spot.participantId)+"&slot="+slot;
+  return `<div class="edfat-hunting-spotlight"><div class="edfat-hunting-spotlight-photo"><img src="${url}" alt="Foto hunting ${slot} karya ${name}" decoding="async"></div><div class="edfat-hunting-spotlight-copy"><span class="kicker">KARYA PILIHAN · DETEKTIF EDFAT</span><h1>${name}</h1><h2>Foto ${slot} · ${escapeHtml(a.dominant||"—")}</h2><p>${escapeHtml(a.reason||"Belum ada alasan.")}</p><div class="theory-question"><span>DISKUSI KELAS</span><strong>Unsur lain apa yang juga terlihat?</strong></div></div></div>`;
  }
  if(spot.module==="edfat"){
   return `<div class="spotlight-generic"><span class="kicker">SOROTAN KARYA · ${label}</span><h1>${name}</h1>
@@ -1609,6 +1632,24 @@ function bindDashboard(){
        :"Belum ada hasil tersimpan."
    }</div>`;
    bindSpotlight($("#inspect"));
+   const preview=$("#inspect [data-edfat-trainer-preview]");
+   if(preview&&state.trainerRole==="trainer"){
+    const slot=Number(preview.dataset.edfatTrainerPreview);
+    if(slot>=1&&slot<=12){
+     void (async()=>{
+      try{
+       const response=await fetch(PUBLIC_BASE+"/api/trainer/hunting/photo/"+encodeURIComponent(p.id)+"/"+slot,{
+        headers:{Authorization:"Bearer "+state.trainerToken},cache:"no-store"});
+       if(!response.ok)throw Error("Foto belum tersedia di server");
+       const url=URL.createObjectURL(await response.blob());
+       if(!preview.isConnected){URL.revokeObjectURL(url);return}
+       preview.innerHTML="";const img=document.createElement("img");img.src=url;img.alt="Foto hunting "+slot+" karya "+p.name;
+       img.onload=()=>URL.revokeObjectURL(url);
+       preview.append(img);
+      }catch{if(preview.isConnected)preview.textContent="Pratinjau foto belum tersedia."}
+     })();
+    }
+   }
  });
  const filter=$("#participant-filter");
  if(filter)filter.oninput=()=>{const q=filter.value.trim().toLowerCase();$$("[data-participant-row]").forEach(tr=>tr.hidden=!tr.dataset.participantRow.includes(q))};
@@ -1843,7 +1884,7 @@ function lcdPage(){
    ?`<div class="lcd-theory-intro"><span class="kicker">BAB 3 · DETEKTIF EDFAT</span><span class="theory-slide-indicator">SLIDE ${edfatLabel(state.presentation.slide)} / ${EDFAT_SLIDES.length}</span></div>${edfatSlideHTML(state.presentation.slide,"lcd")}`
    :stage===3
    ?`<div class="edfat-lcd-mission"><span class="kicker">TAHAP 03 · MISI DETEKTIF</span><h1>Amati. Temukan petunjuk. <em>Jelaskan alasan.</em></h1>
-   <p>Lima foto, lima pendekatan EDFAT. Peserta memilih sendiri dari HP dan menjelaskan petunjuk nyata pada foto.</p>
+   <p>Pilih satu dari maksimal 12 foto hunting yang sudah terunggah. Tentukan unsur EDFAT yang paling menonjol dan jelaskan bukti visualnya.</p>
    ${edfatVisual(EDFAT_END)}
    <div class="theory-question"><span>DISKUSI KELAS</span><strong>Apakah satu foto hanya dapat memuat satu unsur EDFAT?</strong></div></div>`
    :stage===2 && state.presentation.view==="theory"

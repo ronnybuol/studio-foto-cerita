@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {EDFAT_START,EDFAT_END,EDFAT_SLIDES,EDFAT_CASES,EDFAT_OPTIONS,edfatSlide,edfatLabel,edfatVisual,edfatPhoto} from "../public/edfat.js";
 
-test("Modul 03 memiliki tujuh slide teori dan lima kasus EDFAT dari foto dokumentasi Sangihe",()=>{
+test("Modul 03 mempertahankan tujuh slide teori dan lima contoh EDFAT; slide akhir briefing hunting",()=>{
  assert.equal(EDFAT_START,32);
  assert.equal(EDFAT_END,38);
  assert.equal(EDFAT_SLIDES.length,7);
@@ -30,7 +30,7 @@ test("Modul 03 memiliki tujuh slide teori dan lima kasus EDFAT dari foto dokumen
   assert.ok(edfatPhoto(c.image).startsWith("/lensa-muda/assets/composition/"));
  }
 });
-test("Alur EDFAT mengikuti pembukaan tahap, slide LCD, dan latihan individu",()=>{
+test("Alur EDFAT mengikuti pembukaan tahap, slide LCD, dan pilihan foto hunting pribadi",()=>{
  const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
  const api=readFileSync(new URL("../src/index.js",import.meta.url),"utf8");
  const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
@@ -41,8 +41,14 @@ test("Alur EDFAT mengikuti pembukaan tahap, slide LCD, dan latihan individu",()=
  assert.ok(app.includes('data-edfat-mode="simulator"'));
  assert.ok(app.includes('stage===3&&state.presentation.view==="theory"'));
  assert.ok(app.includes('saveAnswer("edfat"'));
- assert.ok(app.includes('state.work.edfat?.answers'));
- assert.ok(app.includes('EDFAT_CASES.find('));
+ assert.ok(app.includes('state.work.edfat?.photoSlot'));
+ assert.ok(app.includes('data-edfat-dominant'));
+ assert.ok(app.includes('data-edfat-trainer-preview'));
+ assert.ok(app.includes('/api/spotlight/photo?participant='));
+ assert.ok(app.includes('onSelect:slot=>'));
+ assert.ok(api.includes('answer?.mode==="hunting"'));
+ assert.ok(api.includes('photoSlot!==slot'));
+ assert.ok(api.includes('const trainerPhoto='));
  assert.ok(api.includes('data.slide>56'));
  assert.ok(css.includes('.edfat-learner-theory .edfat-lead'));
  assert.ok(css.includes('object-fit:contain'));
