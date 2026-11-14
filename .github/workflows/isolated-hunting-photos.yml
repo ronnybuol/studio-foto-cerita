@@ -1,0 +1,49 @@
+name: Isolated R2 hunting photo upload test
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/**
+      - public/photo-hunting.js
+      - public/hunting-ui.js
+      - scripts/hunting-photo-smoke-local.mjs
+      - schema.sql
+      - .github/workflows/isolated-hunting-photos.yml
+permissions:
+  contents: read
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Create disposable local Cloudflare resources and test secrets
+        shell: bash
+        run: |
+          cat > .dev.vars <<'EOF'
+          TRAINER_PIN=local-trainer-12345
+          MENTOR_PIN=local-mentor-12345
+          SESSION_SECRET=local-hunting-test-only-123456
+          EOF
+          npx wrangler d1 execute lensa-muda-db --local --file=schema.sql
+      - name: Run upload test with isolated Worker R2 and D1
+        shell: bash
+        run: |
+          set -e
+          npx wrangler dev --local --ip 127.0.0.1 --port 8787 > /tmp/studio-hunting.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8787/lensa-muda/api/state > /dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          if ! node scripts/hunting-photo-smoke-local.mjs; then
+            echo "Local worker error detail:"
+            tail -n 120 /tmp/studio-hunting.log
+            exit 1
+          fi
