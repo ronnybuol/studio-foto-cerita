@@ -1800,3 +1800,43 @@ body.closing-visible #root>.closing-lcd-page{min-height:100vh;min-height:100svh;
  .closing-contact strong{font-size:21px}
  .closing-credit{font-size:10px;margin-top:8px}
 }
+
+/* Final take-home booklet on the synchronized closing slide. */
+.closing-booklet{display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,1.6vw,24px);
+  width:min(100%,660px);padding:clamp(10px,1.1vw,16px);background:rgba(8,21,36,.80);
+  border:1px solid rgba(255,255,255,.30);border-radius:12px;backdrop-filter:blur(6px)}
+.closing-booklet>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.closing-booklet-head{color:#ffbb84;font-weight:850;letter-spacing:.08em;font-size:clamp(10px,.75vw,13px)}
+.closing-booklet strong{font-size:clamp(15px,1.32vw,23px);line-height:1.2}
+.closing-booklet-button{display:inline-block;background:#e66b30;color:#fff!important;font-weight:800;
+  text-decoration:none!important;padding:9px 11px;border-radius:8px;font-size:clamp(12px,.9vw,16px)}
+.closing-booklet-url{font-size:clamp(10px,.66vw,12px);color:#dae2ed;overflow-wrap:anywhere}
+.closing-booklet>a{display:block;padding:7px;background:#fff;border-radius:9px;flex:none;line-height:0}
+.closing-booklet img{width:clamp(88px,8vw,128px);height:auto;aspect-ratio:1;image-rendering:pixelated}
+.closing-slide:has(.closing-booklet) .closing-slide-content{gap:clamp(7px,.7vw,13px);padding-top:12px;padding-bottom:12px}
+.closing-slide:has(.closing-booklet) .closing-slide h1{font-size:clamp(46px,6.2vw,110px)}
+.closing-slide:has(.closing-booklet) .closing-contact{padding-top:10px;margin-top:4px}
+.closing-slide:has(.closing-booklet) .closing-credit{margin-top:2px}
+.closing-booklet-control{margin:16px 0;border:1px solid #d4d7de;border-radius:10px;padding:16px;background:#f8fafb}
+.closing-booklet-control>b{display:block;margin-bottom:7px}
+.closing-booklet-control input[type=file]{display:block;margin:12px 0;max-width:100%}
+@media(max-width:760px){
+ .closing-booklet{gap:9px;padding:9px}
+ .closing-booklet img{width:84px}
+ .closing-booklet-button{font-size:12px;padding:8px}
+ .closing-slide:has(.closing-booklet) .closing-slide-content{gap:6px;padding:12px 18px 18px}
+ .closing-slide:has(.closing-booklet) .closing-slide h1{font-size:clamp(35px,10vw,56px)}
+ .closing-slide:has(.closing-booklet) .closing-subtitle{font-size:clamp(14px,3.6vw,20px)}
+ .closing-slide:has(.closing-booklet) .closing-message{font-size:12px}
+ .closing-slide:has(.closing-booklet) .closing-contact{font-size:13px;padding-top:6px;gap:3px}
+ .closing-slide:has(.closing-booklet) .closing-contact strong{font-size:17px}
+ .closing-booklet-head{font-size:9px}.closing-booklet-url{font-size:9px}
+}
+@media(max-height:670px) and (min-width:761px){
+ .closing-slide:has(.closing-booklet) .closing-slide-content{gap:5px}
+ .closing-slide:has(.closing-booklet) .closing-slide h1{font-size:clamp(40px,5vw,76px)}
+ .closing-slide:has(.closing-booklet) .closing-subtitle{font-size:18px}
+ .closing-slide:has(.closing-booklet) .closing-message{font-size:13px}
+ .closing-slide:has(.closing-booklet) .closing-credit{display:none}
+ .closing-booklet img{width:84px}
+}

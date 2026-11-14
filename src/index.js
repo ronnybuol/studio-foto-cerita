@@ -237,6 +237,37 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
 
+  // Take-home handbook, public download remains available even after class lock.
+  // The PDF may be uploaded once from trainer dashboard; no participant data is stored.
+  const bookletKey="lecture/lensa-muda/Buku_Saku_Lensa_Muda_2026.pdf";
+  if(method==="GET"&&path==="/api/booklet/status"){
+    return output({ready:env.PHOTO_BUCKET?!!(await env.PHOTO_BUCKET.head(bookletKey)):false});
+  }
+  if(path==="/api/booklet/pdf"){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan PDF belum terhubung",503);
+    if(method==="PUT"){
+      const admin=await access(req,env);
+      if(!admin)return failure("Autentikasi trainer diperlukan",401);
+      if(admin.role!=="trainer")return failure("Hanya trainer boleh menerbitkan buku saku",403);
+      if(Number(req.headers.get("Content-Length")||0)>5*1024*1024)return failure("PDF maksimal 5 MB",413);
+      const bytes=new Uint8Array(await req.arrayBuffer());
+      const magic=String.fromCharCode(...bytes.slice(0,5));
+      if(bytes.length<1024||bytes.length>5*1024*1024||magic!=="%PDF-")
+        return failure("Berkas PDF tidak valid atau terlalu besar",415);
+      await env.PHOTO_BUCKET.put(bookletKey,bytes,{httpMetadata:{contentType:"application/pdf"},
+        customMetadata:{program:"Lensa Muda 2026",type:"buku saku peserta"}});
+      return output({ok:true,bytes:bytes.length});
+    }
+    if(method==="GET"){
+      const item=await env.PHOTO_BUCKET.get(bookletKey);
+      if(!item)return failure("Buku saku PDF belum diterbitkan. Gunakan halaman buku saku digital.",404);
+      return new Response(item.body,{headers:{
+       "Content-Type":"application/pdf",
+       "Content-Disposition":"attachment; filename=\"Buku_Saku_Lensa_Muda_2026.pdf\"",
+       "Cache-Control":"public, max-age=300","X-Content-Type-Options":"nosniff"}});
+    }
+    return failure("Metode tidak didukung",405);
+  }
   // Optional full-screen closing slide. The classroom is not locked and answers
   // remain intact; closingVisible is a reversible presentation override.
   const closingPhotoKey="lecture/lensa-muda/closing-silhouette.jpg";
