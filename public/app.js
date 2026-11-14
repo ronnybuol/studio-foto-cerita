@@ -653,9 +653,40 @@ function captionPage(){
  <section class="card caption-reminder"><h3>Catatan editorial</h3><p>Rangkaian ini dokumentasi musik bambu Sangihe, September 2017. Nama, gelar, tujuan kegiatan, dan rincian penghargaan tidak boleh ditambahkan sebagai fakta tanpa sumber yang dapat diperiksa.</p></section>`;
 }
 function countWords(v){return v.trim()?v.trim().split(/\s+/).length:0}
+const ETHICS_PLAN_FIELDS=[
+ ["topic","Cerita budaya apa yang ingin kamu dokumentasikan?","Contoh: proses pembuatan alat musik, aktivitas latihan, atau tradisi di lingkunganmu"],
+ ["subject","Siapa yang perlu kamu ajak bicara?","Tokoh, pembuat, pelaku kegiatan, atau anggota komunitas"],
+ ["permission","Apa yang harus kamu tanyakan atau minta izin terlebih dahulu?","Batasan pengambilan gambar, privasi, kesepakatan dengan subjek"],
+ ["frames","Foto apa saja yang akan dicari?","Foto konteks, tokoh, proses, detail, interaksi, momen, dan penutup"],
+ ["verify","Fakta apa yang perlu diperiksa dan kepada siapa?","Nama, fungsi kegiatan, lokasi, waktu, riwayat, makna, serta sumber informasi"],
+ ["safety","Bagaimana menjaga keselamatan dan martabat subjek?","Risiko bagi orang yang dipotret, adat setempat, dan cara mempublikasikan karya"]
+];
 function ethicsPage(){
-const saved=state.work.etika||{};
-return `${titleBlock("etika")}<div class="card"><h2>Kuis keputusan di lapangan</h2><p class="small-note">Pilih tindakan yang paling bertanggung jawab. Setelah dikirim, pembahasannya akan muncul.</p><form id="ethics-form">${ETHICS.map((e,i)=>`<div class="question"><h3>${i+1}. ${escapeHtml(e.q)}</h3>${e.a.map((choice,j)=>`<label><input type="radio" name="q${i}" value="${j}" ${saved.answers?.[i]===j?"checked":""}>${escapeHtml(choice)}</label>`).join("")}</div>`).join("")}<button class="btn primary" type="submit">Periksa & simpan jawaban ✓</button></form><div id="ethics-result" style="margin-top:14px"></div></div><div class="card" style="margin-top:16px"><h3>Checklist hunting budaya</h3><div class="small-note">□ Tentukan cerita dan tokoh yang ingin dipahami<br>□ Cari informasi latar dan izin yang diperlukan<br>□ Siapkan variasi Entire, Detail, Frame, Angle, Time<br>□ Ambil gambar asli, bukan adegan yang direkayasa<br>□ Catat nama, waktu, lokasi, dan informasi yang terverifikasi<br>□ Pilih sembilan foto landscape yang saling melengkapi<br>□ Tulis satu caption bersama sekitar 150 kata<br>□ Simpan file asli dan periksa aturan unggahan dari panitia</div></div>`;
+ const saved=state.work.etika||{},plan=saved.plan||{},score=Number.isInteger(saved.score)?saved.score:null;
+ return `${titleBlock("etika")}
+ <section class="card ethics-final-intro"><span class="eyebrow">TANTANGAN PENUTUP · MODUL 06</span>
+ <h2>Keputusan etis, lalu rencana karya nyata.</h2>
+ <p>Empat situasi berikut menguji alasan di balik keputusanmu. Setelah itu, siapkan rencana foto cerita budaya yang dapat kamu kerjakan secara bertanggung jawab.</p>
+ <p class="small-note">Tidak ada foto baru atau gambar rekayasa dalam latihan ini. Contoh visual berasal dari dokumentasi Sangihe karya Ronny Adolof Buol, September 2017.</p></section>
+ <form id="ethics-form" class="card ethics-final-workspace">
+ <h2>Bagian A · Empat keputusan di lapangan</h2><p class="small-note">Pilih satu respons untuk tiap situasi. Jelaskan alasan sebelum melihat pembahasannya.</p>
+ ${ETHICS.map((e,i)=>`<fieldset class="ethics-final-question"><legend>${i+1}. ${escapeHtml(e.q)}</legend>
+ ${e.a.map((choice,j)=>`<label class="ethics-option"><input type="radio" name="q${i}" value="${j}" ${saved.answers?.[i]===j?"checked":""}><span>${escapeHtml(choice)}</span></label>`).join("")}
+ <label class="ethics-reason-label" for="ethical-reason-${i}">Mengapa kamu memilih jawaban ini?</label>
+ <textarea id="ethical-reason-${i}" name="reason${i}" rows="2" maxlength="900" placeholder="Tuliskan alasan singkat dan pertimbangkan dampaknya bagi subjek…">${escapeHtml(saved.reasons?.[i]||"")}</textarea></fieldset>`).join("")}
+ <hr class="rule"><h2>Bagian B · Rencana foto cerita budaya</h2>
+ <p class="small-note">Rencana ini bukan janji publikasi. Ini langkah awal supaya kamu siap mengamati, bertanya, memotret, dan memeriksa fakta.</p>
+ <div class="ethics-plan-fields">${ETHICS_PLAN_FIELDS.map(([key,label,hint])=>`<div class="field">
+ <label for="ethical-plan-${key}">${escapeHtml(label)}</label>
+ <textarea id="ethical-plan-${key}" name="plan-${key}" rows="3" maxlength="1500" placeholder="${escapeHtml(hint)}">${escapeHtml(plan[key]||"")}</textarea></div>`).join("")}</div>
+ <div class="ethics-checklist"><h3>Periksa kesiapan karya</h3>
+ ${[["original","Saya akan menjaga keaslian momen serta menyimpan file foto asli."],["respect","Saya akan menghormati orang, privasi, serta pembatasan budaya."],["facts","Saya akan memeriksa fakta dalam caption sebelum publikasi."]].map(([key,label])=>`<label><input type="checkbox" name="check-${key}" value="yes" ${saved.checks?.[key]?"checked":""}><span>${escapeHtml(label)}</span></label>`).join("")}</div>
+ <button type="submit" class="btn primary">Periksa keputusan & simpan rencana ✓</button>
+ <p class="small-note" id="ethics-status" role="status" aria-live="polite">Draf keputusan dan rencana disimpan di perangkat selama kamu mengerjakan. Tekan Simpan untuk mengirim hasil ke trainer.</p>
+ <div id="ethics-result" class="ethics-results">${score===null?"":`<div class="info"><b>${score}/${ETHICS.length} keputusan sesuai pembahasan.</b><p>Nilai ini bahan refleksi, bukan satu-satunya ukuran etika fotografer.</p>
+ ${ETHICS.map((q,i)=>`<p><b>${i+1}. ${saved.answers?.[i]===q.correct?"✓":"Periksa kembali"}</b> ${escapeHtml(q.why)}</p>`).join("")}</div>`}</div>
+ </form>
+ <section class="card ethics-closing"><h3>Sesudah kelas</h3><p>Bawa rancangan ini untuk diskusi dengan pendamping. Cari informasi latar, sepakati akses yang menghormati subjek, siapkan variasi EDFAT, pilih sembilan bingkai yang saling melengkapi, lalu tulis narasi foto yang dapat diverifikasi.</p></section>`;
 }
 async function saveAnswer(key,payload){
  state.work[key]=payload;saveWork();
@@ -746,13 +777,36 @@ function bindLessons(){
   }
  }
  if(state.active==="etika"){
-  $("#ethics-form").onchange=e=>{const values=new FormData(e.currentTarget);state.work.etika={...(state.work.etika||{}),answers:ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)))};saveWork()};
-  $("#ethics-form").onsubmit=e=>{
-    e.preventDefault();const d=new FormData(e.currentTarget),answers=ETHICS.map((_,i)=>d.get("q"+i)===null?null:Number(d.get("q"+i)));
-    if(answers.some(x=>x===null)){toast("Jawab semua pertanyaan terlebih dahulu");return}
-    const score=answers.filter((x,i)=>x===ETHICS[i].correct).length;
-    $("#ethics-result").innerHTML=`<div class="info"><b>${score}/${ETHICS.length} keputusan tepat.</b><hr class="rule">${ETHICS.map((q,i)=>`<p><b>${i+1}. ${answers[i]===q.correct?"✓":"✕"}</b> ${escapeHtml(q.why)}</p>`).join("")}</div>`;
-    saveAnswer("etika",{answers,score});
+  const form=$("#ethics-form");
+  if(form){
+    function ethicsDraft(){
+      const values=new FormData(form);
+      const answers=ETHICS.map((_,i)=>values.get("q"+i)===null?null:Number(values.get("q"+i)));
+      const reasons=ETHICS.map((_,i)=>String(values.get("reason"+i)||"").trim());
+      const plan=Object.fromEntries(ETHICS_PLAN_FIELDS.map(([key])=>[key,String(values.get("plan-"+key)||"").trim()]));
+      const checks=Object.fromEntries(["original","respect","facts"].map(k=>[k,values.get("check-"+k)==="yes"]));
+      return {answers,reasons,plan,checks};
+    }
+    const saveDraft=()=>{state.work.etika={...(state.work.etika||{}),...ethicsDraft(),_draft:true};saveWork()};
+    form.oninput=saveDraft;
+    form.onchange=saveDraft;
+    form.onsubmit=e=>{
+      e.preventDefault();
+      const data=ethicsDraft(),status=$("#ethics-status");
+      const fail=msg=>{if(status)status.textContent=msg;toast(msg)};
+      if(data.answers.some(v=>v===null))return fail("Pilih jawaban untuk keempat situasi.");
+      if(data.reasons.some(v=>v.length<12))return fail("Jelaskan alasan tiap keputusan, minimal 12 karakter.");
+      if(ETHICS_PLAN_FIELDS.some(([key])=>(data.plan[key]||"").length<12))return fail("Lengkapi setiap bagian rencana foto cerita, minimal 12 karakter.");
+      if(Object.values(data.checks).some(v=>!v))return fail("Centang ketiga komitmen etika sebelum menyimpan.");
+      const score=data.answers.filter((v,i)=>v===ETHICS[i].correct).length;
+      const result={...data,score,completedAt:new Date().toISOString()};
+      saveAnswer("etika",result);
+      const area=$("#ethics-result");
+      if(area)area.innerHTML=`<div class="info"><b>${score}/${ETHICS.length} keputusan sesuai pembahasan.</b>
+      <p>Gunakan pembahasan ini untuk meninjau kembali alasanmu, bukan hanya menghafal jawaban.</p>
+      ${ETHICS.map((q,i)=>`<p><b>${i+1}. ${data.answers[i]===q.correct?"✓":"Periksa kembali"}</b> ${escapeHtml(q.why)}</p>`).join("")}</div>`;
+      if(status)status.textContent="Hasil telah disiapkan untuk disimpan. Periksa pesan status penyimpanan kelas.";
+    };
   }
  }
 }
