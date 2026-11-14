@@ -51,9 +51,16 @@ test("Trainer watches submissions and can review or spotlight complete stories",
 test("Sourced sample caption separates photo date from report context",async()=>{
  const {CAPTION_EXAMPLE,captionExampleHTML}=await import("../public/caption.js");
  assert.match(CAPTION_EXAMPLE.text,/9 September 2017/);
- assert.match(CAPTION_EXAMPLE.text,/Mongabay Indonesia/);
+ assert.match(CAPTION_EXAMPLE.text,/Agustinus Sasundu yang berusia 65 tahun/);
+ assert.match(CAPTION_EXAMPLE.text,/Kalpataru/);
+ assert.match(CAPTION_EXAMPLE.text,/Musik bambu dimainkan oleh satu group/);
+ assert.deepEqual(CAPTION_EXAMPLE.facts[0],["WHO","Para pemain musik bambu dan Agustinus Sasundi"]);
+ assert.deepEqual(CAPTION_EXAMPLE.facts[5],["HOW","Bambu tua dipilih, ditebang, dikeringkan, kemudian dibentuk menjadi instrumen musik."]);
  assert.equal(CAPTION_EXAMPLE.facts.length,6);
  assert.ok(captionExampleHTML().includes('CONTOH CAPTION'));
+ assert.ok(!captionExampleHTML().includes('Konteks:'));
+ assert.ok(!captionExampleHTML().includes('Tanggal pemotretan:'));
+ assert.ok(styles.includes('.caption-example-text{max-height:none;overflow:visible;'));
  assert.ok(CAPTION_SLIDES.some(s=>s.key==='caption-example'));
  assert.ok(app.includes('captionExampleHTML()'));
  assert.ok(!api.includes('data.captionText.trim().split(/\\s+/u).length<50'));
