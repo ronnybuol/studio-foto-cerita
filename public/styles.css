@@ -1559,3 +1559,36 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .hunting-photo-frame img{height:100%;width:100%;object-fit:contain;object-position:center}
 @media(max-width:900px){.hunting-photo-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.hunting-photo-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.hunting-upload-actions>*{width:100%;justify-content:center}}
+
+/* Satu timer hunting kelas: menempel ringan pada peserta, LCD dan trainer.
+   Hanya angka dihitung setiap detik, tanpa merender ulang latihan/foto. */
+.shared-hunting-timer{background:linear-gradient(135deg,#19212b,#11171e);border:1px solid #e47d3f99;border-radius:14px;color:#fff;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;padding:clamp(9px,1vw,18px);box-shadow:0 9px 30px #0006}
+.shared-hunting-timer[hidden]{display:none!important}
+.hunting-timer-eyebrow{color:#ffa26b;font-size:clamp(11px,.92vw,17px);font-weight:850;letter-spacing:.09em;line-height:1.3}
+.hunting-timer-time{font-variant-numeric:tabular-nums;font-size:clamp(32px,3.3vw,60px);letter-spacing:-.035em;line-height:1;font-weight:900}
+.hunting-timer-status{font-size:clamp(12px,1.1vw,18px);font-weight:700;color:#e4eaf0;line-height:1.3}
+.shared-hunting-timer[data-warning=true]{border-color:#f7b247;background:linear-gradient(135deg,#42301b,#231d18)}
+.shared-hunting-timer[data-status=expired]{border-color:#ff7366;background:linear-gradient(135deg,#4a2422,#211516)}
+.participant-hunting-timer{margin:12px 0;position:sticky;top:8px;z-index:25;flex-direction:row;flex-wrap:wrap;justify-content:space-between;gap:9px;padding:9px 15px}
+.participant-hunting-timer .hunting-timer-eyebrow{font-size:clamp(11px,2.8vw,15px);flex:1;min-width:120px;text-align:left}
+.participant-hunting-timer .hunting-timer-time{font-size:clamp(25px,6.8vw,39px)}
+.participant-hunting-timer .hunting-timer-status{font-size:clamp(11px,2.6vw,14px)}
+.participant-hunting-timer small{font-size:11px;color:#ccd4df}
+.lcd-hunting-timer{position:fixed;z-index:60;right:clamp(25px,3vw,70px);top:clamp(67px,7.4vh,105px);width:clamp(190px,19vw,300px);padding:12px;background:#0e141bf2;box-shadow:0 9px 35px #000c;pointer-events:none}
+.lcd-hunting-timer .hunting-timer-time{font-size:clamp(39px,4.3vw,74px)}
+.shared-timer-trainer{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.shared-timer-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.shared-timer-heading h2{font-size:clamp(21px,2vw,31px);margin:5px 0}
+.shared-timer-heading p{margin:6px 0}
+.trainer-hunting-timer{min-width:clamp(190px,23vw,320px)}
+.shared-timer-actions{display:flex;flex-wrap:wrap;gap:8px}
+.shared-timer-actions button{flex:0 1 auto}
+#shared-timer-feedback{min-height:20px;color:#c6d0db}
+@media(max-width:720px){
+ .shared-timer-heading{flex-direction:column;align-items:stretch}
+ .trainer-hunting-timer{width:100%}
+ .shared-timer-actions button{flex:1 1 140px}
+ .lcd-hunting-timer{top:75px;right:12px;width:155px;padding:8px}
+ .lcd-hunting-timer .hunting-timer-time{font-size:37px}
+ .lcd-hunting-timer .hunting-timer-eyebrow{font-size:10px}
+}
