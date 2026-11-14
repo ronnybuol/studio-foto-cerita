@@ -68,6 +68,9 @@ async function stageState(env){
 }
 const DEFAULT_CAMERA = Object.freeze({a:1,s:3,i:1});
 const DEFAULT_PRESENTATION = Object.freeze({view:"theory",slide:0});
+const STAGE_FIRST_SLIDES = [0,0,21,32,39,45,51];
+const STAGE_LAST_SLIDES = [0,20,31,38,44,50,56];
+function validControlRevision(data){return data.controlRevision===undefined||(Number.isSafeInteger(data.controlRevision)&&data.controlRevision>0)}
 const DEFAULT_COMPOSITION = Object.freeze({grid:true,frame:false,position:"center",distance:"wide",angle:"eye",preview:"distance"});
 function validComposition(c){
  return !!c&&typeof c==="object"&&!Array.isArray(c)
@@ -110,8 +113,8 @@ async function liveComposition(env){
  }
 }
 // LCD spotlight is a temporary override of what is projected; it never alters the saved presentation.
-async function liveSpotlight(env){
-  const camera=await liveCamera(env);
+async function liveSpotlight(env,snapshotCamera){
+  const camera=snapshotCamera||await liveCamera(env);
   const selected=camera?.spotlight;
   if(!selected||typeof selected!=="object"||!ANSWER_KEYS.has(selected.module)
      ||typeof selected.participantId!=="string"||!/^[0-9a-f-]{36}$/i.test(selected.participantId))return null;
@@ -122,6 +125,26 @@ async function liveSpotlight(env){
   let answer;try{answer=JSON.parse(result.payload)}catch{return null}
   if(!answer||typeof answer!=="object"||Array.isArray(answer))return null;
   return {participantId:selected.participantId,module:selected.module,name:result.name,answer};
+}
+async function sessionSnapshot(env,lockReady=true){
+ let row;
+ try{row=await env.DB.prepare(`SELECT active_stage,camera_json${lockReady?",is_locked":""} FROM sessions WHERE id=?`).bind(SESSION_ID).first()}
+ catch(error){
+  if(!/no such column:\s*camera_json/i.test(String(error?.message)))throw error;
+  row=await env.DB.prepare(`SELECT active_stage${lockReady?",is_locked":""} FROM sessions WHERE id=?`).bind(SESSION_ID).first();
+ }
+ if(!row)throw Error("Database belum disiapkan: jalankan schema.sql");
+ let camera;try{camera=JSON.parse(row.camera_json||"null")}catch{}
+ if(!validCamera(camera))camera={...DEFAULT_CAMERA};
+ return {stage:row.active_stage,locked:lockReady?Number(row.is_locked)===1:true,camera,
+  composition:compositionFromCamera(JSON.stringify(camera)),presentation:presentationFromCamera(camera),
+  controlRevision:Number.isSafeInteger(camera.controlRevision)?camera.controlRevision:0};
+}
+async function writeProjection(env,data,expression,bindings=[],condition="",conditionBindings=[]){
+ const revision=data.controlRevision??null;
+ const result=await env.DB.prepare(`UPDATE sessions SET camera_json=json_set(${expression},'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0))${condition}`)
+  .bind(...bindings,revision,new Date().toISOString(),SESSION_ID,revision,revision,...conditionBindings).run();
+ return result.meta?.changes!==0;
 }
 async function loginsTooMany(env,id){
   const row=await env.DB.prepare("SELECT failures, window_start FROM login_attempts WHERE id=?").bind(id).first();
@@ -211,9 +234,10 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
   if(method==="GET"&&path==="/api/state"){
-    const [stage,participants]=await Promise.all([stageState(env),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
-    const [camera,composition,spotlight]=await Promise.all([liveCamera(env),liveComposition(env),liveSpotlight(env)]);
-    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation:presentationFromCamera(camera),count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
+    const [snapshot,participants]=await Promise.all([sessionSnapshot(env,lockReady),env.DB.prepare("SELECT COUNT(*) AS total FROM participants WHERE session_id=?").bind(SESSION_ID).first()]);
+    const {stage,camera,composition,presentation,controlRevision}=snapshot;
+    const spotlight=await liveSpotlight(env,camera);
+    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},welcome:camera.welcome===true,orientation:camera.orientation==="registration",roster:camera.orientation==="roster",rosterPage:Number.isInteger(camera.rosterPage)?camera.rosterPage:0,rosterNames:camera.orientation==="roster"&&stage===0?(await env.DB.prepare("SELECT name FROM participants WHERE session_id=? ORDER BY created_at ASC, id ASC LIMIT 48 OFFSET ?").bind(SESSION_ID,Math.max(0,Math.min(99,Number.isInteger(camera.rosterPage)?camera.rosterPage:0))*48).all()).results.map(row=>row.name):[],presentation,count:participants?.total||0,date:"2026-11-16",title:"Studio Foto Cerita — Lensa Muda"});
   }
   if(method==="POST"&&path==="/api/participants"){
    const data=await bodyJson(req);
@@ -273,8 +297,8 @@ async function handleApi(req,env){
   }
   if(method==="GET"&&path==="/api/dashboard"){
     const user=await access(req,env);if(!user)return failure("Autentikasi trainer diperlukan",401);
-    const [stage,rows,answers]=await Promise.all([
-      stageState(env),
+    const [snapshot,rows,answers]=await Promise.all([
+      sessionSnapshot(env,lockReady),
       env.DB.prepare("SELECT id,username,name,school,class_name AS className FROM participants WHERE session_id=? ORDER BY created_at ASC").bind(SESSION_ID).all(),
       env.DB.prepare("SELECT a.participant_id,a.stage,a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.session_id=?").bind(SESSION_ID).all()
     ]);
@@ -283,8 +307,9 @@ async function handleApi(req,env){
       const target=map.get(record.participant_id);
       if(target){target.done++;try{target.answers[record.stage]=JSON.parse(record.payload)}catch{}}
     }
-    const [camera,composition,spotlight]=await Promise.all([liveCamera(env),liveComposition(env),liveSpotlight(env)]);
-    return output({stage,locked,composition,spotlight,camera:{a:camera.a,s:camera.s,i:camera.i},presentation:presentationFromCamera(camera),count:map.size,participants:[...map.values()],role:user.role});
+    const {stage,camera,composition,presentation,controlRevision}=snapshot;
+    const spotlight=await liveSpotlight(env,camera);
+    return output({stage,locked:snapshot.locked,composition,spotlight,controlRevision,camera:{a:camera.a,s:camera.s,i:camera.i},presentation,count:map.size,participants:[...map.values()],role:user.role});
   }
   if((method==="PATCH"||method==="DELETE")&&/^\/api\/participants\/[0-9a-f-]{36}$/i.test(path)){
     const admin=await access(req,env);
@@ -324,10 +349,10 @@ async function handleApi(req,env){
      if(!user)return failure("Autentikasi trainer diperlukan",401);
      if(user.role!=="trainer")return failure("Hanya trainer boleh menyorot karya peserta",403);
      const data=await bodyJson(req);
+     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
      if(data.participantId===null){
-       await env.DB.prepare("UPDATE sessions SET camera_json=json_remove(camera_json,'$.spotlight'),updated_at=? WHERE id=?")
-        .bind(new Date().toISOString(),SESSION_ID).run();
-       return output({ok:true,spotlight:null});
+       if(!await writeProjection(env,data,"json_remove(camera_json,'$.spotlight')"))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
+       return output({ok:true,spotlight:null,controlRevision:data.controlRevision});
      }
      if(typeof data.participantId!=="string"||!/^[0-9a-f-]{36}$/i.test(data.participantId)
         ||typeof data.module!=="string"||!ANSWER_KEYS.has(data.module))return failure("Peserta atau modul tidak valid",400);
@@ -335,9 +360,8 @@ async function handleApi(req,env){
        "SELECT a.payload FROM answers a JOIN participants p ON p.id=a.participant_id WHERE p.id=? AND p.session_id=? AND a.stage=?"
      ).bind(data.participantId,SESSION_ID,data.module).first();
      if(!record)return failure("Peserta belum menyimpan hasil modul tersebut",404);
-     await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.spotlight',json(?)),updated_at=? WHERE id=?")
-       .bind(JSON.stringify({participantId:data.participantId,module:data.module}),new Date().toISOString(),SESSION_ID).run();
-     return output({ok:true,spotlight:await liveSpotlight(env)});
+     if(!await writeProjection(env,data,"json_set(camera_json,'$.spotlight',json(?))",[JSON.stringify({participantId:data.participantId,module:data.module})]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
+     return output({ok:true,spotlight:await liveSpotlight(env),controlRevision:data.controlRevision});
    }
   if(method==="PUT"&&path==="/api/presentation"){
     const user=await access(req,env);
@@ -346,15 +370,19 @@ async function handleApi(req,env){
     const data=await bodyJson(req);
     if(!["theory","simulator"].includes(data.view)||!Number.isInteger(data.slide)||data.slide<0||data.slide>56)
       return failure("Mode presentasi atau nomor slide tidak valid",400);
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    if(data.stage!==undefined&&(!Number.isInteger(data.stage)||data.stage<0||data.stage>6))return failure("Tahap tidak valid",400);
+    if(data.stage>0&&data.view==="theory"&&(data.slide<STAGE_FIRST_SLIDES[data.stage]||data.slide>STAGE_LAST_SLIDES[data.stage]))return failure("Slide ini bukan bagian tahap aktif. Segarkan dashboard trainer.",409);
     try{
-      await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null),updated_at=? WHERE id=?")
-        .bind(data.view,data.slide,new Date().toISOString(),SESSION_ID).run();
+      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
+        .bind(data.view,data.slide,data.controlRevision??null,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null,data.stage??null,data.stage??null).run();
+      if(written.meta?.changes===0)return failure("Tahap atau kendali kelas sudah berubah. Segarkan status sebelum memilih slide lagi.",409);
     }catch(error){
-      if(/no such column:\\s*camera_json/i.test(String(error?.message)))
+      if(/no such column:\s*camera_json/i.test(String(error?.message)))
         return failure("Database belum memiliki kolom kamera. Terapkan migrasi 0001.",503);
       throw error;
     }
-    return output({ok:true,presentation:{view:data.view,slide:data.slide}});
+    return output({ok:true,presentation:{view:data.view,slide:data.slide},controlRevision:data.controlRevision});
   }
   if(method==="PUT"&&path==="/api/demo-composition"){
     const user=await access(req,env);
@@ -392,20 +420,20 @@ async function handleApi(req,env){
     if(!admin||admin.role!=="trainer")return failure("Hanya trainer yang dapat menampilkan orientasi",403);
     const data=await bodyJson(req);
     if(!["registration","roster"].includes(data.screen))return failure("Slide orientasi tidak valid",400);
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(data.screen==="roster"&&(!Number.isInteger(data.page)||data.page<0||data.page>99))return failure("Halaman daftar peserta tidak valid",400);
     if(await stageState(env)!==0)return failure("Slide ini hanya tersedia pada tahap 00 · Orientasi",409);
-    await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.orientation',?,'$.rosterPage',?,'$.welcome',json('false')),updated_at=? WHERE id=?")
-      .bind(data.screen,data.screen==="roster"?data.page:0,new Date().toISOString(),SESSION_ID).run();
-    return output({ok:true,orientation:data.screen,page:data.screen==="roster"?data.page:0});
+    if(!await writeProjection(env,data,"json_set(camera_json,'$.orientation',?,'$.rosterPage',?,'$.welcome',json('false'))",[data.screen,data.screen==="roster"?data.page:0]," AND active_stage=0"))return failure("Tahap atau kendali kelas sudah berubah. Segarkan status.",409);
+    return output({ok:true,orientation:data.screen,page:data.screen==="roster"?data.page:0,controlRevision:data.controlRevision});
   }
   if(method==="PUT"&&path==="/api/welcome"){
     const admin=await access(req,env);
     if(!admin||admin.role!=="trainer")return failure("Hanya trainer yang dapat mengatur layar sambutan",403);
     const data=await bodyJson(req);
     if(typeof data.active!=="boolean")return failure("Status sambutan tidak valid",400);
-    await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.welcome',json(?),'$.orientation',null),updated_at=? WHERE id=?")
-      .bind(data.active?"true":"false",new Date().toISOString(),SESSION_ID).run();
-    return output({ok:true,welcome:data.active});
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    if(!await writeProjection(env,data,"json_set(camera_json,'$.welcome',json(?),'$.orientation',null)",[data.active?"true":"false"]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
+    return output({ok:true,welcome:data.active,controlRevision:data.controlRevision});
   }
   if(method==="PUT"&&path==="/api/state"){
     const user=await access(req,env);
@@ -413,9 +441,15 @@ async function handleApi(req,env){
     if(user.role!=="trainer")return failure("Hanya trainer yang boleh mengubah tahap",403);
     const data=await bodyJson(req);
     if(!Number.isInteger(data.stage)||data.stage<0||data.stage>6)return failure("Tahap tidak valid");
-    await env.DB.prepare("UPDATE sessions SET active_stage=?,camera_json=json_set(camera_json,'$.welcome',json('false'),'$.orientation',null),updated_at=? WHERE id=?")
-      .bind(data.stage,new Date().toISOString(),SESSION_ID).run();
-    return output({stage:data.stage,ok:true});
+    if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
+    const written=await env.DB.prepare(`UPDATE sessions SET camera_json=json_set(
+      CASE WHEN active_stage<>? THEN json_remove(CASE WHEN ?>0 THEN json_set(camera_json,'$.view','theory','$.slide',?) ELSE camera_json END,'$.spotlight') ELSE camera_json END,
+      '$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),
+      active_stage=?,updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0))`)
+      .bind(data.stage,data.stage,STAGE_FIRST_SLIDES[data.stage],data.controlRevision??null,data.stage,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null).run();
+    if(written.meta?.changes===0)return failure("Kendali kelas sudah diperbarui. Segarkan status sebelum mengubah tahap lagi.",409);
+    const snapshot=await sessionSnapshot(env,lockReady);
+    return output({stage:snapshot.stage,presentation:snapshot.presentation,controlRevision:snapshot.controlRevision,ok:true});
   }
   if(method==="PUT"&&path.startsWith("/api/answers/")){
     const key=decodeURIComponent(path.slice("/api/answers/".length));

@@ -4,6 +4,11 @@
  */
 import assert from "node:assert/strict";
 import {performance} from "node:perf_hooks";
+import {COMPOSITION_START} from "../public/composition.js";
+import {EDFAT_START} from "../public/edfat.js";
+import {STORY_START} from "../public/story.js";
+import {CAPTION_START} from "../public/caption.js";
+import {ETHICS_START} from "../public/ethics.js";
 
 const base = process.env.LOAD_TEST_BASE || "http://127.0.0.1:8787";
 if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(base)) {
@@ -102,11 +107,22 @@ assert.equal(recovered.data.answers.kamera.a,1,"late old answer must not overwri
 assert.equal(recovered.data.answers.kamera._clientRevision,200,"latest revision must survive");
 const dashboard=await api("/dashboard",{token});await requireStatus(dashboard,200,"trainer answer dashboard");
 assert.equal(dashboard.data.participants.filter(p=>p.answers.kamera?._clientRevision===200).length,70,"trainer sees all 70 submitted results");
+const firstSlides=[0,0,COMPOSITION_START,EDFAT_START,STORY_START,CAPTION_START,ETHICS_START],controlBase=Date.now();
+for(let stage=1;stage<=6;stage++){
+ await requireStatus(await api("/state",{method:"PUT",payload:{stage,controlRevision:controlBase+stage*10},token}),200,"atomic stage change "+stage);
+ const projected=await api("/state");await requireStatus(projected,200,"LCD stage snapshot");
+ assert.equal(projected.data.stage,stage,"LCD stage agrees with trainer");
+ assert.equal(projected.data.presentation.view,"theory","new module starts with theory");
+ assert.equal(projected.data.presentation.slide,firstSlides[stage],"new module starts at its correct first slide");
+}
+await requireStatus(await api("/state",{method:"PUT",payload:{stage:1,controlRevision:controlBase+5},token}),409,"late old stage must be rejected");
+await requireStatus(await api("/presentation",{method:"PUT",payload:{stage:1,view:"theory",slide:0,controlRevision:controlBase+100},token}),409,"old-module slide must not overwrite current module");
+const afterLateControl=await api("/state");assert.equal(afterLateControl.data.stage,6);assert.equal(afterLateControl.data.presentation.slide,51);
 await requireStatus(await api("/state",{method:"PUT",payload:{stage:0},token}),200,"restore test orientation stage");
 await requireStatus(await api("/orientation",{method:"PUT",payload:{screen:"registration"},token}),200,"restore test registration slide");
 
 const timings=iterations.slice().sort((a,b)=>a-b);
 const percentile=p=>Number(timings[Math.min(timings.length-1,Math.ceil(p*timings.length)-1)].toFixed(0));
 const elapsed=Math.round(performance.now()-ab);
-const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","registration slide restore"]};
+const report={target:"localhost only",parallel:students,registered:students,failed:bad.length,httpStatuses:Object.fromEntries(statuses),elapsedMs:elapsed,responseTimeMs:{p50:percentile(.5),p95:percentile(.95),max:percentile(1)},checks:["70 registrations","70 unique IDs and tokens","counter equals 70","duplicate username returns 409","relogin without extra account","48+22 roster pagination","70 concurrent answer saves","late old write rejected","answer recovery","70 results visible to trainer","atomic trainer-LCD stages 01-06","late stage and old-module slides rejected","registration slide restore"]};
 console.log("LOAD TEST RESULT",JSON.stringify(report,null,2));
