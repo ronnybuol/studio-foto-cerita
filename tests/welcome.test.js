@@ -50,7 +50,7 @@ test("beranda dan LCD menggunakan hero Hong Bit yang sama, hanya aksi yang berbe
  assert.match(css,/\.welcome-shared-hero/);
  assert.match(css,/\.welcome-projector \.welcome-shared-hero/);
  assert.match(css,/\.welcome-shared-hero \.welcome-portrait/);
- assert.match(html,/app\.js\?v=20261114-orientation-v4/);
+ assert.match(html,/app\.js\?v=20261114-orientation-live-v5/);
 });
 
 test("orientasi 00 menampilkan formulir peserta yang sama dengan pendaftaran HP",()=>{
@@ -66,4 +66,24 @@ test("orientasi 00 menampilkan formulir peserta yang sama dengan pendaftaran HP"
  assert.match(worker,/path==="\/api\/orientation"/);
  assert.match(worker,/await stageState\(env\)!==0/);
  assert.match(worker,/orientation:camera\.orientation==="registration"/);
+});
+
+test("counter real-time dan daftar nama hanya saat dipicu trainer",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ assert.match(app,/orientation-registered-count/);
+ assert.match(app,/prevCount!==state.count/);
+ assert.match(app,/function orientationRosterSlide\(count,page,names\)/);
+ assert.match(app,/escapeHtml\(String\(name\)\)/);
+ assert.match(app,/trainer-show-roster/);
+ assert.match(app,/trainer-roster-next/);
+ assert.match(app,/trainer-roster-prev/);
+ assert.match(app,/rosterNames=Array.isArray\(data.rosterNames\)/);
+ assert.match(app,/prevRosterNames!==JSON.stringify\(state.rosterNames\)/);
+ assert.match(css,/\.orientation-roster-grid/);
+ assert.match(css,/\.orientation-live-counter/);
+ assert.match(worker,/camera.orientation==="roster"&&stage===0/);
+ assert.match(worker,/SELECT name FROM participants/);
+ assert.match(worker,/LIMIT 48 OFFSET/);
+ assert.match(worker,/\["registration","roster"\]/);
+ assert.match(worker,/data.screen==="roster"&&\(!Number.isInteger\(data.page\)/);
 });

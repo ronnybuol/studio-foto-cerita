@@ -1171,3 +1171,32 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 .orientation-control .btn{flex:none}
 @media(max-width:1050px){.lcd-orientation-registration{grid-template-columns:minmax(290px,41%) minmax(0,59%)}.orientation-phone{width:295px;height:610px;min-height:540px}.orientation-phone-side{padding:15px}.orientation-instructions{padding:30px 20px 35px 0}.orientation-steps{gap:11px}}
 @media(max-width:680px){.lcd-orientation-registration{grid-template-columns:1fr;min-height:0}.orientation-phone-side{height:620px}.orientation-instructions{padding:22px 25px 45px}.orientation-instructions h1{font-size:41px!important}.orientation-steps{gap:14px}}
+
+/* Orientasi 00: angka pendaftaran real-time dan daftar nama peserta di LCD. */
+.orientation-live-counter{display:flex;align-items:center;gap:19px;margin:20px 0 8px;padding:13px 18px;border:1px solid #ed89494a;border-radius:15px;background:linear-gradient(95deg,#2f201b,#171a21);max-width:520px}
+.orientation-counter-icon{color:#ff924d;letter-spacing:.13em;font-size:clamp(12px,1vw,17px);font-weight:900;white-space:nowrap}
+.orientation-live-counter>div{display:flex;align-items:center;gap:17px}
+.orientation-live-counter strong{font-size:clamp(42px,4vw,72px);line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+.orientation-live-counter>div>span{font-size:clamp(12px,1vw,18px);line-height:1.25;font-weight:800;color:#ffb582;max-width:175px}
+.count-pulse{animation:registration-count-bump .55s ease-out}
+@keyframes registration-count-bump{0%{transform:scale(1)}40%{transform:scale(1.2);color:#ff8a37}100%{transform:scale(1)}}
+.orientation-roster-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lcd-orientation-roster{position:relative;min-height:calc(100svh - 82px);padding:clamp(32px,3.5vw,65px) clamp(36px,4.5vw,90px) 35px;background:radial-gradient(ellipse at 90% 2%,#54201265 0,transparent 38%),#0c0e12;color:#fff;display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.lcd-orientation-roster:after{content:"";position:absolute;right:-65px;top:-65px;width:280px;height:280px;border:22px solid #b42b1726;transform:rotate(38deg);pointer-events:none}
+.orientation-roster-top{max-width:850px}
+.orientation-roster-top h1{margin:7px 0 10px;font-size:clamp(41px,4.2vw,78px)!important;line-height:1.07;letter-spacing:-.04em;color:#fff}
+.orientation-roster-top h1 em{color:#ff8235;font-style:normal}
+.orientation-roster-top p{font-size:clamp(15px,1.25vw,23px)!important;line-height:1.4;color:#d0d2d7;margin:0}
+.orientation-roster-count{position:absolute;top:clamp(45px,5vw,88px);right:clamp(55px,6vw,112px);display:flex;align-items:center;gap:13px}
+.orientation-roster-count strong{font-size:clamp(64px,7.5vw,140px);line-height:1;font-variant-numeric:tabular-nums;color:#ff7a32}
+.orientation-roster-count span{font-size:clamp(17px,1.4vw,25px);line-height:1.12;color:#e4e4e6;font-weight:700}
+.orientation-roster-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(12,minmax(0,1fr));grid-auto-flow:column;gap:7px 16px;flex:1;min-height:400px;margin-top:8px}
+.orientation-roster-name{display:flex;align-items:center;gap:12px;padding:8px 11px;border-radius:8px;background:#ffffff0c;border:1px solid #ffffff13;min-width:0;min-height:0}
+.orientation-roster-name>span{font-size:clamp(12px,.9vw,16px);font-weight:850;color:#fb8f4a;flex:none}
+.orientation-roster-name strong{font-size:clamp(15px,1.22vw,23px);font-weight:720;line-height:1.22;overflow-wrap:anywhere;color:#f6f6f8}
+.orientation-roster-empty{grid-column:1/-1;font-size:23px!important;align-self:center;text-align:center;color:#ccc}
+.orientation-roster-bottom{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #ffffff35;padding-top:15px;color:#cfd1d6;font-size:clamp(14px,1vw,19px)}
+.orientation-roster-bottom strong{color:#ff9655}
+@media (max-width:1200px){.orientation-roster-grid{gap:5px 10px}.orientation-roster-name{padding:5px 7px}.orientation-roster-name strong{font-size:clamp(13px,1.2vw,19px)}.orientation-roster-count{right:35px;top:45px}}
+@media (max-width:800px){.orientation-roster-count{position:static;margin-top:-12px}.orientation-roster-count strong{font-size:65px}.orientation-roster-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(24,minmax(0,1fr));grid-auto-flow:column;min-height:950px}.lcd-orientation-roster{overflow:visible}.orientation-live-counter{max-width:none}}
+@media (prefers-reduced-motion:reduce){.count-pulse{animation:none}}
