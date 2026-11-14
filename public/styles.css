@@ -1475,3 +1475,69 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
 /* Transparansi editorial: empat versi foto di laboratorium mendapat olah visual berbantuan AI. */
 .comp-photo-disclosure{display:block;font-size:clamp(10px,.82vw,13px);color:#f5b78b;font-weight:750;line-height:1.35}
 .lcd-composition-lab .comp-photo-disclosure,.comp-spotlight .comp-photo-disclosure{font-size:clamp(11px,.9vw,14px)}
+
+/* Modul 02 LCD: do not let fixed aspect-ratio + max-height crop a photo.
+   Letterbox the ORIGINAL whole image inside the allotted LCD image region. */
+.lcd-composition-lab .comp-demo-pair .comp-compare-photos{
+  align-items:start;
+  flex:none;
+  overflow:visible;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-card{
+  min-width:0;
+  max-height:none;
+  overflow:hidden;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-image{
+  aspect-ratio:auto;
+  height:clamp(180px,32vh,395px);
+  min-height:0;
+  max-height:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-image img{
+  position:static;
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  object-position:center;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-image .comp-rule-grid{
+  pointer-events:none;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-card figcaption{
+  min-height:0;
+}
+.lcd-composition-lab .comp-demo-pair .comp-compare-card figcaption span{
+  line-height:1.25;
+}
+@media(max-height:760px){
+ .lcd-composition-lab .comp-demo-pair .comp-compare-image{height:clamp(150px,28vh,285px)}
+}
+@media(max-width:600px){
+ .lcd-composition-lab .comp-demo-pair .comp-compare-image{height:clamp(100px,27vh,260px);max-height:none}
+}
+
+/* The same full-frame rule applies when a selected student's answer is projected. */
+.comp-spotlight .comp-compare-image{
+ aspect-ratio:auto;
+ height:clamp(125px,27vh,345px);
+ max-height:none;
+ min-height:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+.comp-spotlight .comp-compare-image img{
+ display:block;
+ width:100%;
+ height:100%;
+ object-fit:contain;
+ object-position:center;
+}

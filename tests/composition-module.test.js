@@ -95,3 +95,28 @@ test("empat versi foto yang diproses AI diberi label transparansi di peserta, LC
  assert.match(app,/Penyempurnaan visual berbantuan AI/);
  assert.match(css,/\.comp-photo-disclosure/);
 });
+
+test("LCD menampilkan foto lengkap: tidak memotong bingkai 3:2 dengan max-height",()=>{
+ const css=readFileSync(new URL("../public/styles.css",import.meta.url),"utf8");
+ const rules=css.slice(css.lastIndexOf("/* Modul 02 LCD: do not let"));
+ assert.match(rules,/\.lcd-composition-lab \.comp-demo-pair \.comp-compare-image\s*\{[\s\S]*?aspect-ratio:auto;/);
+ assert.match(rules,/max-height:none;/);
+ assert.match(rules,/\.lcd-composition-lab \.comp-demo-pair \.comp-compare-image img\s*\{[\s\S]*?object-fit:contain;/);
+ assert.match(rules,/@media\(max-height:760px\)/);
+ assert.match(rules,/@media\(max-width:600px\)/);
+});
+test("dashboard trainer memantau ulasan server tanpa reload dashboard dan menjaga daftar terbuka",()=>{
+ const app=readFileSync(new URL("../public/app.js",import.meta.url),"utf8");
+ assert.match(app,/async function refreshCompositionResponses\(force=false\)/);
+ assert.match(app,/await request\("\/api\/dashboard",\{auth:true\}\)/);
+ assert.match(app,/compositionResponsesLastSnapshot/);
+ assert.match(app,/data-comp-response-index/);
+ assert.match(app,/panel\.innerHTML=wrapper\.firstElementChild\.innerHTML/);
+ assert.match(app,/openIndexes\.has\(el\.dataset\.compResponseIndex\)/);
+ assert.match(app,/pageMode\(\)==="trainer"&&state\.dashboard\?\.stage===2/);
+ assert.match(app,/await refreshCompositionResponses\(\)/);
+ assert.match(app,/const compositionPanel=\$\("#comp-response-panel"\)/);
+ assert.match(app,/compositionPanel\.onclick=event=>/);
+ assert.match(app,/data-comp-spotlight-id/);
+ assert.doesNotMatch(app,/(?<!\$)\$\(["'][^"']+["'](?:,\s*panel)?\)\.(?:forEach|filter)/);
+});
