@@ -41,7 +41,9 @@ export function paintSharedHuntingTimer(timer,offsetMs=0,now=Date.now()){
  const expired=current.status==="running"&&remaining===0;
  const status=current.status==="idle"?"Belum dimulai":current.status==="finished"?"Fase selesai":current.status==="paused"?"Dijeda oleh trainer":expired?"Waktu habis — kembali berkumpul":remaining<=5*60000?"Sisa lima menit atau kurang":"Sedang berjalan";
  for(const node of document.querySelectorAll(".shared-hunting-timer")){
-  node.hidden=current.status==="idle"&&node.id!=="shared-hunting-trainer";
+  // Saat fase diakhiri, sembunyikan seluruh tampilan hitung mundur, termasuk trainer.
+  // Tombol kontrol trainer tetap ada untuk memulai fase berikutnya.
+  node.hidden=!["running","paused"].includes(current.status);
   node.dataset.status=expired?"expired":current.status;
   node.dataset.warning=remaining<=300000&&current.status==="running"?"true":"false";
   const eyebrow=node.querySelector(".hunting-timer-eyebrow");if(eyebrow)eyebrow.textContent="TIMER KELAS · "+(current.phase?phaseName(current.phase):"Belum dimulai");
