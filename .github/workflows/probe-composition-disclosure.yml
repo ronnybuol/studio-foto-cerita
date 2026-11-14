@@ -1,0 +1,39 @@
+name: Verify composition editorial disclosure live
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/probe-composition-disclosure.yml]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read-only Cloudflare check
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,time,sys
+          base="https://kelasbelajar.org/lensa-muda/"
+          for i in range(1,7):
+            try:
+              def fetch(path):
+                q=urllib.request.Request(base+path,headers={"Cache-Control":"no-cache","User-Agent":"Mozilla/5.0"})
+                with urllib.request.urlopen(q,timeout=25) as r:return r.status,r.read()
+              a,html=fetch("?disclosure-check="+str(i))
+              b,js=fetch("app.js?disclosure-check="+str(i))
+              c,css=fetch("styles.css?disclosure-check="+str(i))
+              flags={
+               "html":b"20261115-comp-photo-disclosure-v10" in html,
+               "js":b"Penyempurnaan visual berbantuan AI" in js and b'["5625","5794","5711","5712"]' in js,
+               "css":b".comp-photo-disclosure" in css,
+               "http":a==b==c==200
+              }
+              print("ATTEMPT",i,flags,flush=True)
+              if all(flags.values()):
+                print("PASS: composition editorial disclosure is live in production",flush=True)
+                sys.exit(0)
+            except Exception as e:print("ERROR",str(e),flush=True)
+            time.sleep(12)
+          sys.exit("FAIL: disclosure not yet deployed")
+          PY
