@@ -586,7 +586,7 @@ function compositionParticipantPage(i=state.presentation.slide){
 function compositionTrainerResponsePanel(data,isMentor){
  const people=(data.participants||[]),answered=people.filter(p=>p.answers?.komposisi?.challenges);
  return `<section class="card comp-response-panel" id="comp-response-panel">
-  <div class="comp-response-header"><div><span class="eyebrow">RESPONS PESERTA · MODUL 02</span><h3>Pilihan kelas dan alasan fotografer</h3><p class="small-note">Hanya jawaban yang sudah dikirim ke server. Tekan Perbarui untuk membaca jawaban terbaru, tanpa mengubah layar LCD.</p></div><button class="btn subtle" id="refresh-comp-answers">↻ Perbarui jawaban</button></div>
+  <div class="comp-response-header"><div><span class="eyebrow">RESPONS PESERTA · MODUL 02</span><span id="comp-response-updated" class="small-note" aria-live="polite">Memantau jawaban otomatis…</span><h3>Pilihan kelas dan alasan fotografer</h3><p class="small-note">Hanya jawaban yang sudah dikirim ke server. Tekan Jawaban yang dikirim peserta diperbarui otomatis sekitar 4 detik sekali. Tombol Perbarui dapat dipakai kapan saja.</p></div><button class="btn subtle" id="refresh-comp-answers">↻ Perbarui jawaban</button></div>
   <div class="comp-response-summary">${COMPOSITION_CHALLENGES.map((item,i)=>{
    const results=answered.map(p=>p.answers.komposisi.challenges[item.id]).filter(a=>["A","B"].includes(a?.choice)&&String(a.reason||"").trim().length>=15);
    const a=results.filter(x=>x.choice==="A").length,b=results.filter(x=>x.choice==="B").length;
@@ -594,11 +594,34 @@ function compositionTrainerResponsePanel(data,isMentor){
   }).join("")}</div>
   <div class="comp-response-list">${COMPOSITION_CHALLENGES.map((item,i)=>{
    const rows=answered.map(p=>({p,a:p.answers.komposisi.challenges[item.id]})).filter(x=>["A","B"].includes(x.a?.choice)&&String(x.a.reason||"").trim().length>=15);
-   return `<details class="comp-response-group" ${i===compositionChallengeIndex(state.demoComposition)?"open":""}><summary>${i+1}. ${escapeHtml(item.title)} · ${rows.length} ulasan</summary>
+   return `<details class="comp-response-group" data-comp-response-index="${i}" ${i===compositionChallengeIndex(state.demoComposition)?"open":""}><summary>${i+1}. ${escapeHtml(item.title)} · ${rows.length} ulasan</summary>
     ${rows.length?rows.map(({p,a})=>`<div class="comp-response-entry"><div><strong>${escapeHtml(p.name)}</strong><span>Foto ${escapeHtml(a.choice)}</span><p>${escapeHtml(a.reason)}</p></div><button type="button" class="btn small primary" data-comp-spotlight-id="${escapeHtml(p.id)}" data-comp-spotlight-index="${i}" ${isMentor?"disabled":""}>Tampilkan di LCD</button></div>`).join(""):`<p class="small-note">Belum ada ulasan untuk tantangan ini.</p>`}
    </details>`;
   }).join("")}</div>
  </section>`;
+}
+// Refresh only the review panel: never rebuild trainer controls or close open discussions.
+let compositionResponsesBusy=false;
+let compositionResponsesLastSnapshot="";
+async function refreshCompositionResponses(force=false){
+ const panel=$("#comp-response-panel");
+ if(!panel||pageMode()!=="trainer"||compositionResponsesBusy||!state.trainerToken)return;
+ compositionResponsesBusy=true;
+ try{
+  const incoming=await request("/api/dashboard",{auth:true});
+  const people=incoming.participants||[];
+  const fingerprint=JSON.stringify(people.map(p=>[p.id,p.answers?.komposisi?.challenges]));
+  if(!force&&fingerprint===compositionResponsesLastSnapshot)return;
+  const openIndexes=new Set($("[data-comp-response-index]",panel).filter(el=>el.open).map(el=>el.dataset.compResponseIndex));
+  state.dashboard.participants=people;
+  state.dashboard.count=incoming.count;
+  const wrapper=document.createElement("div");
+  wrapper.innerHTML=compositionTrainerResponsePanel({...state.dashboard,participants:people},state.trainerRole==="mentor");
+  panel.innerHTML=wrapper.firstElementChild.innerHTML;
+  $("[data-comp-response-index]",panel).forEach(el=>{el.open=openIndexes.has(el.dataset.compResponseIndex)});
+  compositionResponsesLastSnapshot=fingerprint;
+  const stamp=$("#comp-response-updated");if(stamp)stamp.textContent="Terbarui otomatis · "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+ }finally{compositionResponsesBusy=false}
 }
 function compositionTrainerPanel(data,isMentor){
  const active=data.stage===2,enabled=!isMentor;
@@ -1519,8 +1542,6 @@ function bindDashboard(){
  });
  const trainerCompGrid=$("#trainer-comp-grid");
  if(trainerCompGrid)trainerCompGrid.onclick=()=>{state.demoComposition.grid=!state.demoComposition.grid;refreshTrainerDemo();saveCompositionDemo()};
- const refreshCompAnswers=$("#refresh-comp-answers");
- if(refreshCompAnswers)refreshCompAnswers.onclick=async()=>{refreshCompAnswers.disabled=true;try{await fetchDashboard();render();toast("Jawaban peserta terbaru ditampilkan")}catch(e){refreshCompAnswers.disabled=false;toast("Gagal memuat jawaban: "+e.message)}};
 
  async function changeSpotlight(participantId,module,challengeIndex){
   if(isMentor)return;
@@ -1542,7 +1563,13 @@ function bindDashboard(){
   $$("[data-spotlight-id]",scope).forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.spotlightId,btn.dataset.spotlightModule));
  }
  bindSpotlight();
- $$("[data-comp-spotlight-id]").forEach(btn=>btn.onclick=()=>changeSpotlight(btn.dataset.compSpotlightId,"komposisi",Number(btn.dataset.compSpotlightIndex)));
+ const compositionPanel=$("#comp-response-panel");
+ if(compositionPanel)compositionPanel.onclick=event=>{
+  const spotlightButton=event.target.closest("[data-comp-spotlight-id]");
+  if(spotlightButton){void changeSpotlight(spotlightButton.dataset.compSpotlightId,"komposisi",Number(spotlightButton.dataset.compSpotlightIndex));return}
+  const refreshButton=event.target.closest("#refresh-comp-answers");
+  if(refreshButton){refreshButton.disabled=true;void refreshCompositionResponses(true).then(()=>toast("Jawaban terbaru dimuat")).catch(error=>toast("Gagal memuat jawaban: "+error.message)).finally(()=>{const button=$("#refresh-comp-answers");if(button)button.disabled=false})}
+ };
  $$("[data-inspect]").forEach(btn=>btn.onclick=()=>{
    const p=(state.dashboard.participants||[]).find(p=>p.id===btn.dataset.inspect);
    if(!p)return;
@@ -1909,6 +1936,8 @@ const pollClass=singleFlight(async(force=false)=>{
        const accessRevoked=stageChanged&&!isUnlocked(state.active);
        // Pembukaan tahap lanjut tidak menginterupsi peserta yang sedang menulis atau memilih foto.
        if((!before.known&&state.hasClassState)||lockChanged||accessRevoked||startingLesson||(learnerMode(state.active)==="follow"&&slideChanged))renderParticipant();
+    }else if(pageMode()==="trainer"&&state.dashboard?.stage===2&&state.presentation.view==="simulator"&&$("#comp-response-panel")){
+       await refreshCompositionResponses();
     }
   }
 });
