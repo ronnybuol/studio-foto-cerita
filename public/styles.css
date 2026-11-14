@@ -1307,3 +1307,82 @@ body[data-app-mode="lcd"] #root:fullscreen{background:#090a0c}
     aspect-ratio:3/2;
   }
 }
+
+/* Tahap 00: projector walkthrough of the logged-in participant interface.
+   CSS-only example screen; no account, form submission or network requests. */
+.lcd-orientation-guide{min-height:calc(100svh - 82px);height:auto;background:radial-gradient(ellipse at 50% 54%,#28343b 0,#141920 44%,#0b0d11 86%);padding:clamp(18px,2vw,38px) clamp(22px,3.8vw,74px) clamp(18px,2vw,38px);display:flex;flex-direction:column;gap:clamp(12px,1.3vh,20px);color:#fff;overflow:hidden}
+.orientation-guide-heading{text-align:center;flex:none;max-width:1400px;margin:0 auto}
+.orientation-guide-heading .orientation-eyebrow{display:block;margin-bottom:8px}
+.orientation-guide-heading h1{font-size:clamp(26px,3vw,56px)!important;line-height:1.11;letter-spacing:-.035em;margin:0!important;color:#fff}
+.orientation-guide-heading h1 em{font-style:normal;color:#fa833d}
+.orientation-guide-heading p{font-size:clamp(13px,1.15vw,21px)!important;color:#cdd5df;margin:8px 0 0;line-height:1.35}
+.orientation-guide-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,350px) minmax(0,1fr);gap:clamp(14px,2vw,36px);align-items:center;justify-content:center;flex:1;min-height:0}
+.orientation-guide-callouts{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(9px,1.4vh,22px);height:min(58vh,580px);min-height:350px}
+.orientation-guide-tip{display:flex;align-items:center;gap:clamp(10px,1vw,17px);position:relative;background:#222a35aa;border:1px solid #63707b65;border-radius:14px;padding:clamp(10px,1.2vw,22px);min-width:0}
+.orientation-guide-tip:after{content:"";position:absolute;width:clamp(14px,2.1vw,39px);height:1px;background:#f08b4c;top:50%}
+.orientation-guide-callouts.left .orientation-guide-tip:after{right:calc(clamp(14px,2.1vw,39px)*-1)}
+.orientation-guide-callouts.right .orientation-guide-tip:after{left:calc(clamp(14px,2.1vw,39px)*-1)}
+.orientation-guide-number{width:clamp(34px,3.1vw,55px);height:clamp(34px,3.1vw,55px);flex:none;display:grid;place-items:center;border-radius:12px;background:#f582362b;border:1px solid #e57a33;color:#ffaf6a;font-weight:900;font-size:clamp(15px,1.5vw,26px)}
+.orientation-guide-tip strong{display:block;color:#fff;font-size:clamp(17px,1.42vw,26px);line-height:1.1}
+.orientation-guide-tip p{font-size:clamp(13px,1.09vw,19px)!important;line-height:1.38;margin:6px 0 0;color:#d1d8df}
+.orientation-guide-phone-wrap{display:flex;align-items:center;justify-content:center;min-height:0}
+.orientation-guide-phone{position:relative;width:min(100%,315px);height:min(61vh,635px);min-height:395px;border:8px solid #444a52;border-radius:34px;background:#f6f7f8;color:#161d23;box-shadow:0 0 0 2px #a4abb34a,0 24px 60px #000b;display:flex;flex-direction:column;overflow:hidden}
+.orientation-guide-phone:before{content:"";position:absolute;top:5px;left:50%;transform:translateX(-50%);background:#272b30;width:33%;height:10px;border-radius:0 0 8px 8px;z-index:2}
+.orientation-guide-phone .orientation-phone-status{padding-inline:17px}
+.orientation-guide-phone .orientation-phone-address{font-size:9px;margin:2px 10px 5px}
+.orientation-guide-phone-screen{padding:7px 10px 22px;overflow:hidden;flex:1;min-height:0;background:#f1f1f0;display:flex;flex-direction:column;gap:7px}
+.orientation-guide-preview-label{font-size:9px;color:#b94d19;font-weight:850;letter-spacing:.07em}
+.orientation-guide-preview-nav{display:flex;align-items:flex-start;justify-content:space-between;gap:7px;padding:8px;background:#fff;border-radius:8px;border:1px solid #e1e5e9}
+.orientation-guide-preview-nav>div:first-child{min-width:0}
+.orientation-guide-preview-nav small{display:block;color:#6f757f;font-size:9px}
+.orientation-guide-preview-nav strong{font-size:10px;display:block;color:#26303b;margin-top:4px}
+.orientation-guide-account{font-size:9px;font-weight:750;color:#343d47;text-align:right}
+.orientation-guide-account b{display:block;margin-top:3px;color:#cf6327}
+.orientation-guide-sync,.orientation-guide-save-status{background:#e5f3e9;border-radius:6px;padding:5px 7px;font-size:9px;color:#195b36;font-weight:750}
+.orientation-guide-study{padding:8px;background:#e9eef2;border-radius:8px}
+.orientation-guide-study>b{font-size:10px;color:#24303b}
+.orientation-guide-modes{display:flex;gap:4px;margin-top:6px}
+.orientation-guide-modes span{border-radius:5px;padding:5px 4px;font-size:9px;font-weight:700;background:white;color:#3f4852;flex:1;text-align:center}
+.orientation-guide-modes span:last-child{background:#333943;color:#fff}
+.orientation-guide-lesson{min-height:0;background:#fff;padding:9px;border-radius:10px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.orientation-guide-lesson>.eyebrow{font-size:9px;margin:0;color:#d56d28;font-weight:800}
+.orientation-guide-lesson h2{font-size:17px!important;line-height:1.15;margin:0;color:#252b33}
+.orientation-guide-lesson p{font-size:10px!important;margin:0;color:#52606b;line-height:1.25}
+.orientation-guide-lesson img{display:block;object-fit:contain;aspect-ratio:3/2;width:100%;min-height:0;max-height:min(16vh,155px);border-radius:6px;background:#1d2024}
+.orientation-guide-controls{display:flex;justify-content:space-between;gap:4px;font-size:9px;color:#46515b}
+.orientation-guide-controls span{border:1px solid #d9dce0;border-radius:5px;padding:5px;flex:1;text-align:center}
+.orientation-guide-controls b{display:block;color:#222a32}
+.orientation-guide-save{background:#e67530;color:#fff;text-align:center;padding:8px;border-radius:6px;font-size:11px;font-weight:800}
+.orientation-guide-phone .orientation-phone-home{height:4px}
+.orientation-guide-bottom{flex:none;display:flex;justify-content:center;align-items:center;gap:clamp(18px,3vw,55px);padding-top:clamp(8px,1.3vh,17px);border-top:1px solid #77808a55;text-align:center;font-size:clamp(12px,1vw,19px)}
+.orientation-guide-bottom strong{color:#ffab73}
+.orientation-guide-bottom span{color:#c4d0dc}
+@media(max-height:820px) and (min-width:901px){
+ .lcd-orientation-guide{gap:8px;padding-block:14px}
+ .orientation-guide-heading h1{font-size:clamp(25px,2.6vw,43px)!important}
+ .orientation-guide-heading p{margin-top:5px}
+ .orientation-guide-phone{height:54vh;min-height:355px}
+ .orientation-guide-callouts{height:54vh;min-height:355px;gap:8px}
+ .orientation-guide-lesson img{max-height:11vh}
+ .orientation-guide-tip{padding:10px}
+ .orientation-guide-tip p{font-size:clamp(12px,1vw,16px)!important}
+}
+@media(max-width:900px){
+ .lcd-orientation-guide{padding:22px;overflow:visible}
+ .orientation-guide-heading h1{font-size:clamp(27px,4.3vw,42px)!important}
+ .orientation-guide-body{grid-template-columns:minmax(0,1fr) minmax(245px,315px) minmax(0,1fr);gap:10px}
+ .orientation-guide-tip{flex-direction:column;align-items:flex-start;padding:9px}
+ .orientation-guide-tip:after{display:none}
+ .orientation-guide-tip strong{font-size:16px}
+ .orientation-guide-tip p{font-size:12px!important}
+ .orientation-guide-callouts{height:auto;min-height:0}
+ .orientation-guide-phone{height:550px}
+}
+@media(max-width:680px){
+ .orientation-guide-body{grid-template-columns:1fr;gap:14px}
+ .orientation-guide-phone-wrap{grid-row:1}
+ .orientation-guide-phone{height:570px}
+ .orientation-guide-callouts{grid-template-columns:1fr;grid-template-rows:none}
+ .orientation-guide-tip{flex-direction:row}
+ .orientation-guide-bottom{flex-direction:column;gap:6px}
+}
