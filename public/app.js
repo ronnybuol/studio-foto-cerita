@@ -612,13 +612,13 @@ async function refreshCompositionResponses(force=false){
   const people=incoming.participants||[];
   const fingerprint=JSON.stringify(people.map(p=>[p.id,p.answers?.komposisi?.challenges]));
   if(!force&&fingerprint===compositionResponsesLastSnapshot)return;
-  const openIndexes=new Set($("[data-comp-response-index]",panel).filter(el=>el.open).map(el=>el.dataset.compResponseIndex));
+  const openIndexes=new Set($$("[data-comp-response-index]",panel).filter(el=>el.open).map(el=>el.dataset.compResponseIndex));
   state.dashboard.participants=people;
   state.dashboard.count=incoming.count;
   const wrapper=document.createElement("div");
   wrapper.innerHTML=compositionTrainerResponsePanel({...state.dashboard,participants:people},state.trainerRole==="mentor");
   panel.innerHTML=wrapper.firstElementChild.innerHTML;
-  $("[data-comp-response-index]",panel).forEach(el=>{el.open=openIndexes.has(el.dataset.compResponseIndex)});
+  $$("[data-comp-response-index]",panel).forEach(el=>{el.open=openIndexes.has(el.dataset.compResponseIndex)});
   compositionResponsesLastSnapshot=fingerprint;
   const stamp=$("#comp-response-updated");if(stamp)stamp.textContent="Terbarui otomatis · "+new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
  }finally{compositionResponsesBusy=false}
