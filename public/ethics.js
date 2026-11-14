@@ -13,5 +13,20 @@ export const ethicsSlide=i=>ETHICS_SLIDES[i-ETHICS_START]||ETHICS_SLIDES[0];
 export const ethicsLabel=i=>String(i-ETHICS_START+1).padStart(2,"0");
 export const ethicsVisual=i=>{
  const x=ethicsSlide(i);
- return `<figure class="ethics-slide-photo"><img src="/lensa-muda/assets/composition/sangihe-2017-${x.image}.webp" alt="Dokumentasi musik bambu Sangihe untuk pembahasan etika" decoding="async"><figcaption>Dokumentasi Sangihe · September 2017 · Foto: Ronny Adolof Buol</figcaption></figure>`;
+ const n=i-ETHICS_START+1;
+ // Existing Sangihe illustration is a non-destructive fallback until the six
+ // documentary photographs have been uploaded by the trainer.
+ const fallback="/lensa-muda/assets/composition/sangihe-2017-"+x.image+".webp";
+ return `<figure class="ethics-slide-photo"><img src="/lensa-muda/api/ethics/slide-photo/${n}" alt="Foto dokumenter karya Ronny Adolof Buol untuk slide ${n} Modul 06" decoding="async" onerror="this.onerror=null;this.src='${fallback}'"><figcaption>Foto: Ronny Adolof Buol · dokumentasi budaya</figcaption></figure>`;
 };
+export const ethicsPhotoUploadPanel=isMentor=>`<section class="card ethics-upload-panel" id="ethics-upload-panel">
+ <span class="eyebrow">FOTO MATERI · MODUL 06</span>
+ <h3>Enam foto dokumenter untuk slide 01–06</h3>
+ <p class="small-note">Urutan sesuai nama berkas: slide 1 sampai slide 6. Foto hanya mengganti ilustrasi; teks dan latihan tidak berubah.</p>
+ ${isMentor?"":`<details class="ethics-upload-tools">
+ <summary>Unggah keenam foto final (WebP)</summary>
+ <p class="small-note">Ekstrak ZIP final, lalu pilih sekaligus keenam berkas <code>slide 1 - modul 06.webp</code> hingga <code>slide 6 - modul 06.webp</code>.</p>
+ <input type="file" accept=".webp,image/webp" multiple id="ethics-upload-input">
+ <p class="small-note" id="ethics-upload-status" role="status" aria-live="polite"></p></details>`}
+ <p class="small-note" id="ethics-photo-availability">Memeriksa status enam foto…</p>
+ </section>`;

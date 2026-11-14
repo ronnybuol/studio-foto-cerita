@@ -237,6 +237,45 @@ async function handleApi(req,env){
   const locked=lockReady?await classLocked(env):false;
   if(locked&&participantAction)return failure("Kelas telah dikunci trainer. Akses latihan peserta ditutup.",423);
 
+  // Six documentary photos for Modul 06, kept independent of participant R2 data.
+  // Trainer may upload the six user-supplied WebP photos; lecture slide URLs are read-only.
+  const ethicsImageMatch=/^\/api\/ethics\/slide-photo\/([1-6])$/.exec(path);
+  if(method==="GET"&&path==="/api/ethics/photos/status"){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    const existing=await Promise.all([1,2,3,4,5,6].map(async n=>
+      !!(await env.PHOTO_BUCKET.head("lecture/modul06/slide-"+n+".webp"))));
+    return output({photos:existing});
+  }
+  if(ethicsImageMatch){
+    if(!env.PHOTO_BUCKET)return failure("Penyimpanan foto belum terhubung",503);
+    const n=Number(ethicsImageMatch[1]),key="lecture/modul06/slide-"+n+".webp";
+    if(method==="PUT"){
+      const admin=await access(req,env);
+      if(!admin)return failure("Autentikasi trainer diperlukan",401);
+      if(admin.role!=="trainer")return failure("Hanya trainer boleh mengganti foto materi",403);
+      const type=req.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
+      if(type!=="image/webp")return failure("Berkas harus WebP",415);
+      if(Number(req.headers.get("Content-Length")||0)>3*1024*1024)
+        return failure("Foto maksimal 3 MB",413);
+      const buffer=new Uint8Array(await req.arrayBuffer());
+      const ascii=(offset,length)=>String.fromCharCode(...buffer.slice(offset,offset+length));
+      if(buffer.length<16||buffer.length>3*1024*1024
+          ||ascii(0,4)!=="RIFF"||ascii(8,4)!=="WEBP")
+        return failure("Format WebP tidak valid atau ukuran melampaui 3 MB",415);
+      await env.PHOTO_BUCKET.put(key,buffer,{httpMetadata:{contentType:"image/webp"},
+        customMetadata:{credit:"Ronny Adolof Buol",module:"06",slide:String(n)}});
+      return output({ok:true,slide:n,bytes:buffer.length});
+    }
+    if(method==="GET"){
+      const object=await env.PHOTO_BUCKET.get(key);
+      if(!object)return failure("Foto slide belum diunggah trainer",404);
+      return new Response(object.body,{headers:{"Content-Type":"image/webp",
+        "Cache-Control":"no-store","X-Content-Type-Options":"nosniff",
+        "X-Robots-Tag":"noindex, nofollow"}});
+    }
+    return failure("Metode tidak didukung",405);
+  }
+
   // Five original National Geographic magazine spreads. Upload only by trainer to
   // the existing R2 bucket; public display is restricted to these five static keys.
   const spreadMatch=/^\/api\/portfolio\/spread\/([1-5])$/.exec(path);
