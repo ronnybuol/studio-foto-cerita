@@ -6,38 +6,38 @@ export const THEORY_SLIDES = [
   points:["Perhatikan manusia dan tindakannya.","Cari petunjuk tempat, suasana, serta waktu.","Jangan mengira-ngira hal yang tidak terlihat."],
   prompt:"Apa yang kamu ketahui? Apa yang masih harus ditanyakan?",
   note:"Minta dua siswa menyebut fakta yang terlihat, lalu satu pertanyaan yang perlu diverifikasi.",kind:"story"},
- {eyebrow:"02 / MEMBACA CAHAYA",title:"Fotografi menulis dengan cahaya",
+ {eyebrow:"02 / MEMBACA CAHAYA",title:"Fotografi itu bercerita dengan cahaya",
   lead:"Arah dan jumlah cahaya menentukan apa yang bisa kita lihat dalam gambar.",
-  points:["Cahaya depan memperjelas wajah dan detail.","Cahaya samping menonjolkan bentuk dan tekstur.","Cahaya belakang dapat membuat subjek menjadi siluet."],
+  points:["Cahaya dari depan memperjelas wajah dan detail.","Cahaya samping menonjolkan bentuk dan tekstur.","Cahaya belakang dapat membuat subjek menjadi siluet."],
   prompt:"Kalau wajah tokoh terlalu gelap, apa yang bisa kita ubah?",
   note:"Ajak siswa melihat jendela kelas: mana arah cahaya, dan apa efek berpindah posisi?",kind:"light"},
- {eyebrow:"03 / SEGITIGA EXPOSURE",title:"Tiga keputusan sebelum memotret",
+ {eyebrow:"03 / SEGITIGA EXPOSURE",title:"Pahami Segi Tiga ini sebelum memotret",
   lead:"Aperture dan shutter mengatur cahaya yang ditangkap. ISO mengatur penguatan sinyal hasil.",
   points:["Aperture: bukaan lensa dan kedalaman ruang.","Shutter: lamanya cahaya masuk dan jejak gerakan.","ISO: tingkat penguatan, kecerahan, dan kompromi noise."],
-  prompt:"Saat satu pengaturan berubah, apa yang harus diseimbangkan?",
+  prompt:"Jika salah satu pengaturan berubah, apa yang harus diseimbangkan?",
   note:"Tekankan: ISO tidak menambah jumlah cahaya masuk ke sensor.",kind:"triangle"},
  {eyebrow:"04 / APERTURE",title:"Bukaan mengubah kedalaman ruang",
   lead:"f-number kecil berarti bukaan lebih besar; latar lebih mudah terlihat blur.",
   points:["f/1.8: latar cenderung lebih blur.","f/11: area yang terlihat tajam lebih luas.","Hasil bergantung juga pada jarak, lensa, dan ukuran sensor."],
-  prompt:"Untuk cerita pengrajin dan tempat kerja, seberapa banyak latar perlu terlihat?",
+  prompt:"Untuk foto cerita pengrajin dan tempat kerja dalam contoh ini, seberapa banyak latar perlu terlihat?",
   note:"Bandingkan potret tokoh dan foto lingkungan; latar blur bukan selalu lebih baik.",kind:"aperture"},
  {eyebrow:"05 / SHUTTER SPEED",title:"Membekukan atau merekam gerakan?",
-  lead:"Rana cepat membatasi jejak gerak. Rana lambat dapat memperlihatkan arah gerakan.",
+  lead:"Rana cepat membatasi jejak gerak dan membekukannya. Rana lambat dapat memperlihatkan arah gerakan.",
   points:["1/15 detik: gerak mudah kabur.","1/1000 detik: gerak lebih mudah dibekukan.","Rana cepat menangkap lebih sedikit cahaya pada bukaan yang sama."],
   prompt:"Saat memotret penari, kapan kita ingin blur dan kapan gerakan dibekukan?",
   note:"Tunjukkan dua tujuan kreatif: keduanya sah jika informasi foto tetap jelas.",kind:"shutter"},
- {eyebrow:"06 / ISO",title:"Terang bukan tanpa konsekuensi",
+ {eyebrow:"06 / ISO",title:"Foto yang terang bukan tanpa konsekuensi",
   lead:"ISO lebih tinggi dapat membuat gambar lebih terang, tetapi juga dapat memperjelas noise.",
   points:["ISO rendah biasanya memberi noise lebih sedikit.","ISO tinggi membantu situasi minim cahaya.","Mengubah ISO tidak menambah cahaya yang masuk."],
-  prompt:"Apa yang kamu prioritaskan ketika memotret pertunjukan di ruang gelap?",
+  prompt:"Apa yang kamu prioritaskan ketika memotret pertunjukan di ruang minim cahaya atau gelap?",
   note:"Noise juga dipengaruhi sensor, cahaya, dan pemrosesan kamera.",kind:"iso"},
  {eyebrow:"07 / KESEIMBANGAN",title:"Exposure mirip, karakter berbeda",
   lead:"Kombinasi berbeda dapat memberi kecerahan serupa, tetapi gerak dan noise tetap berubah.",
   points:["f/2.8 · 1/125 · ISO 200","f/2.8 · 1/500 · ISO 800","Rana dua stop lebih cepat diimbangi ISO dua stop lebih tinggi."],
   prompt:"Jika rana dipercepat, apa yang perlu diubah agar foto tidak gelap?",
   note:"Ajak siswa menghitung 2 stop: 1/125 → 1/250 → 1/500 dan ISO 200 → 400 → 800.",kind:"balance"},
- {eyebrow:"08 / SIAP PRAKTIK",title:"Sekarang giliran kamu bereksperimen",
-  lead:"Tidak harus membawa kamera. Kita bisa menguji keputusan fotografi lewat simulasi.",
+ {eyebrow:"08 / SIAP PRAKTIK",title:"Sekarang mari kita bereksperimen",
+  lead:"Tidak harus ada kamera. Kita akan menguji keputusan fotografi lewat simulasi.",
   points:["Coba membekukan gerakan pengrajin.","Coba membuat latar lebih tajam.","Coba menyeimbangkan exposure saat ISO berubah."],
   prompt:"Pengaturan mana yang pertama ingin kamu coba?",
   note:"Klik 'Mulai Simulator' di dashboard; minta siswa menebak hasil sebelum slider digeser.",kind:"challenge"}
@@ -46,18 +46,18 @@ export const THEORY_SLIDES = [
 // Detail foto ditempatkan setelah delapan slide asli agar posisi sesi lama tetap kompatibel.
 export const PHOTO_DETAILS = [
  {parent:0,suffix:"a",title:"Amati foto: apa yang terlihat?",image:"base",caption:"Pengrajin bekerja · ilustrasi latihan",question:"Apa yang terlihat jelas, dan fakta apa yang masih perlu diverifikasi?"},
- {parent:1,suffix:"a",title:"Cahaya depan",image:"cahaya-depan",caption:"Arah cahaya: depan",question:"Bagian wajah dan benda apa yang tampak paling jelas?"},
- {parent:1,suffix:"b",title:"Cahaya samping",image:"cahaya-samping",caption:"Arah cahaya: samping",question:"Di mana bayangan memperjelas tekstur dan bentuk?"},
- {parent:1,suffix:"c",title:"Cahaya belakang",image:"cahaya-belakang",caption:"Arah cahaya: belakang",question:"Apa yang hilang dan muncul ketika subjek membelakangi cahaya?"},
+ {parent:1,suffix:"a",title:"Cahaya depan",image:"cahaya-depan",caption:"Arah cahaya: depan",question:"Apa saja yang tampak terlihat paling jelas?"},
+ {parent:1,suffix:"b",title:"Cahaya samping",image:"cahaya-samping",caption:"Arah cahaya: samping",question:"Apakah tekstur benda terlihat jelas saat ada bayangan?"},
+ {parent:1,suffix:"c",title:"Cahaya belakang",image:"cahaya-belakang",caption:"Arah cahaya: belakang",question:"Perubahan apa yang terjadi ketika subjek membelakangi cahaya?"},
  {parent:3,suffix:"a",title:"Bukaan f/1.8",image:"aperture-lebar",caption:"Simulasi f/1.8 · latar blur",question:"Apa yang terjadi pada detail ruang kerja di belakang pengrajin?"},
- {parent:3,suffix:"b",title:"Bukaan f/11",image:"aperture-sempit",caption:"Simulasi f/11 · area tajam",question:"Bagian latar apa yang kini membantu menjelaskan tempat kerja?"},
- {parent:4,suffix:"a",title:"Shutter lambat: 1/15",image:"shutter-lambat",caption:"Simulasi 1/15 detik · jejak gerak",question:"Apakah jejak gerak membantu atau mengganggu cerita?"},
- {parent:4,suffix:"b",title:"Shutter cepat: 1/1000",image:"shutter-cepat",caption:"Simulasi 1/1000 detik · gerak beku",question:"Detail gerakan mana yang kini terlihat jelas?"},
+ {parent:3,suffix:"b",title:"Bukaan f/11",image:"aperture-sempit",caption:"Simulasi f/11 · area tajam",question:"Apakah kini latar membantu menjelaskan lokasi kerja?"},
+ {parent:4,suffix:"a",title:"Shutter lambat: 1/15",image:"shutter-lambat",caption:"Simulasi 1/15 detik · jejak gerak",question:"Apakah jejak gerak (tangan yang blur) membantu atau mengganggu cerita?"},
+ {parent:4,suffix:"b",title:"Shutter cepat: 1/1000",image:"shutter-cepat",caption:"Simulasi 1/1000 detik · gerak beku",question:"Apakah kini gerakan tangan pengrajin terlihat jelas dan memperkuat cerita?"},
  {parent:5,suffix:"a",title:"ISO 100",image:"iso-rendah",caption:"Simulasi ISO 100 · noise rendah",question:"Perhatikan bidang gelap dan tekstur gambar."},
  {parent:5,suffix:"b",title:"ISO 3200",image:"iso-tinggi",caption:"Simulasi ISO 3200 · noise lebih terlihat",question:"Apa perbedaan tekstur dibanding gambar sebelumnya?"},
  {parent:6,suffix:"a",title:"Kombinasi exposure A",image:"base",caption:"f/2.8 · 1/125 · ISO 200",question:"Bagaimana keseimbangan kecerahan dan gerak di foto pertama?"},
  {parent:6,suffix:"b",title:"Kombinasi exposure B",image:"shutter-cepat",caption:"f/2.8 · 1/500 · ISO 800",question:"Bandingkan dengan foto sebelumnya; apa yang berubah?"},
- {parent:7,suffix:"a",title:"Siap bereksperimen",image:"base",caption:"Ilustrasi pengrajin · bahan latihan kamera",question:"Pengaturan apa yang pertama akan kamu uji di simulator?"}
+ {parent:7,suffix:"a",title:"Siap bereksperimen",image:"base",caption:"Ilustrasi pengrajin · bahan latihan kamera",question:"Silahkan bereksperimen di simulator?"}
 ];
 export const PRESENTATION_ORDER = THEORY_SLIDES.flatMap((_,i)=>[i,...PHOTO_DETAILS.map((d,j)=>d.parent===i?THEORY_SLIDES.length+j:null).filter(n=>n!==null)]);
 export const MAX_PRESENTATION_SLIDE = THEORY_SLIDES.length + PHOTO_DETAILS.length - 1;
@@ -75,7 +75,7 @@ export function theoryVisual(index){
     case 0:return `<div class="theory-story-visual">
       <img src="${cameraPhotoUrl("base")}" alt="Ilustrasi pengrajin bekerja" loading="eager">
       <div class="theory-observe"><div><span>YANG TERLIHAT</span><strong>Seorang pengrajin menggunakan alat</strong></div>
-      <div><span>YANG PERLU DIPASTIKAN</span><strong>Siapa namanya? Di mana? Membuat apa? Mengapa penting?</strong></div></div>
+      <div><span>YANG PERLU DIPASTIKAN</span><strong>Siapa namanya? Di mana? Membuat apa? Mengapa ini penting?</strong></div></div>
       <small>Ilustrasi latihan · bukan foto peristiwa nyata</small></div>`;
     case 1:return `<div class="theory-light-grid">
       ${photo("light-front","CAHAYA DEPAN","cahaya-depan")}
