@@ -21,7 +21,5 @@ jobs:
            print('term',kw,'hits',len(matches))
            for m in matches[:5]:
             print(doc[max(0,m.start()-260):m.end()+260].replace('\\n',' ')[:530])
-          for m in re.findall(r'(?i)(?:src|data-src|background-image|url)\\s*[=:]\\s*["\\']?([^"\\' <>]+)',doc):
-           if any(x in m.lower() for x in ['hong','bit','photo','image','media','jpg']):print('candidate',html.unescape(m)[:240])
           
           PY
