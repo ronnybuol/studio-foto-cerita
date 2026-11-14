@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {existsSync,readFileSync} from "node:fs";
 import {ETHICS_START,ETHICS_END,ETHICS_SLIDES,ethicsSlide,ethicsLabel,ethicsVisual} from "../public/ethics.js";
-test("Modul 06 memiliki enam slide dengan dokumentasi Sangihe asli",()=>{
+test("Modul 06 memakai enam foto dokumenter dengan fallback Sangihe yang tidak mengubah materi",()=>{
  assert.equal(ETHICS_START,52);assert.equal(ETHICS_END,57);assert.equal(ETHICS_SLIDES.length,6);
  for(let i=52;i<=57;i++){
    const x=ethicsSlide(i);
@@ -10,6 +10,7 @@ test("Modul 06 memiliki enam slide dengan dokumentasi Sangihe asli",()=>{
    assert.equal(x.points.length,3);
    assert.equal(ethicsLabel(i),String(i-51).padStart(2,"0"));
    assert.ok(existsSync(new URL("../public/assets/composition/sangihe-2017-"+x.image+".webp",import.meta.url)));
+   assert.match(ethicsVisual(i),new RegExp("/api/ethics/slide-photo/"+(i-ETHICS_START+1)));
    assert.match(ethicsVisual(i),/sangihe-2017/);
  }
 });
@@ -31,4 +32,8 @@ test("Tantangan akhir menghubungkan trainer, LCD, peserta, jawaban, dan sorotan 
  assert.ok(html.includes('app.js?v=20261115-slide06-caption-final-v3'));
  assert.ok(css.includes('.ethics-final-question'));
  assert.ok(css.includes('.ethics-theory-layout'));
+ assert.ok(app.includes('ethicsPhotoUploadPanel(isMentor)'));
+ assert.ok(app.includes('id="ethics-upload-input"')===false || app.includes('const upload=$("#ethics-upload-input")'));
+ assert.ok(api.includes('"/api/ethics/photos/status"'));
+ assert.ok(api.includes('const ethicsImageMatch='));
 });
