@@ -10,7 +10,7 @@ test("All trainer navigation commands must dismiss the persistent closing overla
   ['if(method==="PUT"&&path==="/api/presentation")','if(method==="PUT"&&path==="/api/orientation")'],
   ['if(method==="PUT"&&path==="/api/orientation")','if(method==="PUT"&&path==="/api/welcome")'],
   ['if(method==="PUT"&&path==="/api/welcome")','if(method==="PUT"&&path==="/api/hunting/timer")'],
-  ['if(method==="PUT"&&path==="/api/state")','if(method==="PUT"&&path==="/api/class-lock")'],
+  ['if(method==="PUT"&&path==="/api/state")','if(method==="PUT"&&path.startsWith("/api/answers/"))'],
   ['if(method==="PUT"&&path==="/api/portfolio/presentation")','// Only the trainer can read an individual participant']
  ];
  for(const [start,end] of pairs){
