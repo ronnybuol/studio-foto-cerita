@@ -391,7 +391,7 @@ async function handleApi(req,env){
     const data=await bodyJson(req);
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(!Number.isInteger(data.page)||data.page<0||data.page>5)return failure("Halaman portofolio harus 0–5",400);
-    if(!await writeProjection(env,data,"json_set(json_remove(camera_json,'$.spotlight'),'$.portfolioPage',?)",[data.page]))
+    if(!await writeProjection(env,data,"json_set(json_remove(camera_json,'$.spotlight'),'$.portfolioPage',?,'$.closingVisible',json('false'))",[data.page]))
       return failure("Kendali kelas berubah. Segarkan dashboard",409);
     return output({ok:true,portfolioPage:data.page,controlRevision:data.controlRevision});
   }
@@ -673,7 +673,7 @@ async function handleApi(req,env){
     if(data.stage!==undefined&&(!Number.isInteger(data.stage)||data.stage<0||data.stage>6))return failure("Tahap tidak valid",400);
     if(data.stage>0&&data.view==="theory"&&(data.slide<STAGE_FIRST_SLIDES[data.stage]||data.slide>STAGE_LAST_SLIDES[data.stage]))return failure("Slide ini bukan bagian tahap aktif. Segarkan dashboard trainer.",409);
     try{
-      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.welcome',json('false'),'$.orientation',null,'$.portfolioPage',0,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
+      const written=await env.DB.prepare("UPDATE sessions SET camera_json=json_set(camera_json,'$.view',?,'$.slide',?,'$.closingVisible',json('false'),'$.welcome',json('false'),'$.orientation',null,'$.portfolioPage',0,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0)) AND (? IS NULL OR active_stage=?)")
         .bind(data.view,data.slide,data.controlRevision??null,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null,data.stage??null,data.stage??null).run();
       if(written.meta?.changes===0)return failure("Tahap atau kendali kelas sudah berubah. Segarkan status sebelum memilih slide lagi.",409);
     }catch(error){
@@ -722,7 +722,7 @@ async function handleApi(req,env){
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     if(data.screen==="roster"&&(!Number.isInteger(data.page)||data.page<0||data.page>99))return failure("Halaman daftar peserta tidak valid",400);
     if(await stageState(env)!==0)return failure("Slide ini hanya tersedia pada tahap 00 · Orientasi",409);
-    if(!await writeProjection(env,data,"json_set(camera_json,'$.orientation',?,'$.rosterPage',?,'$.welcome',json('false'))",[data.screen,data.screen==="roster"?data.page:0]," AND active_stage=0"))return failure("Tahap atau kendali kelas sudah berubah. Segarkan status.",409);
+    if(!await writeProjection(env,data,"json_set(camera_json,'$.orientation',?,'$.rosterPage',?,'$.welcome',json('false'),'$.closingVisible',json('false'))",[data.screen,data.screen==="roster"?data.page:0]," AND active_stage=0"))return failure("Tahap atau kendali kelas sudah berubah. Segarkan status.",409);
     return output({ok:true,orientation:data.screen,page:data.screen==="roster"?data.page:0,controlRevision:data.controlRevision});
   }
   if(method==="PUT"&&path==="/api/welcome"){
@@ -731,7 +731,7 @@ async function handleApi(req,env){
     const data=await bodyJson(req);
     if(typeof data.active!=="boolean")return failure("Status sambutan tidak valid",400);
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
-    if(!await writeProjection(env,data,"json_set(camera_json,'$.welcome',json(?),'$.orientation',null)",[data.active?"true":"false"]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
+    if(!await writeProjection(env,data,"json_set(camera_json,'$.welcome',json(?),'$.orientation',null,'$.closingVisible',json('false'))",[data.active?"true":"false"]))return failure("Kendali kelas sudah berubah. Segarkan status.",409);
     return output({ok:true,welcome:data.active,controlRevision:data.controlRevision});
   }
   if(method==="PUT"&&path==="/api/hunting/timer"){
@@ -759,7 +759,7 @@ async function handleApi(req,env){
     if(!validControlRevision(data))return failure("Revisi kendali tidak valid",400);
     const written=await env.DB.prepare(`UPDATE sessions SET camera_json=json_set(
       CASE WHEN active_stage<>? THEN json_remove(CASE WHEN ?>0 THEN json_set(camera_json,'$.view','theory','$.slide',?) ELSE camera_json END,'$.spotlight') ELSE camera_json END,
-      '$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),
+      '$.closingVisible',json('false'),'$.welcome',json('false'),'$.orientation',null,'$.controlRevision',COALESCE(?,json_extract(camera_json,'$.controlRevision'),0)),
       active_stage=?,updated_at=? WHERE id=? AND (? IS NULL OR ?>=COALESCE(json_extract(camera_json,'$.controlRevision'),0))`)
       .bind(data.stage,data.stage,STAGE_FIRST_SLIDES[data.stage],data.controlRevision??null,data.stage,new Date().toISOString(),SESSION_ID,data.controlRevision??null,data.controlRevision??null).run();
     if(written.meta?.changes===0)return failure("Kendali kelas sudah diperbarui. Segarkan status sebelum mengubah tahap lagi.",409);
