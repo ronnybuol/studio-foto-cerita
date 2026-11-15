@@ -260,15 +260,15 @@ Dokumen rinci: [perlindungan jawaban](docs/answer-recovery-2026-11-14.md), [pemu
 
 ## 10. Arsitektur dan berkas utama
 
-`
+```text
 Browser peserta / trainer / LCD
         │
         ▼
-Cloudflare Worker (`src/index.js`)
-   ├── Assets dari `public/` (ES modules tanpa bundling)
-   ├── D1 `DB`: sesi, akun peserta, jawaban, metadata hunting
-   └── R2 `PHOTO_BUCKET`: media hunting dan materi/handbook
-`
+Cloudflare Worker (src/index.js)
+   ├── Assets dari public/ (ES modules tanpa bundling)
+   ├── D1 DB: sesi, akun peserta, jawaban, metadata hunting
+   └── R2 PHOTO_BUCKET: media hunting dan materi/handbook
+```
 
 | Berkas | Fungsi |
 |---|---|
