@@ -1,253 +1,454 @@
 # Studio Foto Cerita — Lensa Muda 2026
 
-Aplikasi laboratorium fotografi dan foto jurnalistik interaktif untuk pelajar SMA/SMK/MA, disiapkan untuk **Kelas Lensa Muda — 16 November 2026**.
+**Panduan operasional kelas, pemulihan masalah, arsitektur, dan pengujian aman.** Pembaruan dokumentasi: **15 November 2026**, berdasarkan kode di branch `main` setelah PR #43. Program pelatihan: **16 November 2026**, oleh **Kelas Belajar Zonautara.com × Kamisama Fotografia**, dengan trainer **Ronny Adolof Buol**.
 
-## Tujuan belajar (180 menit)
-- Menguji exposure triangle (aperture, shutter speed, ISO), kedalaman ruang dan gerak lewat simulator visual.
-- Memahami komposisi foto, EDFAT (Entire, Detail, Frame, Angle, Time).
-- Memilih serta mengurutkan **9 foto landscape (simulasi rasio 3:2)** menjadi photo story.
-- Menyusun **satu caption untuk 9 foto** sekitar 150 kata dengan 5W+1H, mempraktikkan integritas foto jurnalistik.
-- Tetap bisa mengikuti seluruh simulasi **tanpa memiliki kamera** saat workshop.
+> **PENTING UNTUK OPERATOR:** Ada dua pekerjaan berbeda: mengajar memakai dashboard dan mengubah kode aplikasi. Ketika kelas berlangsung, **jangan deploy, reset D1, menghapus peserta, membersihkan cache/storage browser peserta, atau menguji 70 akun palsu di produksi**. Periksa tindakan pemulihan tanpa merusak data terlebih dahulu. Status sebuah PR di GitHub **tidak membuktikan** bahwa versi itu telah aktif di Cloudflare.
 
-## Cara mencoba di komputer
-Aplikasi frontend tanpa build step. Jalankan server statis dari folder `public` (misalnya `python -m http.server 8000 --directory public`), kemudian buka `http://localhost:8000`. Dalam deployment Cloudflare, akses aplikasi melalui `/lensa-muda/`.
-Dalam mode ini, aplikasi menggunakan **mode demo lokal**: jawaban hanya tersimpan di browser, dan kontrol trainer tidak tersinkron antarpeserta.
+## DAFTAR ISI CEPAT
 
-## Deploy untuk kelas dengan banyak ponsel (Cloudflare Workers + D1)
+- [1. Jika terjadi masalah saat kelas — baca ini dahulu](#1-jika-terjadi-masalah-saat-kelas--baca-ini-dahulu)
+- [2. Link kelas dan peran pengguna](#2-link-kelas-dan-peran-pengguna)
+- [3. Checklist sebelum peserta masuk](#3-checklist-sebelum-peserta-masuk)
+- [4. Alur operasional dari pembuka sampai buku saku](#4-alur-operasional-dari-pembuka-sampai-buku-saku)
+- [5. Enam modul dan keluaran peserta](#5-enam-modul-dan-keluaran-peserta)
+- [6. Dashboard trainer dan LCD](#6-dashboard-trainer-dan-lcd)
+- [7. Foto hunting, R2, penyimpanan dan pemulihan jawaban](#7-foto-hunting-r2-penyimpanan-dan-pemulihan-jawaban)
+- [8. Galeri materi, foto penutup, dan buku saku](#8-galeri-materi-foto-penutup-dan-buku-saku)
+- [9. Kunci kelas dan privasi](#9-kunci-kelas-dan-privasi)
+- [10. Arsitektur dan berkas utama](#10-arsitektur-dan-berkas-utama)
+- [11. Menjalankan aplikasi dan pengujian LOKAL yang aman](#11-menjalankan-aplikasi-dan-pengujian-lokal-yang-aman)
+- [12. Cloudflare, deployment dan pemulihan produksi](#12-cloudflare-deployment-dan-pemulihan-produksi)
+- [13. API yang perlu diketahui saat diagnosis](#13-api-yang-perlu-diketahui-saat-diagnosis)
+- [14. Pengujian, batas bukti, dan audit lanjutan](#14-pengujian-batas-bukti-dan-audit-lanjutan)
+- [15. Arsip keputusan dan kontribusi](#15-arsip-keputusan-dan-kontribusi)
 
-1. Jalankan `npm install`, lalu buat database D1: `npx wrangler d1 create lensa-muda-db`; masukkan `database_id` yang diberikan ke `wrangler.jsonc` (ganti placeholder).
-2. Buat juga bucket R2 bernama `lensa-muda-media` lewat dashboard Cloudflare (R2 Object Storage), untuk menampung media pada iterasi berikutnya.\n3. Terapkan skema: `npx wrangler d1 execute lensa-muda-db --remote --file=schema.sql`.
-4. Tambahkan rahasia PIN: `npx wrangler secret put TRAINER_PIN` lalu `npx wrangler secret put MENTOR_PIN` (PIN berbeda; bagikan hanya kepada yang berhak).
-5. Tambahkan kunci tanda tangan sesi: `npx wrangler secret put SESSION_SECRET` (teks acak minimal 32 karakter).\n6. Jalankan lokal terintegrasi: `npx wrangler dev` lalu buka `/lensa-muda/`; untuk produksi: `npx wrangler deploy`.
-7. Periksa pendaftaran, simpan jawaban, pengaturan tahap oleh trainer, dan pembaruan LCD dari perangkat berbeda.
+---
 
-**Jangan menaruh PIN ke repositori**. Bersihkan data latihan jika berganti angkatan. Pendaftaran bersifat terbuka tanpa kuota, tetapi beban serentak tetap harus diuji pada jaringan tempat acara.
+## 1. Jika terjadi masalah saat kelas — baca ini dahulu
 
-## Peran
-- **Peserta**: daftar nama, sekolah, kelas; latihan di HP; pekerjaan tersimpan di server saat backend aktif.
-- **Trainer**: login PIN, memantau dan mengubah tahap aktif, melihat jawaban peserta.
-- **Pendamping fotografer**: login PIN pendamping, dapat memantau siswa dan hasil latihan (tanpa mengubah tahap).
-- **LCD**: tampilan presentasi yang mengikuti tahap yang dibuka trainer.
+### Tiga langkah aman pertama
 
-## Catatan editorial & teknis
-Semua ilustrasi adegan pada versi awal adalah **simulasi grafis**, bukan foto jurnalistik nyata dan tidak boleh diserahkan sebagai karya lomba. Uji pada ponsel dan laptop; simulator bukan pengganti pengukuran kamera sesungguhnya. Karya lomba harus buatan peserta sendiri, tanpa AI generatif/manipulasi objek. Juknis menetapkan sembilan foto, EDFAT, satu caption ±150 kata, dan etika candid. Tampilan 3:2 landscape untuk latihan; konfirmasi format unggahan final dengan panitia sebelum publikasi.
+1. **Jangan panik dan jangan reset.** Minta peserta **tidak menutup halaman, tidak logout, tidak menghapus data browser, dan tidak menghapus foto asli di HP**. Bila sedang mengetik, pertahankan perangkat/browser yang sama.
+2. **Periksa apa yang sebenarnya terganggu:** internet perangkat, satu layar, sinkronisasi antarlayar, unggah foto, atau penyimpanan jawaban. Lihat status koneksi dan pesan pada layar, lalu buka `https://kelasbelajar.org/lensa-muda/api/state` **hanya untuk membaca** status server.
+3. **Pisahkan “tersimpan lokal” dan “sudah diterima server”.** Jawaban yang masih tertunda tidak sama dengan jawaban yang sudah terlihat di dashboard. Saat koneksi pulih, gunakan status/fitur retry pada layar; jangan mengulang tindakan secara membabi buta.
 
-Aplikasi ini bukan sistem resmi pengumpulan karya lomba. Penyimpanan jawaban peserta dipakai hanya sebagai bahan praktik selama workshop.
+### Tabel penyelesaian masalah (untuk trainer di lapangan)
 
-## Domain publik
+| Gejala | Pemeriksaan / tindakan aman | Jangan lakukan |
+|---|---|---|
+| LCD tidak mengikuti slide | Periksa URL `#/lcd`, internet, status trainer, lalu tombol **Segarkan** di LCD. Perubahan memakai polling, bukan instan. Pastikan hanya satu trainer mengendalikan presentasi. | Reset sesi atau deploy ulang tanpa diagnosis. |
+| Peserta masih melihat materi lama | Peserta mungkin berada di mode **Latihan saya** atau **Baca materi**. Untuk mengikuti presentasi, pilih **Ikuti trainer**. Kemandirian peserta ini disengaja. | Memaksa semua peserta refresh saat mereka sedang mengetik. |
+| Trainer mengganti tahap, tetapi tampilan tertinggal | Tunggu respons kendali; bila timeout, **baca ulang status LCD/server dahulu** sebelum mengulangi tombol. Request lama dapat selesai belakangan. | Menekan tombol berkali-kali hingga urutan tak jelas. |
+| Jawaban tidak terlihat di dashboard | Periksa apakah peserta sudah menekan **Simpan** dan ada konfirmasi **diterima server**. Jika **tersimpan lokal / pending**, sambungkan kembali internet pada **perangkat dan akun yang sama**. | Menyuruh peserta menghapus cache/storage, logout, atau ganti HP saat masih ada pending. |
+| Foto hunting tidak muncul di Meja Editor | Di Modul 03 periksa galeri: status harus **Tersimpan di server**. Gunakan **Unggah tertunda / Perbarui**. Foto antrean lokal belum tentu tersedia untuk Modul 04. | Hapus foto asli HP atau data browser. |
+| Tombol **+ Pilih Foto** atau **Simpan sembilan foto** belum aktif | Pastikan sudah memilih foto **hasil hunting dari server**; untuk menyimpan perlu **tepat 9 foto** serta judul dan alasan editorial yang memenuhi validasi. Pilihan foto stok lama tidak dihitung. | Mengubah data peserta dari D1 secara manual. |
+| Caption Lab belum bisa dikirim | Harus ada **9 foto Modul 04 yang sudah disimpan**; narasi boleh **berapa pun jumlah katanya selama tidak kosong**; periksa isian serta tiga checklist editorial. | Memaksa target minimum 50 atau 150 kata; aturan latihan sudah berubah. |
+| Timer dihentikan tetapi overlay belum hilang | Gunakan kontrol **Stop/Selesai**, lalu periksa status server dan tunggu polling. Jika satu layar tertinggal, **Segarkan** layar itu setelah memastikan tidak ada isian belum disimpan. | Membuat timer baru untuk “menimpa” timer yang macet tanpa mengecek status. |
+| Tidak bisa login peserta | Pastikan kelas belum dikunci, username benar, dan internet aktif. Username menjadi kredensial; login ulang dari perangkat lain **merotasi token lama**. | Sebarkan username peserta dalam grup atau mencoba login berulang memakai akun milik orang lain. |
+| Kelas sudah dikunci | Ini memblokir operasi peserta. Trainer dapat **membuka kembali kelas** bila benar-benar perlu. Buku saku publik tetap bisa dibaca/diunduh. | Reset data agar peserta bisa masuk. |
+| Foto Modul 06 masih foto Sangihe | Foto dokumenter baru per slide belum ada di R2 atau URL belum terambil. Periksa status enam foto di panel Modul 06. Foto Sangihe adalah **fallback** yang disengaja. | Menghapus aset fallback di repo. |
+| Slide terima kasih tidak tampil | Foto latar JPG harus tersedia di R2 sebelum tombol penutup aktif. Periksa panel **Slide Penutup**. Klik **Kembali ke Materi** untuk menutup overlay. | Mengubah tahap/modul hanya untuk menutup penutup. |
+| QR buku saku terbuka tetapi tombol PDF belum tersedia | QR menuju **halaman buku saku digital**. PDF unduhan baru muncul setelah trainer **mengunggah PDF** ke R2; peserta tetap bisa **Cetak / Simpan PDF** dari browser. | Menutup seluruh situs atau kunci akses buku saku. |
+| Koneksi internet satu lokasi terputus | Hentikan sementara kiriman, lanjutkan penjelasan verbal/observasi; saat koneksi pulih periksa antrean, status sinkron dan jawaban. | Menganggap status offline sama dengan data hilang atau status server sukses. |
 
-Setelah berhasil diuji melalui `*.workers.dev/lensa-muda/`, pasang Workers Route khusus `kelasbelajar.org/lensa-muda/*` pada zona domain `kelasbelajar.org`. **Jangan membuat route `kelasbelajar.org/*`**, sebab aplikasi lain pada domain tersebut harus tetap berfungsi. Cloudflare Workers kini mendukung `assets.base_path` (Wrangler >= 4.148.0), sehingga file di `public/` dapat langsung dilayani pada subpath tanpa dipindahkan ke folder `lensa-muda/`.
+**Tanda bahaya yang memerlukan pemeriksaan teknis:** HTTP 401 (sesi/token), 403 (peran/tahap), 409 (konflik revisi/data), 413 (file terlalu besar), 415 (format file), 423 (kelas terkunci), 429 (pembatasan), 503 (ketidaktersediaan backend/binding). Arti pasti harus dibaca dari pesan respons API; tabel ini bukan daftar seluruh kemungkinan.
 
-Deployment GitHub dapat dibuat melalui **Workers & Pages → Create application → GitHub → ronnybuol/studio-foto-cerita**. Pakai nama Worker `studio-foto-cerita`, build command kosong (aplikasi tanpa build), dan deploy command `npx wrangler deploy`. Sebelum deploy, database ID di `wrangler.jsonc` harus diganti dari placeholder seluruh nol ke ID D1 yang benar; dan bucket R2 `lensa-muda-media` harus telah dibuat. Setelah deploy, set secrets (`TRAINER_PIN`, `MENTOR_PIN`, `SESSION_SECRET`); jangan kirim nilai PIN atau secret melalui chat atau commit GitHub.
+### Jika benar-benar perlu melapor ke pengembang/Codex
 
-Pada versi ini R2 sudah diberi binding `PHOTO_BUCKET`, tetapi fitur unggah foto asli belum diaktifkan. Berkas gambar yang digunakan di editor sembilan bingkai saat ini adalah ilustrasi lokal untuk latihan.
+Catat **waktu WITA, layar/URL, modul dan slide, tindakan terakhir, pesan error, status online, apakah jawaban masih ada di HP, serta apakah LCD dan dashboard sama-sama bermasalah**. Sertakan screenshot yang disamarkan bila memuat identitas peserta. **Jangan kirim PIN, token, daftar username, atau foto privat peserta** di issue publik.
 
-## Peningkatan v0.2: Trainer mengendalikan demo kamera di LCD
+---
 
-Setelah deployment versi ini, lakukan migrasi **sekali saja** di D1 Console database `lensa-muda-db`:
+## 2. Link kelas dan peran pengguna
 
-```sql
-ALTER TABLE sessions ADD COLUMN camera_json TEXT NOT NULL DEFAULT '{"a":1,"s":3,"i":1}';
+| Layar | Link |
+|---|---|
+| Beranda | https://kelasbelajar.org/lensa-muda/ |
+| Peserta | https://kelasbelajar.org/lensa-muda/#/peserta |
+| Trainer | https://kelasbelajar.org/lensa-muda/#/trainer |
+| LCD / proyektor | https://kelasbelajar.org/lensa-muda/#/lcd |
+| Buku saku digital | https://kelasbelajar.org/lensa-muda/buku-saku.html |
+| Status kelas (GET, baca saja) | https://kelasbelajar.org/lensa-muda/api/state |
+
+Aplikasi juga mengenali sejumlah rute berbasis path; URL hash di atas dipakai di panduan ini agar konsisten saat operator berpindah layar.
+
+**Peran:**
+- **Peserta:** daftar/login dengan username, mengerjakan latihan di perangkat sendiri, mengunggah foto hunting dan menyimpan jawaban. Username bukan password yang kuat — perlakukan sebagai **kredensial rahasia**.
+- **Trainer:** masuk menggunakan PIN trainer yang disimpan sebagai **Cloudflare secret**, mengendalikan tahap, slide, kamera demo, timer, sorotan karya, layar penutup, penguncian kelas dan unggah aset materi.
+- **Pendamping/mentor:** masuk dengan PIN pendamping; terutama **memantau**, bukan memegang kendali presentasi/unggah materi atau menghapus data.
+- **LCD:** presentasi publik yang membaca status kelas. Tidak perlu token trainer pada layar LCD.
+
+**Rekomendasi kelas:** satu laptop trainer, satu layar LCD/TV/proyektor eksternal, dan masing-masing peserta memakai ponsel. Pastikan laptop serta perangkat peserta memperoleh internet yang memadai; dua tab laptop trainer dan LCD boleh digunakan sebagai alat kontrol/penayangan.
+
+---
+
+## 3. Checklist sebelum peserta masuk
+
+- [ ] Pastikan commit GitHub yang dituju sudah **benar-benar terdeploy** ke Cloudflare; jangan hanya melihat status PR.
+- [ ] Buka beranda, `#/trainer`, `#/lcd` dan satu HP peserta (tanpa membuat akun palsu baru di produksi).
+- [ ] Pastikan layar trainer tersambung, LCD mengikuti satu perpindahan slide yang aman, dan presentasi masih bisa kembali.
+- [ ] Periksa jumlah peserta yang sudah terdaftar **tanpa menghapusnya** dan apakah kelas masih terbuka.
+- [ ] Periksa **status enam foto Modul 06** serta lima spread NatGeo di panel yang tersedia.
+- [ ] Pastikan **foto siluet penutup** sudah berstatus tersedia.
+- [ ] Pastikan **PDF Buku Saku** sudah diterbitkan (maksimal 5 MB), lalu **pindai QR** layar penutup dengan HP dan lakukan satu unduhan percobaan.
+- [ ] Cek bahwa halaman `buku-saku.html` masih bisa dibaca tanpa login.
+- [ ] Pastikan charger, kabel/HDMI, perangkat LCD, browser fullscreen, dan jaringan cadangan.
+- [ ] Siapkan cara fasilitasi tanpa internet: instruksi lisan, foto asli peserta, dan diskusi bersama. Hindari tindakan destruktif saat sambungan tidak stabil.
+
+**Penting:** status **berhasil merge** berbeda dari **Cloudflare sudah menjalankan versi baru**. Kondisi produksi dan ketersediaan media R2 harus diuji langsung oleh operator. Repo hanya mendefinisikan fitur dan rutenya.
+
+---
+
+## 4. Alur operasional dari pembuka sampai buku saku
+
+### Tahap 00 — orientasi dan registrasi
+
+1. Trainer membuka dashboard dan memilih tampilan orientasi/pendaftaran.
+2. Peserta masuk dari ponsel dan mendaftar memakai **nama, sekolah, kelas, serta username pilihan**, atau login dengan username yang pernah dibuat.
+3. LCD dapat menampilkan panduan, jumlah peserta dan roster. Pada uji 70 peserta, daftar dibagi **48 nama + 22 nama**.
+4. Simpan username masing-masing secara privat; jangan sebarkan roster yang memuat username.
+
+### Modul 01 — Laboratorium Kamera
+
+1. Trainer membuka tahap 01; teori dimulai dari indeks presentasi **0** dan dapat berpindah ke simulasi kamera.
+2. Peserta memahami cahaya, aperture, shutter speed, ISO dan hubungan ketiganya. Mereka menguji perubahan setting masing-masing.
+3. Trainer dapat menggerakkan demo kamera pada dashboard untuk ditampilkan di LCD; demo ini **terpisah** dari latihan kamera peserta.
+4. Peserta menyimpan hasil kamera jika tugas meminta penyimpanan.
+
+### Modul 02 — Komposisi Visual
+
+1. Tahap 02 mulai di indeks **21**; gunakan contoh dokumentasi Sangihe untuk membahas bingkai, posisi, jarak, sudut dan framing.
+2. Trainer membuka latihan komposisi. Demo trainer tampil di LCD, sedangkan peserta mengendalikan contoh komposisi sendiri.
+3. Peserta menyimpan keputusan dan alasan. Praktik bukan membuat objek pada foto dokumenter menjadi kejadian baru.
+
+### Modul 03 — EDFAT + hunting foto
+
+1. Tahap 03 mulai di indeks **32**. Enam slide pertama menjelaskan **Entire, Detail, Frame, Angle, Time**; slide 07 adalah **briefing hunting dan unggah**.
+2. Trainer dapat menjalankan timer hunting **25 menit**, lalu seleksi/unggah **15 menit**. Pengaturan ini membantu kelas; tetap gunakan penilaian situasional saat memfasilitasi.
+3. Peserta mengambil foto sendiri, memilih hingga **12** foto dari galeri HP, lalu mengunggah salinan yang dikompresi WebP. Foto asli di HP **tidak dihapus** aplikasi.
+4. Pastikan status setiap foto yang diperlukan **Tersimpan di server**. Ketika jaringan putus, periksa antrean IndexedDB di perangkat yang sama.
+5. **Misi Detektif:** setiap peserta memilih **SATU** foto dari hasil hunting, menentukan unsur EDFAT dominan, dan menulis alasan berdasarkan bukti yang terlihat. Trainer dapat memeriksa dan menyorot foto pilihan ke LCD.
+
+**Foto musik bambu Sangihe tetap dipakai sebagai contoh teori**, bukan menggantikan foto hasil hunting peserta pada latihan.
+
+### Modul 04 — Sembilan Bingkai / Meja Editor — **DIKUNCI**
+
+1. Tahap 04 mulai di indeks **39** dan memiliki **enam slide teori** dengan contoh foto Sangihe.
+2. Portofolio majalah **National Geographic — Hudog Pekayang**, lima spread karya Ronny Adolof Buol, disajikan dalam layout asli sebagai inspirasi penyuntingan foto cerita. Spread dan urutannya **dikunci**.
+3. Slide 06 mengantar praktik menggunakan foto hunting peserta; ilustrasinya spread pertama NatGeo.
+4. Peserta membuka Meja Editor dan memilih **tepat sembilan dari maksimal dua belas foto hunting yang sudah tersimpan**, mengatur urutannya, mengisi judul dan alasan editorial, lalu menyimpan.
+5. Trainer dapat melihat sembilan foto dan melempar karya peserta pilihan ke LCD untuk diskusi; foto peserta lain tidak boleh tercampur.
+
+Jangan kembali memakai foto stok musik bambu sebagai **jawaban latihan**. Contoh Sangihe tetap sah pada slide teori.
+
+### Modul 05 — Caption Lab — **DIKUNCI**
+
+1. Tahap 05 mulai di indeks **45** dan memiliki **tujuh slide** (45–51).
+2. Slide 06 memuat **contoh caption musik bambu Sangihe** tanggal foto 9 September 2017 beserta peta **5W+1H**; slide 07 adalah praktik.
+3. Latihan hanya bisa dikirim setelah rangkaian **sembilan foto** Modul 04 disimpan oleh akun peserta yang sama.
+4. Peserta mencatat 5W+1H, hal yang perlu diverifikasi, dan menulis **satu narasi**; panjang tulisan **bebas selama tidak kosong**. Penghitung kata ditampilkan untuk bahan diskusi, bukan syarat minimum 50/150 kata.
+5. Tiga pemeriksaan editorial perlu diselesaikan sebelum mengirim.
+6. Trainer memantau hasil dan menyorotnya ke LCD: **sembilan foto berurutan dalam grid 3×3, judul, narasi utuh yang bisa digulir, dan jumlah kata**.
+
+### Modul 06 — Etika & Tantangan
+
+1. Tahap 06 mulai di indeks **52** dan memiliki enam slide (52–57), meliputi kepercayaan, momen asli, izin dan martabat subjek, edit/verifikasi, pilihan etis dan tantangan akhir.
+2. Enam foto dokumenter pengganti ditampilkan dari **R2** dengan fallback foto Sangihe. Berkas unggahan WebP dipasangkan ke slide 01–06.
+3. Latihan peserta: **empat situasi etika**, masing-masing satu jawaban dan **alasan**, lalu rencana foto cerita budaya yang mencakup **enam bagian**: tema, tokoh, izin, ragam foto, fakta yang harus diperiksa, serta keselamatan/martabat. Terakhir **tiga komitmen etika**.
+4. Peserta menyimpan hasil; trainer membaca skor keputusan (0–4) sebagai bahan refleksi, bukan satu-satunya ukuran etika, dan dapat menyorot rencana ke LCD.
+5. **Belum ada alasan menganggap seluruh alur ini terverifikasi end-to-end pada 70 sesi nyata** hanya dari uji pendaftaran serentak. Lakukan gladi ringan dengan akun khusus yang memang diizinkan bila diperlukan.
+
+### Layar penutup dan buku saku
+
+1. Pada dashboard trainer, buka **Slide Penutup · Seluruh Kelas**.
+2. Pastikan foto **siluet fotografer berlatar awan** sudah diunggah sebagai JPG dan status siap.
+3. Klik **Tampilkan Penutup di LCD & Peserta**. Ini **overlay**, bukan modul baru, dan tidak menghapus jawaban.
+4. Slide berisi **Terima kasih**, kontak trainer, **QR Buku Saku** dan tombol buka buku saku.
+5. Peserta memindai QR yang mengarah ke **`https://kelasbelajar.org/lensa-muda/buku-saku.html`**; di sana dapat membaca enam modul dan mengunduh PDF lengkap bila tersedia, atau **Cetak / Simpan PDF** sebagai alternatif.
+6. **Kembali ke Materi** menonaktifkan overlay dan mengembalikan posisi sebelumnya.
+7. Setelah yakin semua sudah tersimpan dan buku saku dapat diakses, trainer boleh mengunci aplikasi peserta. **Tautan buku saku publik tetap tersedia setelah kelas dikunci.**
+
+**Pegangan praktis:** jangan mengunci sebelum peserta yang masih memiliki unggah/jawaban pending menyelesaikan sinkronisasi atau memahami konsekuensinya.
+
+---
+
+## 5. Enam modul dan keluaran peserta
+
+| Tahap | Materi | Indeks presentasi | Keluaran praktik |
+|---|---|---|---|
+| 00 | Orientasi, panduan, registrasi | Tampilan khusus tahap 00 | Akun peserta dan pemahaman alur |
+| 01 | Dasar fotografi / kamera | 0–20 | Keputusan kamera (aperture, shutter, ISO) |
+| 02 | Komposisi Visual | 21–31 | Komposisi dan alasan pilihan |
+| 03 | EDFAT / hunting foto | 32–38 | Maks. 12 foto tersimpan di R2; 1 pilihan EDFAT + alasan |
+| 04 | Sembilan Bingkai | 39–44 | 9 foto hunting tersusun, judul dan alasan editorial |
+| 05 | Caption Lab | 45–51 | Satu narasi untuk 9 foto, 5W+1H, verifikasi dan jumlah kata |
+| 06 | Etika & Tantangan | 52–57 | 4 respons etika, alasan, rencana foto cerita dan 3 komitmen |
+| Penutup | Slide terima kasih | Overlay terpisah | QR/link ke buku saku |
+
+Indeks di tabel adalah **indeks internal untuk debugging**, bukan nomor yang harus dibaca peserta. Konstanta acuan terdapat di `src/index.js` (`STAGE_FIRST_SLIDES` / `STAGE_LAST_SLIDES`) dan berkas materi masing-masing. Jika kelak ada slide tambahan, seluruh batas dan tes harus disesuaikan **bersama**.
+
+**Mode peserta:** **Latihan saya** mempertahankan pekerjaan; **Baca materi** memberi navigasi materi mandiri; **Ikuti trainer** membuat layar kembali mengikuti presentasi. LCD selalu mengikuti kendali trainer. Saat kelas dibuka ke tahap berikutnya, tugas yang sedang dikerjakan peserta tidak perlu dipaksa berpindah.
+
+---
+
+## 6. Dashboard trainer dan LCD
+
+### Pengendalian yang harus dipahami trainer
+
+**Satu kendali kelas:** pilih tahap → tampilkan materi → pindah slide → buka latihan → bahas hasil peserta → pindah tahap. Jangan memakai dua sesi trainer yang sama-sama aktif mengendalikan presentasi pada waktu bersamaan.
+
+- **Presenter:** trainer mengirim perubahan lewat API; server menyimpan snapshot sesi; LCD dan peserta mengikuti melalui polling. Sinkron bukan WebSocket dan tidak dijanjikan tanpa jeda.
+- **Konsistensi tahap:** pergantian tahap dan slide awal memakai pembaruan atomik; `controlRevision` menolak perintah lama yang datang terlambat.
+- **Sorotan karya:** hasil terpilih muncul di LCD tanpa mengganti tahap/slide dasar. Hentikan sorotan melalui **Kembali ke Presentasi**. Pastikan tidak menampilkan informasi sensitif pada proyektor.
+- **Hunting timer:** start, pause, resume, extend, stop/finish. Saat dihentikan, overlay countdown seharusnya ikut hilang setelah sinkronisasi.
+- **Layar penutup:** tampil/keluar tanpa mengunci kelas atau mengubah modul. Slide penutup perlu foto latar yang sudah tersedia di server.
+- **Mentor/pendamping:** hak baca, bukan kendali trainer.
+
+**Catatan privasi:** LCD dan status publik dapat menyajikan karya/teks yang dipilih trainer. Jangan menyorot data pribadi, alamat sensitif, atau informasi yang berpotensi membahayakan subjek.
+
+---
+
+## 7. Foto hunting, R2, penyimpanan dan pemulihan jawaban
+
+### Tiga lapisan penyimpanan yang berbeda
+
+| Lapisan | Menyimpan | Dampak jika hilang |
+|---|---|---|
+| Browser perangkat peserta | Identitas/token lokal, draf dan **pending answer** per akun; antrean unggah foto di IndexedDB | Draf / antrean yang **belum tersinkron** bisa hilang jika data browser dibersihkan |
+| Cloudflare **D1** | Akun, status kelas, metadata foto, hasil jawaban per modul | Merupakan sumber data kegiatan; **jangan reset** |
+| Cloudflare **R2** | Berkas WebP hunting, foto materi Modul 06, spread portfolio, foto penutup, dan PDF buku saku | Foto dan unduhan gagal jika objek/binding tidak tersedia |
+
+**Batas teknis foto hunting:** maksimal **12 slot per peserta**, diproses ke format **WebP** dan dibatasi sekitar **2 MB per hasil optimasi**. Status **Tersimpan di server** berarti foto telah dikonfirmasi sebagai hasil kiriman; antrean lokal tidak boleh dianggap sudah di R2.
+
+**Jawaban D1** memakai kunci `kamera`, `komposisi`, `edfat`, `story`, `caption`, dan `etika`. Satu akun + satu modul memakai satu hasil terbaru (upsert), dengan proteksi `_clientRevision` untuk menolak kiriman lama. Foto yang disimpan tetap milik akun tersebut, bukan aset yang bisa dibaca sembarang pengguna.
+
+**Pola pemulihan yang aman:** tetap di browser yang sama → cek label status → sambungkan internet → buka kembali modul/galeri → gunakan tombol retry/perbarui → konfirmasi hasil pada dashboard trainer. Logout atau login ulang di perangkat berbeda bisa merotasi token, sehingga **jangan pindah perangkat sebelum antrean tersinkron**.
+
+**Tidak dijamin:** data yang hanya berada di browser akan selamat bila perangkat hilang, browser di-reset, atau penyimpanan dibersihkan. Konflik edit simultan dari dua perangkat dengan username yang sama tidak otomatis digabung.
+
+Dokumen rinci: [perlindungan jawaban](docs/answer-recovery-2026-11-14.md), [pemulihan koneksi](docs/connection-recovery-2026-11-14.md), dan [sinkronisasi trainer–LCD](docs/trainer-lcd-sync-2026-11-14.md).
+
+---
+
+## 8. Galeri materi, foto penutup, dan buku saku
+
+| Media | Lokasi / cara mendapatkan | Jika belum tersedia |
+|---|---|---|
+| Foto contoh kamera dan komposisi Sangihe | Aset statis di `public/assets/`, ikut kode/deploy | Periksa deployment dan URL aset; jangan ubah D1 |
+| Lima spread NatGeo `Hudog Pekayang` | R2; tampilan portofolio Modul 04 | Periksa panel status dan unggahan yang sudah ada; **jangan menimpa** spread yang dikunci |
+| Enam foto Modul 06 | Trainer unggah **6 WebP sekaligus**: `slide 1 - modul 06.webp` s.d. `slide 6 - modul 06.webp`, maksimal **3 MB per file**, melalui panel Modul 06 | Aplikasi memakai foto Sangihe sebagai fallback |
+| Foto siluet penutup | Trainer unggah **JPG** (maks. **4 MB**) pada panel Slide Penutup | Penutup tidak bisa dinyalakan sampai JPG tersedia |
+| Buku saku digital | `/lensa-muda/buku-saku.html` | Bisa dibaca tanpa login, dengan perintah cetak/simpan PDF |
+| PDF buku saku 19 halaman | Trainer unggah **PDF maksimal 5 MB** melalui panel `Publikasikan Buku Saku Peserta (PDF)`; unduhan publik `/lensa-muda/api/booklet/pdf` | Tombol PDF lengkap belum muncul sampai file siap; QR tetap mengarah ke halaman digital |
+
+**Jangan memperlakukan “sudah ada fitur upload” sebagai bukti bahwa objek media sudah ada di R2.** Periksa status dan buka foto/PDF di browser.
+
+**Materi peserta untuk donor:** buku saku merupakan **produk pembelajaran dan lampiran materi**, bukan bukti otomatis kehadiran, jumlah peserta selesai, atau mutu hasil belajar. Dokumentasi pelaksanaan dan keluaran karya perlu diverifikasi tersendiri.
+
+---
+
+## 9. Kunci kelas dan privasi
+
+- Kunci kelas `is_locked` dapat diaktifkan **hanya trainer** setelah kelas selesai. Akses operasi peserta ditolak ketika dikunci; dashboard trainer tetap tersedia untuk keperluan pengawasan.
+- Setelah dikunci, peserta tidak dapat memperbaiki hasil yang belum tersinkron. **Konfirmasi seluruh peserta telah menyimpan tugas terlebih dahulu.**
+- **Buku saku** dan halaman statis digital **tetap publik** walaupun akun kelas terkunci; jangan menempatkannya di balik operasi login peserta.
+- Username yang dipilih peserta (3–20 huruf kecil a–z tanpa spasi untuk akun baru) **berfungsi sebagai kredensial login**, bukan sekadar nama tampilan. Jangan membagikannya secara publik. Username lama dengan pola `LM-...` tetap mendapat jalur kompatibilitas.
+- Trainer/mentor memakai PIN dari Cloudflare secrets; token tidak boleh masuk log publik, tangkapan layar, repo, atau laporan donor.
+- Permintaan hapus peserta dari dashboard **dapat menghapus jawaban terkait**; jangan gunakan fitur ini untuk memperbaiki masalah login.
+
+---
+
+## 10. Arsitektur dan berkas utama
+
+```text
+Browser peserta / trainer / LCD
+        │
+        ▼
+Cloudflare Worker (src/index.js)
+   ├── Assets dari public/ (ES modules tanpa bundling)
+   ├── D1 DB: sesi, akun peserta, jawaban, metadata hunting
+   └── R2 PHOTO_BUCKET: media hunting dan materi/handbook
 ```
 
-Ini hanya menambah kolom dan **tidak menghapus data peserta maupun jawaban**. Jalankan **sekali saja** pada database yang sudah ada. SQL yang sama tersedia pada `migrations/0001-live-camera.sql`. Pada database baru, kolom sudah termasuk dalam `schema.sql`, jadi migrasi tidak diperlukan.
+| Berkas | Fungsi |
+|---|---|
+| `public/index.html`, `public/app.js`, `public/styles.css` | Entry aplikasi, state, dashboard, rendering 3 mode dan styling |
+| `public/slides.js`, `public/composition.js` | Materi kamera dan komposisi |
+| `public/edfat.js` | Materi EDFAT dan briefing hunting |
+| `public/story.js`, `public/story-selection.js`, `public/story-hunting-ui.js` | Meja Editor sembilan foto dan loading foto milik peserta |
+| `public/caption.js` | Tujuh slide Caption Lab dan contoh 5W+1H |
+| `public/ethics.js` | Enam slide etika dan ilustrasi R2/fallback |
+| `public/closing.js`, `public/buku-saku.html` | Penutup penuh, QR dan buku saku |
+| `public/photo-hunting.js`, `public/hunting-ui.js` | Kompresi WebP, IndexedDB antrean, tampilan galeri peserta |
+| `public/hunting-timer-ui.js`, `src/hunting-timer.js` | Kendali/tampilan countdown bersama |
+| `public/answer-sync.js`, `public/connection.js`, `public/trainer-sync.js` | Pending jawaban, timeout/polling, revisi kendali |
+| `src/index.js`, `src/hunting-photos.js` | Worker API, hak akses, D1/R2 dan skema hunting |
+| `wrangler.jsonc`, `schema.sql`, `migrations/` | Konfigurasi layanan, skema baru, migrasi terdokumentasi |
+| `scripts/load-test-local.mjs`, `scripts/hunting-photo-smoke-local.mjs` | Tes HTTP/70 peserta dan unggah foto **hanya lokal** |
+| `tests/` | Unit/regresi; tidak semuanya pengujian browser end-to-end |
+| `docs/`, `AGENTS.md` | Laporan audit, pemulihan, dan aturan keamanan perubahan |
 
-Untuk menguji:
-1. Trainer login melalui `/lensa-muda/#/trainer`, buka tahap `01 · Laboratorium Kamera`.
-2. Buka `/lensa-muda/#/lcd` di jendela lain (disarankan pada layar eksternal), pilih `Layar penuh`.
-3. Pada dashboard trainer, gerakkan slider di panel `Kontrol Kamera dari Trainer`. Perubahan seharusnya muncul di LCD dalam sekitar 2–4 detik jika koneksi stabil.
-4. Mode pendamping dapat melihat pengaturan, tetapi tidak dapat mengubahnya. Pengaturan trainer terpisah dari latihan kamera peserta.
+Binding produksi saat dokumentasi diperbarui: Worker `studio-foto-cerita`; D1 `lensa-muda-db` (binding `DB`); R2 `lensa-muda-media` (binding `PHOTO_BUCKET`); aset statis `ASSETS` dengan `base_path: "/lensa-muda"`. Konfigurasi sebenarnya adalah `wrangler.jsonc`; **jangan mengganti ID database/bucket dengan resource uji pada kode produksi**.
 
-### Fitur yang masih akan dikembangkan
-- Simulator pada versi ini masih berupa ilustrasi grafis, bukan foto nyata atau simulasi optik yang presisi.
-- Penyempurnaan viewport dan scroll pada layar HP peserta belum termasuk tahap v0.2.
-- Penayangan LCD memakai polling D1, bukan WebSocket; latensi bergantung koneksi dan aktivitas browser.
+Status sesi disimpan di `sessions.camera_json` (tahap/presentasi/spotlight, timer, penutup) dan tabel terkait. Tidak ada kebutuhan membuat migrasi baru hanya untuk menampilkan penutup dan buku saku.
 
-## Peningkatan v0.3 — teori sebelum simulator (tanpa migrasi D1 tambahan)
+---
 
-Delapan slide teori dasar fotografi tersedia pada `public/slides.js`. Trainer mengendalikan slide melalui `#/trainer`, dan layar `#/lcd` secara otomatis mengikuti nomor slide dan mode presentasi. Seluruh catatan mengajar hanya ditampilkan di dashboard trainer; slide LCD dirancang untuk dibaca dari jauh.
+## 11. Menjalankan aplikasi dan pengujian LOKAL yang aman
 
-**Cara uji:**
-1. Buka `https://kelasbelajar.org/lensa-muda/#/trainer` dan login.
-2. Klik tahap `01 · Laboratorium Kamera`. Ketika tahap ini dibuka dari tahap lain, mode dimulai dari slide teori 1.
-3. Panel `Materi Dasar Fotografi` berisi navigasi slide, delapan tombol nomor, dan catatan khusus trainer.
-4. Buka `https://kelasbelajar.org/lensa-muda/#/lcd` pada tab terpisah. Klik `Layar penuh`, lalu uji tombol `Slide berikutnya` dari dashboard. LCD mengikuti perubahan dalam beberapa detik tanpa keluar dari layar penuh.
-5. Klik `Mulai simulator kamera` di dashboard. LCD beralih ke peragaan kamera langsung; slider aperture, shutter, dan ISO kembali berfungsi.
-6. Klik `Kembali ke slide teori` untuk mengembalikan materi.
-7. Peserta yang membuka modul kamera di HP akan melihat ringkasan slide selama mode teori, lalu simulator ketika trainer mengalihkan mode.
+### Prasyarat
 
-State presentasi disimpan secara atomik dalam JSON pada kolom `camera_json` yang sudah dibuat di v0.2 menggunakan `json_set` SQLite. **Tidak perlu menjalankan SQL baru.** Metadata tambahan `view` dan `slide` tidak menghapus pengaturan kamera `a`, `s`, dan `i`.
+- Node.js dan npm; CI memakai Node **22**.
+- Wrangler dari dependensi repository.
+- Repo di komputer sendiri dengan semua aset (termasuk file biner) tersedia.
+- **Rahasia uji**, bukan rahasia produksi, pada `.dev.vars` yang **tidak di-commit**.
+- D1/R2 **lokal terpisah**. Jangan menjalankan perintah schema pada database remote yang aktif.
 
-Materi visual pada versi ini berupa **ilustrasi simulasi** dan diberi label yang sesuai. Foto dokumenter nyata, foto seri dengan parameter kamera berbeda, serta penyempurnaan layout HP merupakan pekerjaan tahap berikutnya.
+### Periksa sintaks dan tes
 
+```bash
+npm install --no-audit --no-fund
+npm run check
+npm test
+```
 
-## v0.4 — Foto generatif untuk Laboratorium Kamera
+Perintah `npm run check` mengikuti daftar berkas yang ditentukan `package.json`; modul ES lain juga diuji melalui `npm test`, tetapi **lulus tes unit tidak sama dengan lulus 70 sesi browser**.
 
-Sepuluh file WebP ada di folder public/assets/camera/ dan akan diakses sebagai static assets Cloudflare, bukan R2. Ukuran gabungan sekitar 1,6 MB.
+### Siapkan lingkungan HTTP/Wrangler lokal
 
-- base.webp: slide membaca foto dan referensi simulator.
-- cahaya-depan.webp, cahaya-samping.webp, cahaya-belakang.webp: slide arah datang cahaya.
-- aperture-lebar.webp dan aperture-sempit.webp: slide depth of field dan simulator.
-- shutter-lambat.webp dan shutter-cepat.webp: slide gerak dan overlay simulator.
-- iso-rendah.webp dan iso-tinggi.webp: contoh penguatan sinyal/noise.
-- Segitiga exposure tetap menggunakan infografik SVG.
+Buat `.dev.vars` **lokal saja** menggunakan PIN contoh khusus uji, bukan PIN produksi:
 
-Semua ini foto generatif untuk latihan, bukan foto dokumentasi kejadian nyata. Angka f-stop, shutter dan ISO adalah label simulasi, bukan data EXIF hasil pemotretan. Simulator memberi representasi visual konseptual, bukan simulasi optika yang presisi. Jangan gunakan gambar ini sebagai foto jurnalistik atau karya lomba.
+```text
+TRAINER_PIN=local-trainer-12345
+MENTOR_PIN=local-mentor-12345
+SESSION_SECRET=local-load-test-only-secret-for-virtual-users-123456
+```
 
-Uji pada https://kelasbelajar.org/lensa-muda/#/trainer (tahap 01). LCD dan tampilan peserta harus menampilkan gambar yang sama. Tidak ada migrasi SQL tambahan.
+```bash
+# HANYA D1 lokal. Jangan tambah --remote.
+npx wrangler d1 execute lensa-muda-db --local --file=schema.sql
 
-## Pembaruan akun peserta dan tata letak ponsel (November 2026)
+# Worker lokal, data lokal; jangan akses Cloudflare produksi.
+npx wrangler dev --local --ip 127.0.0.1 --port 8787
 
-- Pendaftaran baru mengumpulkan nama, sekolah, dan kelas **sekali**. Aplikasi membuat username acak format `LM-XXXXXXXXXXXX` yang harus disimpan peserta.
-- Untuk kembali dari perangkat lain, pilih **Sudah punya username? Masuk**. Tidak ada password, sehingga username bersifat rahasia dan menjadi kunci untuk jawaban peserta. Masuk di perangkat lain menerbitkan token baru dan membatalkan token lama.
-- Progres peserta dibaca kembali dari D1 melalui `GET /api/me` setelah masuk ulang. Token lama yang masih valid juga dipulihkan saat aplikasi dibuka.
-- Dashboard trainer mencakup pencarian, salin username, koreksi nama/sekolah/kelas, dan penghapusan peserta **beserta seluruh jawabannya** dengan dialog konfirmasi. Pendamping hanya membaca dan tidak melihat username.
-- Tata letak HP 320–430px, tablet dan laptop disesuaikan untuk seluruh modul, terutama bank 12 foto, caption, pilihan EDFAT, dan kuis etika. Setiap peserta mengendalikan simulator sendiri tanpa mempengaruhi LCD.
+# Di terminal LAIN, setelah API lokal siap:
+node scripts/load-test-local.mjs
+```
 
-### Migrasi D1 dan perlindungan data
+Skrip beban **secara eksplisit menolak alamat selain localhost/127.0.0.1**; memerlukan database uji **kosong**, tahap 00 dan kredensial trainer uji. Jangan mengosongkan data produksi atau mengubah `LOAD_TEST_BASE` ke URL produksi. Untuk uji ulang, siapkan **persistensi lokal disposable baru**, jangan menghapus database lain yang sedang dipakai.
 
-Kode mendeteksi kolom `participants.username` saat akses pendaftaran/login/dashboard pertama, lalu menjalankan migrasi aditif idempoten: menambah kolom, memberikan username acak kepada peserta lama, dan membuat indeks unik. **Tidak menghapus peserta atau jawaban.** Skrip manual yang ekuivalen tersedia pada `migrations/0002-participant-username.sql`; jangan menjalankannya setelah migrasi otomatis karena `ALTER TABLE` hanya boleh sekali.
+Uji unggah foto lokal dengan `node scripts/hunting-photo-smoke-local.mjs` pada instance lokal **terpisah / kosong**: skrip membuat akun uji sendiri dan menguji sampai 12 slot. Jangan menjalankannya pada server kelas.
 
-Untuk produksi, sebaiknya ambil backup D1 sebelum deployment apabila tersedia. Setelah deployment, trainer membuka dashboard, memastikan username peserta lama tampil, kemudian menguji login dari browser privat. Jangan menghapus data peserta untuk memperbaiki login. Jika migrasi gagal, API mengembalikan pesan kegagalan agar operator dapat memeriksa D1 secara terkendali.
+### Apa yang belum terwakili skrip ini
 
+`scripts/load-test-local.mjs` memeriksa 70 pendaftaran bersamaan, 70 hasil kamera bersamaan, counter/roster, tahap 01–06, revisi kontrol, timer dan pemulihan. `scripts/hunting-photo-smoke-local.mjs` menguji R2 lokal **satu peserta dengan 12 foto**, bukan 70 × 12 foto secara paralel.
 
-## Perubahan terbaru: akun mudah diingat, fokus materi dan penguncian kelas
+**Belum ada bukti satu skenario HTTP/browser tunggal menjalankan 70 peserta dari orientasi hingga 840 unggahan foto, 630 pilihan foto, 70 caption, 70 rencana etika, penutup dan unduhan R2.** Tes sumber/logic yang lain tidak boleh digambarkan sebagai pengujian kapasitas Cloudflare produksi.
 
-**Ketentuan terbaru menggantikan keterangan sebelumnya tentang username acak saat pendaftaran.**
+Workflow CI: [syntax/test](.github/workflows/check.yml), [70 peserta lokal](.github/workflows/isolated-classroom-load.yml), dan [R2 foto lokal](.github/workflows/isolated-hunting-photos.yml).
 
-- Pendaftaran baru: peserta mengisi nama, sekolah, kelas, dan **username pilihannya sendiri**. Username harus satu kata terdiri dari 3–20 huruf kecil a–z tanpa spasi (contoh `jufri`). Nilai disimpan persis sesuai input, dan keunikan ditegakkan oleh indeks D1.
-- Peserta lama yang memiliki username `LM-XXXXXXXXXXXX` **tetap dapat login**. Mereka bisa mengubahnya sendiri melalui menu **Akun > Ganti username** selama kelas terbuka, atau meminta trainer memperbaikinya dari tabel peserta. Tidak ada penghapusan progres.
-- Halaman peserta berfokus pada materi: pemilih modul kecil, panel akun yang bisa dibuka, tanpa tautan ke layar trainer atau LCD. Jika tahap yang dibuka trainer berubah, tampilan peserta mengikuti tahap itu; peserta tetap dapat memilih tahap sebelumnya yang sudah terbuka.
-- Trainer: tombol **Tambah peserta**, **Edit** identitas dan username, **Hapus** (jawaban ikut terhapus setelah konfirmasi), **Cetak / Simpan PDF** melalui dialog cetak browser, dan berbagi ringkasan daftar via WhatsApp/email. Username disertakan pada cetakan internal, **tidak disertakan pada pesan massal WA/email**.
-- Tombol **Kunci aplikasi peserta** hanya untuk trainer; status `is_locked` disimpan di D1. Ketika terkunci, peserta tidak dapat mendaftar, login, membuka profil API, mengubah username, atau menyimpan jawaban. API status terbuka untuk menampilkan pesan kelas ditutup. Trainer dan pendamping tetap bisa mengakses dashboard sesuai haknya; trainer bisa membuka kembali kelas.
-- `migrations/0003-class-lock.sql` adalah petunjuk migrasi aditif, tetapi Worker melakukan pengecekan dan penambahan kolom otomatis secara idempoten saat ada request. Jangan menjalankan migrasi manual setelah otomatis selesai. **Backup D1 lebih dulu** untuk deployment produksi.
-- Identitas Zonautara ditampilkan melalui ikon yang diadaptasi langsung dari berkas logo yang diberikan dan kredit pengembang pada footer.
+---
 
-**Penting:** sistem username tanpa password tidak memberikan perlindungan setara autentikasi akun biasa selama kelas terbuka. Jangan membagikan username peserta kepada orang lain. Login salah telah dibatasi per IP. Aktifkan penguncian segera setelah kelas selesai; jangan mengandalkan penguncian sebagai pengganti keamanan saat kelas berlangsung.
+## 12. Cloudflare, deployment dan pemulihan produksi
 
-### Pengujian sesudah Cloudflare deploy
+### Konfigurasi
 
-1. Di HP kecil (lebar 320, 360, 390, 430 px), pastikan menu modul menjadi pemilih ringkas dan materi muncul di atas tanpa scroll horizontal.
-2. Coba pendaftaran username `jufri` (atau username uji unik), username duplikat, login ulang dari browser lain, dan mengganti username dari panel akun.
-3. Periksa username peserta lama di tabel trainer; ubah username salah satu akun lama lalu login tanpa kehilangan jawaban.
-4. Tambah, edit, cetak daftar (Save as PDF), dan hapus akun uji sebagai trainer; pastikan pendamping tidak punya tombol edit/hapus.
-5. Uji tombol kunci: peserta mendapat halaman “Kegiatan belajar telah selesai”, operasi peserta ditolak (423), dan trainer masih dapat membuka kembali.
-6. Verifikasi branding header dan footer, serta bahwa pembaruan stage dan slide trainer masih sinkron ke peserta/LCD.
+- Worker: `studio-foto-cerita`, kode utama `src/index.js`.
+- Route produksi yang boleh dipakai: `kelasbelajar.org/lensa-muda/*`. **Jangan memakai route `kelasbelajar.org/*`** karena terdapat aplikasi lain.
+- Konfigurasi `assets.base_path` = `/lensa-muda` dan API `/lensa-muda/api/*` dijalankan Worker lebih dahulu.
+- Binding: D1 `DB` = `lensa-muda-db`; R2 `PHOTO_BUCKET` = `lensa-muda-media`.
+- Secrets yang wajib ada: `TRAINER_PIN`, `MENTOR_PIN`, `SESSION_SECRET`. Jangan menulis nilai secret di README, issue, chat, atau commit.
 
+### Prosedur perubahan kode (bukan untuk dilakukan saat kelas berlangsung)
 
-## Modul 02 — Komposisi Visual / Bab 2: Bahasa Visual
+1. Pastikan masalah teridentifikasi dan perubahan memang diperlukan; dokumentasi/audit saja tidak perlu deploy Worker.
+2. Baca `AGENTS.md`, pastikan branch/commit basis dan perubahan GitHub pihak lain (termasuk Codex).
+3. Buat branch kecil; jalankan tes, dokumentasikan keterbatasan; review PR.
+4. Sebelum merge yang memengaruhi runtime, cek apakah Cloudflare terhubung ke `main` untuk **auto-deploy**; siapkan backup D1 dan catat versi Worker sebelumnya.
+5. Merge hanya setelah CI relevan lulus dan aman untuk kelas; cek **Cloudflare Deployments**.
+6. Verifikasi **versi live**, URL aset, `GET /api/state`, koneksi trainer–LCD dan kemampuan menyimpan satu jawaban **hanya melalui akun uji yang memang disetujui**, tidak mengganggu peserta asli.
+7. Bila perlu rollback, rollback **versi Worker** lewat mekanisme deployment yang tersedia. Rollback kode **tidak otomatis memulihkan D1/R2**.
 
-Modul ini mengikuti laboratorium kamera dan mendahului EDFAT. Materi diarahkan untuk karya tema *Wajah Budaya Sulawesi Utara*, dengan rangkaian sembilan foto landscape dan caption terverifikasi sekitar 150 kata sebagai tujuan jangka akhir.
+### Database: jangan menjalankan migrasi historis sembarangan
 
-**Alur:** trainer membuka tahap `02 · Komposisi Visual`; sistem otomatis mengatur presentasi `view:theory, slide:21`. Tujuh slide 21–27 berisi pemahaman informasi dalam bingkai, garis sepertiga, pusat/samping, framing, jarak/detail, sudut, dan transisi praktik. Trainer dapat berpindah slide dari dashboard; LCD dan layar peserta mengikuti sesi yang sama.
+- `schema.sql` dipakai untuk membuat database uji/baru, **bukan** alat memperbaiki/mereset D1 produksi.
+- `migrations/0001-live-camera.sql` menambah `camera_json` pada database lama; database baru sudah menyertakannya.
+- `migrations/0002-participant-username.sql` terkait kolom username; aplikasi mempunyai migrasi otomatis aditif.
+- `migrations/0003-class-lock.sql` terkait kunci kelas; aplikasi mempunyai migrasi otomatis aditif.
+- Tabel `hunting_photos` dibuat secara aditif bila diperlukan.
 
-Setelah diskusi, trainer menekan **Buka latihan komposisi peserta**. Nilai presentasi menjadi `view:simulator` pada tahap 02; peserta masing-masing mencoba garis sepertiga, framing, posisi subjek, jarak, sudut pandang, kemudian menulis alasan minimal 15 karakter dan menyimpan jawaban ke D1 melalui kunci `komposisi` yang sudah digunakan sebelumnya. Perubahan keputusan satu peserta tidak memengaruhi tampilan peserta lain maupun LCD. Trainer membaca alasan di tabel progres.
+**Selalu periksa kondisi skema aktual sebelum ALTER TABLE**, karena mengulang migrasi manual bisa gagal. Lakukan backup/Time Travel D1 sebelum perubahan database yang benar-benar diperlukan.
 
-**Catatan fasilitasi:** Dalam slide, pancing pengamatan, bukan estetika semata: informasi apa yang masuk, hilang, atau perlu verifikasi. Foto di presentasi berasal dari aset simulasi generatif lokal yang sudah tersedia, diberi label jelas, bukan contoh liputan peristiwa yang dapat dianggap faktual. Saat praktik lapangan, peserta harus mengambil foto orisinal dan menghormati komunitas yang dipotret.
+---
 
-Secara teknis hanya rentang indeks presentasi yang diperluas ke 27. Tidak ada migrasi D1, perubahan objek R2, penggantian hak akses, atau perubahan tahapan penilaian.
+## 13. API yang perlu diketahui saat diagnosis
 
+Semua endpoint berikut memiliki prefix `https://kelasbelajar.org/lensa-muda/api`. **GET** digunakan untuk pemeriksaan yang tidak mengubah data; jangan memanggil **PUT/POST/DELETE** di produksi sekadar untuk diagnosis.
 
-### Pembaruan visual Modul 02 (dokumentasi Sangihe, 2017)
+| Endpoint | Kegunaan / catatan |
+|---|---|
+| `GET /state` | Tahap, presentasi, timer, roster/spotlight yang dapat ditampilkan publik; jangan sisipkan token peserta |
+| `GET /dashboard` | Data trainer/mentor, **memerlukan token** dan memuat informasi yang tidak boleh disebar |
+| `GET /me` | Profil/jawaban akun peserta, **memerlukan token peserta** |
+| `POST /participants` | Pendaftaran; membuat akun **baru** |
+| `POST /participant-login` | Login peserta; menerbitkan token baru |
+| `PUT /state`, `PUT /presentation`, `PUT /orientation`, `PUT /spotlight` | Kendali trainer; menggunakan revisi kontrol untuk mencegah request lama |
+| `PUT /hunting/timer` | Start/pause/resume/extend/finish timer; **mengubah sesi** |
+| `GET /hunting/photos`, `GET /hunting/photos/1..12` | Daftar/pratinjau foto akun peserta, memerlukan autentikasi |
+| `PUT /hunting/photos/1..12` | Unggah foto WebP akun peserta (maks. 12 slot) |
+| `GET /ethics/photos/status` | Status tersedia enam foto materi Modul 06 |
+| `GET /ethics/slide-photo/1..6` | Aset enam slide Modul 06 dari R2 |
+| `GET /closing/status`, `GET /closing/photo` | Ketersediaan / pembacaan JPG latar penutup |
+| `PUT /closing/presentation` | Tampilkan/sembunyikan overlay penutup, **hanya trainer** |
+| `GET /booklet/status` | Cek PDF buku saku sudah tersedia di R2 |
+| `GET /booklet/pdf` | Unduh buku saku PDF; **publik**, tidak bergantung pada lock peserta |
+| `PUT /booklet/pdf` | Unggah PDF buku saku baru; **trainer saja**, maksimum 5 MB |
+| `GET /portfolio/status`, `GET /portfolio/spread/1..5` | Lima spread portofolio NatGeo |
+| `PUT /class-lock` | Mengunci/membuka operasi peserta; jangan uji saat kelas berlangsung |
 
-Catatan ini **menggantikan** keterangan Modul 02 sebelumnya tentang ilustrasi generatif yang berulang. Terdapat **11 slide foto asli** (01, 02, 03a, 03b, 04a, 04b, 05a, 05b, 06, 07a, 07b) dari dokumentasi Ronny Adolof Buol tentang musik bambu dan Agustinus Sasundu di Sangihe, September 2017.
+Endpoint jawaban modul dan foto/sorotan khusus memakai pola rute di `src/index.js`. Penggunaan langsung API autentikasi tidak disarankan bagi operator kelas; dashboard menyediakan kontrol resminya.
 
-File berformat WebP di `public/assets/composition/sangihe-2017-XXXX.webp`, satu foto per slide, ditampilkan utuh tanpa cropping di dashboard, LCD, dan perangkat peserta. Pemetaan ada di `docs/module02-sangihe-photo-map.md`. **Seluruh sebelas file foto harus tersedia sebelum PR ini digabungkan ke `main`.** Foto dibagikan sebagai ZIP dalam percakapan pengguna karena akses konektor GitHub hanya mendukung unggahan teks, bukan biner lokal.
+---
 
-Laboratorium peserta kini menggunakan foto asli dari rangkaian Sangihe sebagai galeri perbandingan (dipilih sesuai kontrol terakhir). Gambar yang tampil adalah contoh foto yang memang dipotret, bukan satu foto yang subjeknya digeser secara sintetis. Garis sepertiga tetap overlay edukatif. Jawaban peserta tetap disimpan memakai key `komposisi` di D1; tidak ada migrasi D1.
+## 14. Pengujian, batas bukti, dan audit lanjutan
 
-Pemeriksaan akhir: pastikan 11 URL foto valid, validasi GitHub Actions, lalu merge PR. **Jangan** deploy dari branch sebelum seluruh foto terunggah.
+### Bukti yang dapat dirujuk
 
+Pada pengujian CI di PR #43 (kode yang kemudian masuk `main`), tercatat:
+- **122 tes JavaScript lulus**, 0 gagal; pemeriksaan sintaks lulus.
+- Simulasi **70 registrasi bersamaan** ke Worker/D1 lokal: **70 sukses**, 0 gagal; **p95 ≈267 ms** untuk sampel pendaftaran lokal.
+- **70 penyimpanan jawaban kamera serentak** berhasil dan terlihat pada dashboard uji lokal.
+- Uji R2 lokal tersendiri berhasil untuk **12 slot foto satu akun**, pembatasan akses/ukuran dan pengambilan ulang.
 
-### Koreksi Modul 02 — kontras, tombol peserta, dan demo sinkron LCD
+Angka tersebut berasal dari runner **terisolasi**, bukan pengukuran Cloudflare produksi atau Wi-Fi lokasi kegiatan. Uji unit banyak yang hanya memeriksa sumber kode/handler dan tidak menggantikan uji klik browser aktual.
 
-- Pada panel teori peserta berlatar putih, warna teks penjelasan dan poin diatur gelap; warna putih pada LCD tetap dipertahankan menggunakan CSS spesifik.
-- Tombol komposisi peserta kini mengganti foto dengan contoh Sangihe sesuai pilihan **posisi, jarak, sudut, framing**; tombol garis sepertiga hanya mengubah overlay kisi. Perbaikan memakai selector banyak elemen sehingga setiap tombol mendapat status `aria-pressed` benar. Simulasi tidak membuat satu foto berevolusi atau mengubah kejadian aslinya.
-- Pada **Tahap 02**, trainer membuka mode **Latihan komposisi** untuk menampilkan panel demonstrasi di dashboard. Tombol yang sama dapat digunakan trainer, dan foto contoh serta garisnya mengikuti di LCD melalui polling yang telah tersedia. Peserta tetap memakai kontrol mandiri di HP: aksi peserta tidak menulis ke demo kelas.
-- State demo komposisi disimpan dalam `sessions.camera_json.composition` melalui `PUT /api/demo-composition` khusus trainer. Statusnya diekspos lewat `GET /api/state` dan dashboard. Tidak perlu migrasi D1 ataupun perubahan R2, token, atau tahapan.
-- Uji langkah: buka tahap 02 → klik **Buka latihan komposisi peserta** → pada trainer klik **Lebar / Sedang / Dekat**, lalu **Framing** dan **Garis sepertiga** → amati perubahan foto/overlay pada LCD sambil peserta mencoba pengaturan sendiri di HP. Tes otomatis meliputi hak akses, persistensi, isolasi kamera, tombol frontend, dan CSS.
+### Skenario yang masih perlu gladi atau audit terarah
 
+- Perjalanan **70 peserta sekaligus** dari tahap 00 sampai penutup: 12 unggahan foto tiap orang, satu pilihan EDFAT, sembilan pilihan Meja Editor, seluruh caption, empat soal etika, enam isian rencana, tiga komitmen, sorotan LCD dan 70 unduhan **dari R2/Worker lokal**.
+- Validasi langsung pengiriman **Modul 06** dari browser peserta (belum dikonfirmasi oleh trainer pada sesi terakhir).
+- Perangkat ponsel nyata (320–430 px), koneksi lemah, tab background, keyboard terbuka, LCD 16:9, serta pengujian unduh PDF/QR setelah lock kelas.
+- Setelah Codex mengaudit repo, bandingkan temuannya dengan kode sekarang. **Tidak boleh menganggap status “lulus” lama membuktikan bug baru tidak ada**.
 
-## Modul 03 – Detektif EDFAT (Entire, Detail, Frame, Angle, Time)
+Selama audit, **jangan** membuat akun palsu, menyalakan/mematikan timer, mengunci kelas, mengunggah gambar, atau menghapus jawaban di server produksi tanpa izin yang jelas. Uji perubahan hanya pada sistem lokal disposable.
 
-Materi diperluas dari pertanyaan tunggal menjadi tujuh slide yang mengikuti pengendalian trainer: pengantar dan lima cara mengamati foto (Entire, Detail, Frame, Angle, Time), kemudian Misi Detektif. Menggunakan foto dokumentasi Sangihe, September 2017 karya Ronny Adolof Buol, dari sebelas aset Modul 02 yang sudah berada di repositori; bukan ilustrasi peristiwa rekayasa.
+---
 
-**Cara menjalankan:** trainer membuka **03 · Detektif EDFAT**. Presentasi otomatis diposisikan ke indeks 32 (pengantar). Tombol navigasi membuka indeks 32–38, sinkron ke LCD dan tampilan peserta. Saat siap latihan, tekan **Buka Misi Detektif peserta**. Peserta melihat lima foto individual, memilih kategori EDFAT yang paling dominan dan menulis alasan minimal 12 karakter untuk tiap foto. Simpan melalui tombol di bagian bawah; jawaban disimpan di D1 pada kunci `edfat` yang sudah tersedia dan dapat dibaca di progres trainer. Peserta lama yang memiliki jawaban EDFAT format lama tetap terbaca.
+## 15. Arsip keputusan dan kontribusi
 
-**Catatan fasilitasi:** EDFAT adalah cara mengamati dan merencanakan liputan, bukan klasifikasi mutlak atau kuis hafalan. Penilaian utamakan rujukan ke hal yang benar-benar terlihat pada foto, tidak menebak fakta yang belum diverifikasi. Satu foto mungkin memuat lebih dari satu pendekatan. Diskusikan bagaimana foto Entire dan Detail saling mengisi untuk membangun rangkaian sembilan bingkai cerita budaya Sulawesi Utara.
+**Materi yang disepakati terkunci:** Modul 04 (portofolio lima spread dan Meja Editor foto hunting) serta Modul 05 (tujuh slide, caption tanpa minimal kata, grid sembilan foto + narasi di LCD). Ubah hanya atas permintaan trainer atau bug penting yang dibuktikan.
 
-Tidak ada migrasi D1, unggah R2, perubahan izin, atau modifikasi aset Modul 01–02. Hanya batas indeks presentasi diperluas ke 38.
+**Riwayat dokumentasi/bug yang relevan:**
+- [Audit kode 14 November](docs/audit-2026-11-14.md)
+- [Perlindungan draf dan jawaban pending](docs/answer-recovery-2026-11-14.md)
+- [Koneksi putus, timeout dan pemulihan](docs/connection-recovery-2026-11-14.md)
+- [Sinkron trainer–LCD dan revisi kendali](docs/trainer-lcd-sync-2026-11-14.md)
+- [Pemetaan foto asli Sangihe Modul 02](docs/module02-sangihe-photo-map.md)
+- PR #37: perbaikan pemilihan sembilan foto Meja Editor; #38–#40: Caption Lab dan contoh caption; #41: foto Modul 06; #42: layar penutup; #43: buku saku digital dan unduhan PDF.
 
-**QA setelah deployment:** tahap 03 menampilkan slide pembuka di trainer/LCD/HP; semua tujuh slide dapat dipindahkan tanpa menggeser viewport; transisi ke Misi Detektif mengubah tampilan LCD dan peserta; semua lima pertanyaan dapat dipilih, alasan wajib diisi, lalu hasil tersimpan dan terbaca di dashboard.
+**Pedoman bekerja:** baca [AGENTS.md](AGENTS.md) sebelum menyentuh kode. Buat perubahan kecil, jaga privasi data peserta, pisahkan pengujian lokal dari produksi, dan jangan menyatakan deploy berhasil hanya karena PR telah di-merge.
 
+**Kontak trainer:** Ronny Adolof Buol · ronny.buol@gmail.com · WhatsApp 085256510522 · Instagram [@ronnybuol](https://www.instagram.com/ronnybuol/).
 
-## Modul 04 – Sembilan Bingkai (versi alur lengkap)
+---
 
-Modul ini mengubah simulasi sederhana menjadi meja editor foto berorientasi tugas. Trainer membuka **04 · Sembilan Bingkai** dan dapat memandu **enam slide presentasi** (indeks 39–44): kerja editor, foto pembuka, variasi, alur, pilihan redaksi, lalu praktik. LCD dan peserta mengikuti tahap/slide dari server, seperti Modul 02 dan 03.
-
-Pada praktik, peserta memilih **tepat 9 dari 12 kandidat** foto dokumentasi musik bambu Sangihe karya Ronny Adolof Buol (September 2017), menyusun urutannya dengan tombol ↑ ↓ yang cocok untuk layar sentuh, menulis judul kerja minimal 5 karakter dan alasan editorial minimal 30 karakter, lalu menyimpan hasil melalui kunci D1 `story` yang sudah ada. Trainer melihat urutan, judul, dan alasan masing-masing peserta di menu progres. Data susunan lama (`selected` saja) masih dapat dibaca.
-
-Penting: kandidat 12 adalah **potongan alternatif dari foto kandidat 5**, bukan dokumentasi peristiwa berbeda, dan telah diberi label. Simulasi menyusun alur naratif, **bukan klaim kronologi** yang tidak terverifikasi. Tidak ada foto asli yang ditimpa, migrasi D1, atau perubahan bucket R2.
-
-**Uji produksi:** tahap 04 langsung menampilkan slide pengantar; pindah antar enam slide; buka meja editor; pada HP pilih 9 foto, geser urutan dengan ↑ ↓, isi judul dan alasan, simpan; trainer membaca kembali hasil peserta. Uji layout HP 320–430 piksel dan LCD 16:9 setelah Cloudflare menayangkan commit.
-
-### Pemicu build produksi Modul 04
-
-Commit dokumentasi ini dimaksudkan untuk memicu ulang integrasi GitHub–Cloudflare pada branch `main` setelah konfigurasi Production dipastikan menggunakan `npx wrangler deploy`. Tidak mengubah aplikasi, aset, konfigurasi Worker, migrasi D1, ataupun R2. Bila Cloudflare tidak membuat build baru, periksa instalasi/otorisasi GitHub App Cloudflare dan riwayat build Cloudflare.
-
-
-## Sorotan Karya Peserta di LCD (trainer)
-
-Setelah peserta menyimpan tugas, trainer dapat memilih **Tampilkan di LCD** pada baris peserta (khusus karya Sembilan Bingkai) atau **Lihat** lalu **Tampilkan hasil di LCD** pada modul yang telah diselesaikan. LCD menampilkan hasil terpilih: pada Modul 04, sembilan foto sesuai urutan peserta dalam grid 3 × 3, bersama nama, judul kerja, dan alasan editorial. Fasilitator dapat menanyakan alasan urutan tersebut dan menggantinya langsung dengan hasil peserta lain.
-
-**Kembali ke Presentasi** mengakhiri sorotan dan mengembalikan LCD ke tahap, slide, atau simulator yang aktif sebelumnya. Pilihan sorotan merupakan *overlay* di `sessions.camera_json.spotlight`; tidak mengganti `$.view`, `$.slide`, atau `active_stage`. Tidak ada migrasi D1 atau perubahan R2. Hanya akun trainer (bukan pendamping atau peserta) bisa mengaktifkan dan menghentikan sorotan. Hanya jawaban modul yang benar-benar sudah disimpan dapat ditampilkan.
-
-Karena sorotan memang ditujukan untuk diskusi kelas, jawaban yang dipilih trainer ditampilkan pada endpoint state publik yang sama dengan LCD. Jangan sorot jawaban yang memuat informasi pribadi atau keterangan sensitif. Foto Modul 04 tetap memakai aset Sangihe asli dan tampil `object-fit: contain`; kandidat detail alternatif yang memang berasal dari foto sama tetap diberi perlakuan khusus.
-
-**Uji:** buka tahap 04 dan salah satu slide, buka hasil peserta, tekan Tampilkan di LCD; LCD berganti setelah polling (sekitar beberapa detik). Pilih peserta lain, pastikan hasil berganti. Tekan Kembali ke Presentasi dan pastikan slide lama muncul tanpa diulang dari awal. Verifikasi pada jendela LCD fullscreen dan dashboard di perangkat trainer terpisah.
-
-
-## Latihan peserta tidak lagi terganggu saat trainer mengganti slide
-
-Pada modul 01–04, peserta mendapat kontrol **Latihan saya**, **Baca materi**, dan **Ikuti trainer**. Setelah peserta masuk latihan, perpindahan slide dari dashboard trainer hanya mengubah LCD; pekerjaan mandiri di HP/laptop tidak dipindahkan otomatis. Baca materi memungkinkan peserta menjelajahi seluruh slide modul sendiri dengan Sebelumnya/Berikutnya, lalu kembali ke latihan tanpa kehilangan pilihan sembilan foto, draf alasan, atau isian EDFAT. Ikuti trainer merupakan pilihan sadar untuk kembali mengikuti perubahan presentasi.
-
-Mode belajar disimpan lokal dengan kunci ID peserta+modul. State `presentation` server dan D1 tetap menjadi acuan LCD, bukan pemaksa tampilan praktik peserta. Pembukaan modul berikutnya juga tidak memindahkan peserta dari tugas yang sedang dikerjakan; pembukaan tahap pertama dari orientasi tetap mengantar peserta ke modul aktif. Penutupan/lock kelas tetap berlaku. Draf baru disimpan lokal; untuk mengirim jawaban akhir ke dashboard trainer, peserta tetap perlu memakai tombol **Simpan**.
-
-Uji praktik: buka Modul 04, pilih beberapa foto dan tulis judul/alasan, ubah slide di trainer; HP harus tetap pada latihan. Tekan Baca materi, pindah slide sendiri, lalu Latihan saya; seluruh isian masih ada. Tekan Ikuti trainer lalu ubah slide; HP harus mengikuti. Ulangi pada Modul 01–03.
-
-
-## Modul 05 — Caption Lab (slide 45–50)
-
-Modul 05 melanjutkan **Sembilan Bingkai** tanpa menyusun ulang foto atau mengarang fakta. Enam slide khusus digunakan trainer dan layar LCD: memberi konteks, 5W+1H, membedakan klaim dengan bukti, narasi sembilan bingkai, pemeriksaan fakta, dan praktik. Contoh visual menggunakan foto dokumentasi musik bambu Sangihe, September 2017, karya Ronny Adolof Buol, yang sudah berada di `public/assets/composition/`.
-
-**Peserta:** saat latihan, Caption Lab menampilkan sembilan foto beserta urutan dan judul kerja dari Modul 04 milik peserta yang sama (bila sudah dipilih). Peserta mengisi enam unsur fakta, catatan hal-hal yang perlu diverifikasi, dan satu narasi sekitar 150 kata dengan penghitungan otomatis. Tiga butir pemeriksaan editorial perlu dicentang sebelum mengirim. Draf ditulis ke localStorage tiap perubahan; pengiriman akhir menggunakan key jawaban D1 `caption` yang sudah ada. Snapshot sembilan ID pilihan peserta juga disertakan pada hasil caption sehingga Sorotan Karya LCD dapat memperlihatkan foto pembuka, tengah, dan penutup. Kisaran 120–180 kata adalah panduan, bukan batas mutlak; validasi minimum 50 kata menghindari penyimpanan isian yang belum berupa narasi.
-
-Mode **Latihan saya / Baca materi / Ikuti trainer** tetap berlaku. Trainer boleh membuka slide lain tanpa memindahkan peserta dari editor. Sorotan karya peserta dari dashboard bekerja dengan jawaban yang sudah tersimpan, tidak menampilkan draf yang belum dikirim. Tidak ada migrasi D1, perubahan binding R2, atau pembuatan foto baru.
-
-**Uji:** trainer pilih tahap 05, LCD menampilkan slide pertama, pindahkan semua enam slide dan buka laboratorium; peserta pilih sembilan bingkai di Modul 04, kembali ke Caption Lab, pastikan urutan foto benar. Tulis sebagian caption, klik Baca materi lalu kembali ke Latihan saya dan periksa draf. Isi 5W+1H dan daftar pemeriksaan, simpan, segarkan dashboard, tampilkan hasil caption di LCD, lalu hentikan sorotan untuk kembali ke presentasi terakhir.
-
-
-## Modul 06 – Etika & Tantangan (penutup)
-
-Enam slide baru (51–56) menutup rangkaian dengan kepercayaan publik, keaslian momen, penghormatan kepada subjek dan komunitas, penyuntingan serta verifikasi, keputusan etis, dan rancangan foto cerita budaya. Materi contoh memakai foto Sangihe 2017 yang sudah tersedia di repositori. Trainer mengendalikan teori dan layar LCD; peserta tetap dapat memilih Latihan saya, Baca materi, atau Ikuti trainer tanpa kehilangan draf.
-
-Peserta menanggapi empat skenario yang sudah ada, sekarang disertai alasan sendiri. Nilai keputusan 0–4 tetap tersedia sebagai sarana refleksi, bukan ukuran tunggal etika. Untuk tantangan akhir peserta menyusun rencana: tema, calon tokoh/sumber, izin dan batasan, ragam foto/EDFAT, hal yang perlu diverifikasi, dan cara menjaga keselamatan serta martabat. Terdapat tiga pernyataan komitmen. Draf tersimpan di perangkat; pengiriman jawaban menggunakan key D1 `etika` yang sudah ada tanpa migrasi. Tampilan detail trainer dan Sorotan Karya di LCD memperlihatkan rencana peserta sehingga dapat dibahas bersama dan ditutup kembali ke slide terakhir.
-
-**Skenario uji akhir:** pilih tahap 06 di trainer, pindahkan semua slide di LCD lalu buka tantangan akhir. Di HP peserta pilih empat respons, tulis alasan dan rencana, pindah ke Baca materi lalu kembali Latihan saya: semua draf tetap ada. Simpan hasil, periksa progres trainer, sorot hasil ke LCD, dan akhiri sorotan. Setelahnya lakukan audit perjalanan Modul 01–06 secara menyeluruh. Tidak ada perubahan D1/R2/route produksi.
-
-
-## Uji beban 70 peserta virtual (aman, tanpa menyentuh produksi)
-
-Repositori ini mempunyai pengujian end-to-end HTTP yang berjalan otomatis lewat GitHub Actions pada pull request: `Isolated 70-participant classroom load test`. Pengujian memakai Worker Wrangler lokal dan **D1 lokal sementara**, bukan D1 produksi.
-
-Skenario `scripts/load-test-local.mjs`:
-- 70 akun fiktif dikirim **bersamaan** ke endpoint pendaftaran asli;
-- semua respons pendaftaran harus HTTP 201, dengan ID dan token unik;
-- `/api/state` harus melaporkan 70 peserta;
-- username ganda harus ditolak HTTP 409 tanpa menambah counter;
-- login kembali tidak boleh menambah jumlah peserta;
-- daftar LCD 48 + 22 nama harus sesuai dan dapat kembali ke tampilan pendaftaran.
-
-Tes hanya menerima alamat `localhost` atau `127.0.0.1`, sehingga tidak dapat diarahkan secara tidak sengaja ke `kelasbelajar.org`. Tidak perlu mengundang peserta asli ataupun menciptakan identitas peserta yang sebenarnya.
-
-Pengujian awal pada 14 November 2026 memperoleh 70/70 pendaftaran berhasil tanpa kegagalan; HTTP p50 sekitar 209 ms dan p95 sekitar 212 ms pada runner lokal. **Angka ini bukan pengukuran Cloudflare produksi, jaringan seluler peserta, ataupun proyektor di lokasi acara.** Uji lapangan perangkat dan Wi-Fi tetap diperlukan.
+**Status dokumentasi:** diselaraskan dengan **kode `main` per 15 November 2026**, tetapi ketersediaan objek R2 dan versi Cloudflare yang sedang aktif **harus diperiksa di lingkungan live**. README ini merupakan petunjuk operasional, bukan sertifikat kelulusan seluruh skenario end-to-end.
